@@ -1,0 +1,7 @@
+**/obj/
+**/__pycache__/
+**/bin/
+**/data/
+**/*.rgba
+**/*.rom
+local-tools/

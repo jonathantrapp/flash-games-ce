@@ -1,0 +1,370 @@
+{
+  "source": "pedrofu\\original\\scripts\\xplor\\Conversation.as",
+  "events": [
+    {
+      "event": 0,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,FlxObject.LEFT",
+          "text": "You have trespassed on the ancient lands of the Yak Clan!  You shall be destroyed!",
+          "line": 104
+        }
+      ],
+      "followups": [
+        {
+          "status": 1,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "Ooh... would you mind if I just passed through? I've lost a bunch of mail, and I just need to pick it up.",
+          "line": 200
+        },
+        {
+          "status": 2,
+          "speaker_and_position": "this.otherGuy,0,0,FlxObject.LEFT",
+          "text": "NEVER!!!!!!",
+          "line": 206
+        }
+      ],
+      "initial_branch_source": "Global.pedro.play(\"idle\");\n               badguy.play(\"talk\");\n               this.otherGuy = badguy;\n               this.SetBubble(badguy,0,0,FlxObject.LEFT,\"You have trespassed on the ancient lands of the Yak Clan!  You shall be destroyed!\");\n               break;",
+      "followups_branch_source": "if(this.status == 1)\n               {\n                  this.otherGuy.play(\"idle\");\n                  Global.pedro.play(\"talk\");\n                  this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"Ooh... would you mind if I just passed through? I\\'ve lost a bunch of mail, and I just need to pick it up.\");\n               }\n               else if(this.status == 2)\n               {\n                  Global.pedro.play(\"idle\");\n                  this.otherGuy.play(\"talk\");\n                  this.SetBubble(this.otherGuy,0,0,FlxObject.LEFT,\"NEVER!!!!!!\");\n               }\n               else\n               {\n                  this.End();\n               }\n               break;"
+    },
+    {
+      "event": 1,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "Brrrr... I knew it was a mistake to fly the blimp in my pajamas! Crashing it wasn't great either.",
+          "line": 109
+        }
+      ],
+      "followups": [
+        {
+          "status": 1,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "Boy, the boss is gonna kill me... I better make my way to the wreck and find all the fan mail!",
+          "line": 216
+        }
+      ],
+      "initial_branch_source": "this.hintDelay = 6;\n               Global.pedro.play(\"talk\");\n               this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"Brrrr... I knew it was a mistake to fly the blimp in my pajamas! Crashing it wasn\\'t great either.\");\n               break;",
+      "followups_branch_source": "if(this.status == 1)\n               {\n                  this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"Boy, the boss is gonna kill me... I better make my way to the wreck and find all the fan mail!\");\n               }\n               else if(this.status == 2)\n               {\n                  this.tutorial = new FlxSprite(0,0,TutorialImage);\n                  this.tutorial.scrollFactor.x = 0;\n                  this.tutorial.scrollFactor.y = 0;\n                  add(this.tutorial);\n                  this.bubble.visible = false;\n                  this.words.visible = false;\n                  Global.pedro.play(\"idle\");\n               }\n               else\n               {\n                  PlayState(FlxG.state).AddHelpers();\n                  this.tutorial.visible = false;\n                  this.End();\n               }\n               break;"
+    },
+    {
+      "event": 2,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,FlxObject.LEFT",
+          "text": "I have carefully ensconced this artifact from the sky in my Precious Things vault! You may not have it!",
+          "line": 115
+        }
+      ],
+      "followups": [
+        {
+          "status": 1,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "But that's a fan letter to Boys' Life!  Look at it!  It's not addressed to you!",
+          "line": 240
+        },
+        {
+          "status": 2,
+          "speaker_and_position": "this.otherGuy,0,0,FlxObject.LEFT",
+          "text": "Your symbols mean nothing to me, even though I clearly speak English!  Begone!",
+          "line": 246
+        }
+      ],
+      "initial_branch_source": "Global.pedro.play(\"idle\");\n               badguy.play(\"talk\");\n               this.otherGuy = badguy;\n               this.SetBubble(badguy,0,0,FlxObject.LEFT,\"I have carefully ensconced this artifact from the sky in my Precious Things vault! You may not have it!\");\n               break;",
+      "followups_branch_source": "if(this.status == 1)\n               {\n                  this.otherGuy.play(\"talkidle\");\n                  Global.pedro.play(\"talk\");\n                  this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"But that\\'s a fan letter to Boys\\' Life!  Look at it!  It\\'s not addressed to you!\");\n               }\n               else if(this.status == 2)\n               {\n                  Global.pedro.play(\"idle\");\n                  this.otherGuy.play(\"talk\");\n                  this.SetBubble(this.otherGuy,0,0,FlxObject.LEFT,\"Your symbols mean nothing to me, even though I clearly speak English!  Begone!\");\n               }\n               else\n               {\n                  this.End();\n               }\n               break;"
+    },
+    {
+      "event": 3,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "Wow... I guess she's not flying again. On the plus side, the wreckage is arranged in nice neat platforms!",
+          "line": 120
+        }
+      ],
+      "followups": [],
+      "initial_branch_source": "Global.pedro.play(\"talk\");\n               this.otherGuy = null;\n               this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"Wow... I guess she\\'s not flying again. On the plus side, the wreckage is arranged in nice neat platforms!\");\n               break;",
+      "followups_branch_source": "this.End();\n               break;"
+    },
+    {
+      "event": 4,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,f",
+          "text": "We are the Ninja Brothers! We are visiting from Japan! Let us engage in the local custom of pummeling you!",
+          "line": 130
+        }
+      ],
+      "followups": [
+        {
+          "status": 1,
+          "speaker_and_position": "Global.pedro,0,0,f",
+          "text": "Really?  This is what we're doing now?",
+          "line": 269
+        }
+      ],
+      "initial_branch_source": "badguy.play(\"talk\");\n               this.otherGuy = badguy;\n               f = int(FlxObject.LEFT);\n               if(badguy.x < Global.pedro.x)\n               {\n                  f = int(FlxObject.RIGHT);\n               }\n               this.SetBubble(badguy,0,0,f,\"We are the Ninja Brothers! We are visiting from Japan! Let us engage in the local custom of pummeling you!\");\n               break;",
+      "followups_branch_source": "if(this.status == 1)\n               {\n                  if(this.otherGuy.x < Global.pedro.x)\n                  {\n                     f = int(FlxObject.LEFT);\n                  }\n                  else\n                  {\n                     f = int(FlxObject.RIGHT);\n                  }\n                  Global.pedro.play(\"talk\");\n                  this.otherGuy.play(\"idle\");\n                  this.SetBubble(Global.pedro,0,0,f,\"Really?  This is what we\\'re doing now?\");\n               }\n               else\n               {\n                  this.End();\n               }\n               break;"
+    },
+    {
+      "event": 5,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,FlxObject.LEFT",
+          "text": "You have shown great power, strange burro. But your journey ends here. No stranger may enter the Ancient Temple of the Yak Clan!",
+          "line": 136
+        }
+      ],
+      "followups": [
+        {
+          "status": 1,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "As much as I'd like to take a break, I have a sworn duty to deliver the Boys' Life fan mail!",
+          "line": 281
+        },
+        {
+          "status": 2,
+          "speaker_and_position": "this.otherGuy,0,0,FlxObject.LEFT",
+          "text": "And as much as I admire your tenacity, I'm afraid the letters are far too interesting. We shall keep them.",
+          "line": 287
+        },
+        {
+          "status": 3,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "What?  Oh come on!  Those are our letters! Hand them over!",
+          "line": 293
+        },
+        {
+          "status": 4,
+          "speaker_and_position": "this.otherGuy,0,0,FlxObject.LEFT",
+          "text": "I think I will go read some right now. You can discuss the matter further with Torgo. Good day!",
+          "line": 299
+        }
+      ],
+      "initial_branch_source": "badguy.play(\"talk\");\n               Global.pedro.play(\"idle\");\n               this.otherGuy = badguy;\n               this.SetBubble(badguy,0,0,FlxObject.LEFT,\"You have shown great power, strange burro. But your journey ends here. No stranger may enter the Ancient Temple of the Yak Clan!\");\n               break;",
+      "followups_branch_source": "if(this.status == 1)\n               {\n                  this.otherGuy.play(\"idle\");\n                  Global.pedro.play(\"talk\");\n                  this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"As much as I\\'d like to take a break, I have a sworn duty to deliver the Boys\\' Life fan mail!\");\n               }\n               else if(this.status == 2)\n               {\n                  Global.pedro.play(\"idle\");\n                  this.otherGuy.play(\"talk\");\n                  this.SetBubble(this.otherGuy,0,0,FlxObject.LEFT,\"And as much as I admire your tenacity, I\\'m afraid the letters are far too interesting. We shall keep them.\");\n               }\n               else if(this.status == 3)\n               {\n                  this.otherGuy.play(\"idle\");\n                  Global.pedro.play(\"talk\");\n                  this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"What?  Oh come on!  Those are our letters! Hand them over!\");\n               }\n               else if(this.status == 4)\n               {\n                  Global.pedro.play(\"idle\");\n                  this.otherGuy.play(\"talk\");\n                  this.SetBubble(this.otherGuy,0,0,FlxObject.LEFT,\"I think I will go read some right now. You can discuss the matter further with Torgo. Good day!\");\n               }\n               else if(this.status == 5)\n               {\n                  this.End();\n                  (this.otherGuy as Yak_Master).SummonTorgo();\n               }\n               break;"
+    },
+    {
+      "event": 6,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,FlxObject.LEFT",
+          "text": "Puny burro! You cannot scale the mighty walls of the Yak Clan Temple! I shall use you for target practice!",
+          "line": 142
+        }
+      ],
+      "followups": [
+        {
+          "status": 1,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "Hmm... that is quite a wall. I better find another way in!",
+          "line": 312
+        }
+      ],
+      "initial_branch_source": "badguy.play(\"talk\");\n               Global.pedro.play(\"idle\");\n               this.otherGuy = badguy;\n               this.SetBubble(badguy,0,0,FlxObject.LEFT,\"Puny burro! You cannot scale the mighty walls of the Yak Clan Temple! I shall use you for target practice!\");\n               break;",
+      "followups_branch_source": "if(this.status == 1)\n               {\n                  this.otherGuy.play(\"idle\");\n                  Global.pedro.play(\"talk\");\n                  this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"Hmm... that is quite a wall. I better find another way in!\");\n               }\n               else\n               {\n                  this.End();\n               }\n               break;"
+    },
+    {
+      "event": 7,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,FlxObject.RIGHT",
+          "text": "Gulp.",
+          "line": 148
+        }
+      ],
+      "followups": [],
+      "initial_branch_source": "badguy.play(\"talk\");\n               Global.pedro.play(\"idle\");\n               this.otherGuy = badguy;\n               this.SetBubble(badguy,0,0,FlxObject.RIGHT,\"Gulp.\");\n               break;",
+      "followups_branch_source": "this.End();\n               break;"
+    },
+    {
+      "event": 8,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,FlxObject.LEFT",
+          "text": "Alright, donkey! You think you're so tough? Face my Gauntlet of Death!",
+          "line": 154
+        }
+      ],
+      "followups": [],
+      "initial_branch_source": "badguy.play(\"talk\");\n               Global.pedro.play(\"idle\");\n               this.otherGuy = badguy;\n               this.SetBubble(badguy,0,0,FlxObject.LEFT,\"Alright, donkey! You think you\\'re so tough? Face my Gauntlet of Death!\");\n               break;",
+      "followups_branch_source": "(this.otherGuy as Yak_Master).PoofAway();\n               this.End();\n               break;"
+    },
+    {
+      "event": 9,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,FlxObject.LEFT",
+          "text": "Your skills are most impressive. But now I have built a Mighty Robot to destroy you! I'm quite good with my hands.",
+          "line": 161
+        }
+      ],
+      "followups": [
+        {
+          "status": 1,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.RIGHT",
+          "text": "Wait, did you just stick a trashcan on Torgo's head?",
+          "line": 331
+        },
+        {
+          "status": 2,
+          "speaker_and_position": "this.otherGuy,0,0,FlxObject.LEFT",
+          "text": ". . . .",
+          "line": 337
+        },
+        {
+          "status": 3,
+          "speaker_and_position": "g,0,0,FlxObject.LEFT",
+          "text": "BEEP BOOP",
+          "line": 346
+        },
+        {
+          "status": 4,
+          "speaker_and_position": "this.otherGuy,0,0,FlxObject.LEFT",
+          "text": "Yes.",
+          "line": 354
+        }
+      ],
+      "initial_branch_source": "Global.pedro.acceleration.y = 400;\n               badguy.play(\"talk\");\n               Global.pedro.play(\"idle\");\n               this.otherGuy = badguy;\n               this.SetBubble(badguy,0,0,FlxObject.LEFT,\"Your skills are most impressive. But now I have built a Mighty Robot to destroy you! I\\'m quite good with my hands.\");\n               break;",
+      "followups_branch_source": "if(this.status == 1)\n               {\n                  this.otherGuy.play(\"idle\");\n                  Global.pedro.play(\"talk\");\n                  this.SetBubble(Global.pedro,0,0,FlxObject.RIGHT,\"Wait, did you just stick a trashcan on Torgo\\'s head?\");\n               }\n               else if(this.status == 2)\n               {\n                  Global.pedro.play(\"idle\");\n                  this.otherGuy.play(\"idle\");\n                  this.SetBubble(this.otherGuy,0,0,FlxObject.LEFT,\". . . .\");\n               }\n               else if(this.status == 3)\n               {\n                  this.otherGuy.play(\"idle\");\n                  for each(g in Global.badguys.GetGroup(Badguys.DEADLY).members)\n                  {\n                     if(g is Robot)\n                     {\n                        this.SetBubble(g,0,0,FlxObject.LEFT,\"BEEP BOOP\");\n                        return;\n                     }\n                  }\n               }\n               else if(this.status == 4)\n               {\n                  this.otherGuy.play(\"talk\");\n                  this.SetBubble(this.otherGuy,0,0,FlxObject.LEFT,\"Yes.\");\n               }\n               else\n               {\n                  (this.otherGuy as Yak_Master).PoofAway();\n                  this.End();\n               }\n               break;"
+    },
+    {
+      "event": 10,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "badguy,0,0,FlxObject.LEFT",
+          "text": "You know, this is getting ridiculous. I'm half-tempted to not even offer bonus rewards in this Gauntlet of Death!",
+          "line": 168
+        }
+      ],
+      "followups": [],
+      "initial_branch_source": "Global.pedro.acceleration.y = 400;\n               badguy.play(\"talk\");\n               Global.pedro.play(\"idle\");\n               this.otherGuy = badguy;\n               this.SetBubble(badguy,0,0,FlxObject.LEFT,\"You know, this is getting ridiculous. I\\'m half-tempted to not even offer bonus rewards in this Gauntlet of Death!\");\n               break;",
+      "followups_branch_source": "(this.otherGuy as Yak_Master).PoofAway();\n               this.End();\n               break;"
+    },
+    {
+      "event": 11,
+      "initial": [
+        {
+          "status": 0,
+          "speaker_and_position": "Global.pedro,0,0,FlxObject.LEFT",
+          "text": "Alright, that's IT!  Hand over the mail so I can go home!",
+          "line": 174
+        }
+      ],
+      "followups": [
+        {
+          "status": 1,
+          "speaker_and_position": "this.otherGuy,0,0,FlxObject.RIGHT",
+          "text": "Boy, with you around, I'm glad I have these Barrier Orbs making me invincible!",
+          "line": 371
+        }
+      ],
+      "initial_branch_source": "badguy.play(\"idle\");\n               Global.pedro.play(\"talk\");\n               this.otherGuy = badguy;\n               this.SetBubble(Global.pedro,0,0,FlxObject.LEFT,\"Alright, that\\'s IT!  Hand over the mail so I can go home!\");\n         }\n         FlxG.camera.follow(null);\n      }",
+      "followups_branch_source": "if(this.status == 1)\n               {\n                  Global.pedro.play(\"idle\");\n                  this.otherGuy.play(\"talk\");\n                  this.SetBubble(this.otherGuy,0,0,FlxObject.RIGHT,\"Boy, with you around, I\\'m glad I have these Barrier Orbs making me invincible!\");\n               }\n               else\n               {\n                  this.End();\n               }\n         }\n      }"
+    }
+  ],
+  "triggers": [
+    {
+      "event": 1,
+      "other": "null",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\PedroChute.as",
+      "line": 79,
+      "context": "         {\n            angularAcceleration = 0;\n            angle *= 0.8;\n            if(finished)\n            {\n               exists = false;\n               Global.pedro.x = x;\n               Global.pedro.y = y + 23;\n               Global.pedro.visible = true;\n               Global.pedro.action = IDLE;\n               FlxG.camera.follow(Global.pedro);\n               PlayState(FlxG.state).conversation.Setup(1,null);\n            }\n         }\n      }\n   }\n}\n"
+    },
+    {
+      "event": 0,
+      "other": "g",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Tent.as",
+      "line": 74,
+      "context": "         if(Global.pedro.x + Global.pedro.width / 2 < g.x + g.width / 2)\n         {\n            g.facing = LEFT;\n         }\n         else\n         {\n            g.facing = RIGHT;\n         }\n         g.tag = tag;\n         if(Global.levelNum == 0 && facing == RIGHT)\n         {\n            PlayState(FlxG.state).conversation.Setup(0,g);\n            g.reload = 0;\n            for each(b in Global.badguys.GetGroup(Badguys.BACKGD).members)\n            {\n               if(b is Tent)\n               {\n                  (b as Tent).Launch();"
+    },
+    {
+      "event": 6,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Archer.as",
+      "line": 160,
+      "context": "            action = IDLE;\n            play(\"idle\");\n         }\n      }\n      \n      override public function BasicUpdate() : void\n      {\n         if(Global.levelNum == 9 && tag == 2)\n         {\n            if(this.convoState == 0 && (Global.pedro.velocity.x < -1 || Global.pedro.velocity.x > 1))\n            {\n               PlayState(FlxG.state).conversation.Setup(6,this);\n               this.convoState = 1;\n            }\n            else if(this.convoState == 1 && Global.pedro.y <= y + height && Global.pedro.action == IDLE)\n            {\n               PlayState(FlxG.state).conversation.Setup(7,this);\n               this.convoState = 2;"
+    },
+    {
+      "event": 7,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Archer.as",
+      "line": 165,
+      "context": "      override public function BasicUpdate() : void\n      {\n         if(Global.levelNum == 9 && tag == 2)\n         {\n            if(this.convoState == 0 && (Global.pedro.velocity.x < -1 || Global.pedro.velocity.x > 1))\n            {\n               PlayState(FlxG.state).conversation.Setup(6,this);\n               this.convoState = 1;\n            }\n            else if(this.convoState == 1 && Global.pedro.y <= y + height && Global.pedro.action == IDLE)\n            {\n               PlayState(FlxG.state).conversation.Setup(7,this);\n               this.convoState = 2;\n            }\n         }\n         super.BasicUpdate();\n         if(reload > 0)\n         {"
+    },
+    {
+      "event": 2,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Armor.as",
+      "line": 257,
+      "context": "         }\n         else\n         {\n            facing = RIGHT;\n         }\n         if(DistanceToGuy(Global.pedro) < 60)\n         {\n            this.WakeUp();\n         }\n         if(Global.levelNum == 2 && action == IDLE)\n         {\n            PlayState(FlxG.state).conversation.Setup(2,this);\n            Global.level.GetLayer(Level.LAYER_SOLID).setTileByIndex(Global.level.level2Spot,56);\n            Global.level.GetLayer(Level.LAYER_SOLID).setTileByIndex(Global.level.level2Spot - Global.level.width,56);\n         }\n         if(Global.levelNum == 5 && action == IDLE)\n         {\n            for each(g in Global.badguys.GetGroup(Badguys.DEADLY).members)"
+    },
+    {
+      "event": 8,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Master.as",
+      "line": 242,
+      "context": "         {\n            y = this.hoverY + 6;\n         }\n      }\n      \n      public function UpdateInactive() : void\n      {\n         this.Hover();\n         if(Global.levelNum == 10)\n         {\n            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(8,this);\n         }\n         else if(Global.levelNum == 11)\n         {\n            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(9,this);\n         }"
+    },
+    {
+      "event": 9,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Master.as",
+      "line": 247,
+      "context": "      public function UpdateInactive() : void\n      {\n         this.Hover();\n         if(Global.levelNum == 10)\n         {\n            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(8,this);\n         }\n         else if(Global.levelNum == 11)\n         {\n            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(9,this);\n         }\n         else if(Global.levelNum == 13)\n         {\n            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(10,this);\n         }"
+    },
+    {
+      "event": 10,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Master.as",
+      "line": 252,
+      "context": "            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(8,this);\n         }\n         else if(Global.levelNum == 11)\n         {\n            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(9,this);\n         }\n         else if(Global.levelNum == 13)\n         {\n            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(10,this);\n         }\n         else if(DistanceToGuy(Global.pedro) < 100)\n         {\n            action = IDLE;\n            if(Global.levelNum == 8)\n            {"
+    },
+    {
+      "event": 5,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Master.as",
+      "line": 259,
+      "context": "         }\n         else if(Global.levelNum == 13)\n         {\n            action = IDLE;\n            PlayState(FlxG.state).conversation.Setup(10,this);\n         }\n         else if(DistanceToGuy(Global.pedro) < 100)\n         {\n            action = IDLE;\n            if(Global.levelNum == 8)\n            {\n               PlayState(FlxG.state).conversation.Setup(5,this);\n            }\n            else\n            {\n               PlayState(FlxG.state).conversation.Setup(11,this);\n               this.inactive = false;\n            }"
+    },
+    {
+      "event": 11,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Master.as",
+      "line": 263,
+      "context": "            PlayState(FlxG.state).conversation.Setup(10,this);\n         }\n         else if(DistanceToGuy(Global.pedro) < 100)\n         {\n            action = IDLE;\n            if(Global.levelNum == 8)\n            {\n               PlayState(FlxG.state).conversation.Setup(5,this);\n            }\n            else\n            {\n               PlayState(FlxG.state).conversation.Setup(11,this);\n               this.inactive = false;\n            }\n         }\n      }\n      \n      public function PoofAway() : void"
+    },
+    {
+      "event": 4,
+      "other": "this",
+      "file": "pedrofu\\original\\scripts\\xplor\\Monster\\Yak_Ninja.as",
+      "line": 264,
+      "context": "         play(\"idle\");\n      }\n      \n      public function UpdateHidden() : void\n      {\n         var g:BaseMonster = null;\n         if(DistanceToGuy(Global.pedro) < 80 && LineOfSight(this,Global.pedro))\n         {\n            this.Poof();\n            if(Global.levelNum == 4)\n            {\n               PlayState(FlxG.state).conversation.Setup(4,this);\n               for each(g in Global.badguys.GetGroup(Badguys.DEADLY).members)\n               {\n                  if(g is Yak_Ninja && g.action == HIDDEN)\n                  {\n                     (g as Yak_Ninja).Poof();\n                  }"
+    },
+    {
+      "event": 3,
+      "other": "null",
+      "file": "pedrofu\\original\\scripts\\xplor\\Pedro.as",
+      "line": 784,
+      "context": "         if(isTouching(FLOOR))\n         {\n            this.diveKicks = 0;\n            if(Global.level.GetLayer(Level.LAYER_SOLID).getTile(int((x + width / 2) / 16),int((y + height + 2) / 16)) == 63)\n            {\n               this.hurt(1);\n               this.Knockback(LEFT + RIGHT - facing,40,-40);\n               return;\n            }\n            if(Global.levelNum == 3 && x > Global.TILE_WIDTH * 37 && !this.specialEventYet)\n            {\n               PlayState(FlxG.state).conversation.Setup(3,null);\n               this.specialEventYet = true;\n               return;\n            }\n            this.safeX = x;\n            this.safeY = y;\n            this.jumpkick_done = false;"
+    }
+  ],
+  "global_rules": {
+    "setup": "Global.conversation=true; status=0; camera detaches; bubble/words visible",
+    "end": "Global.conversation=false; camera follows Pedro; bubble/words hidden",
+    "continue": "B2 or B3 or Escape edge, increments status and executes ButtonHit branch",
+    "freezes": "Arena.Update returns while conversation; most gameplay BasicUpdate blocked",
+    "source_note": "Followup branches retained verbatim to preserve non-dialogue effects; page status inferred from preceding explicit status condition."
+  }
+}
