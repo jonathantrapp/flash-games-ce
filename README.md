@@ -10,7 +10,7 @@ Per-game notes, controls and known gaps: [flash-ports/scoutcamp](flash-ports/sco
 
 ## Development screenshots
 
-Native calculator-emulator captures (CEmu with a user-supplied ROM), not browser mockups.
+Native calculator-emulator (CEmu) captures
 
 | Scouts vs Aliens | Pedro Kicks Back |
 | --- | --- |
