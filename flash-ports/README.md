@@ -11,7 +11,7 @@ The original games and extracted artwork are credited to Hamumu Software (2012),
 
 ## Install
 
-1. Build the package with `python package.py` (writes `release/FlashGamesCE-v2.zip`) and extract it on your computer.
+1. Extract the release zip on your computer. (To build it yourself, run `python package.py`; it writes `release/FlashGamesCE-v2.zip`.)
 2. Connect the TI-84 Plus CE using USB and open TI Connect CE's Calculator Explorer.
 3. Send the `.8xp` and `.8xv` files from the extracted package. Keep the `.8xv` files in archive. Each game's asset AppVars must accompany its program.
 4. Launch `SCOUTCE` or `PEDROCE` through Cesium using your existing native-game setup.
