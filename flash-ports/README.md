@@ -1,17 +1,17 @@
 # Flash games adapted for TI-84 Plus CE
 
-These are native C adaptations of the two supplied SWFs:
+These are native C rebuilds of the two supplied SWFs, written from the AS3 recovered with JPEXS. Both are works in progress: see [PARITY-AUDIT.md](PARITY-AUDIT.md) for what is verified and what is not, and each game's notes for controls and known gaps.
 
 | Supplied file | Original game | Calculator program |
 | --- | --- | --- |
-| scoutcamp_unlocked.swf | Scouts vs Aliens | SCOUTCE |
-| pedrofu_unlocked.swf | Pedro Kicks Back | PEDROCE |
+| scoutcamp_unlocked.swf | Scouts vs Aliens | SCOUTCE (+ 18 `SCAxx` art banks) |
+| pedrofu_unlocked.swf | Pedro Kicks Back | PEDROCE (+ 18 `PDBxx` banks, `PDCOLOR`, `PDTILE0/1`, six `PDUxx` images) |
 
 The original games and extracted artwork are credited to Hamumu Software (2012), as identified by the supplied games. This folder contains the calculator implementation and local recovery work. The Flash files themselves cannot run on the calculator.
 
 ## Install
 
-1. Extract `release/FlashGamesCE.zip` on your computer.
+1. Build the package with `python package.py` (writes `release/FlashGamesCE-v2.zip`) and extract it on your computer.
 2. Connect the TI-84 Plus CE using USB and open TI Connect CE's Calculator Explorer.
 3. Send the `.8xp` and `.8xv` files from the extracted package. Keep the `.8xv` files in archive. Each game's asset AppVars must accompany its program.
 4. Launch `SCOUTCE` or `PEDROCE` through Cesium using your existing native-game setup.
@@ -24,6 +24,12 @@ See each game's README for controls, implemented features, and differences from 
 
 ## Source and verification
 
-Each game has its own directory and makefile. The existing NeuroFlappy project is separate. Builds use the workspace's portable [CE C/C++ Toolchain](https://github.com/CE-Programming/toolchain).
+Each game has its own directory and makefile. Builds use the workspace's portable [CE C/C++ Toolchain](https://github.com/CE-Programming/toolchain) and Python 3.12 with Pillow for asset generation.
 
-`smoke.py` runs the compiled programs in the local windowless CEmu runner using a caller-supplied ROM. Logs, JSON test sequences, and LCD captures are kept in `verification/`. Physical-calculator testing remains necessary to establish behavior on the user's hardware and OS.
+- `run_scenario.py` runs a compact key script against a built game in windowless CEmu with a caller-supplied ROM, at idle priority, and saves a screenshot. `smoke.py` is the lower-level runner it uses.
+- `verify_stages.py` opens every stage of both games through the QA path and writes `verification/STAGE-SMOKE.md`.
+- `scoutcamp/tests/check_original_rules.py` and `pedrofu/tests/check_profile.py` run the real native rules code on the host and compare it with values evaluated from the original AS3.
+- `reference_server.py` serves the original SWFs through Ruffle for side-by-side comparison; `extract_mechanics_spec.py` and `extract_dialogue_spec.py` index the recovered AS3.
+- `sync_repo.py` copies the project files (no builds, ROMs or generated data) into the separate GitHub checkout under `build/flash-games-ce-repo`.
+
+Logs, key scripts and LCD captures are kept in `verification/`. Physical-calculator testing is still outstanding.

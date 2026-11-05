@@ -4,6 +4,24 @@ This is a source-bound scope and acceptance checklist, not a claim of completed 
 
 The earlier native releases recovered maps and basic gameplay, but did not meet close reproduction of original mechanics. A percentage cannot be inferred from number of maps, successful launch, or similar screenshots.
 
+## Status (2026-11-05)
+
+This section summarizes the checklist below; it is not a parity percentage. The checklist items stay unchecked unless both source inspection and a relevant native test exist.
+
+**Verified by native tests**
+- Scouts rules: all 12 towers x 6 stat fields x levels 0..5 under 246 skill profiles, all 48 skill prerequisite entries, and 10 monsters at levels 0..64 match values evaluated from the original AS3 (`scoutcamp/tests/check_original_rules.py`, 120,030 checks, 0 differences).
+- Pedro rules: per-move damage with berserk/rage/maximum-force modifiers, skill prerequisites, life and fury maxima, XP and level-up (including the original one-level-per-gain behaviour and level 99) and Fury Overload match the original (`pedrofu/tests/check_profile.py`, 29,678 checks, 0 differences).
+- Both games build, launch in CEmu, and every stage opens and keeps running (`verification/STAGE-SMOKE.md`). This is launch and survival only.
+
+**Implemented from the original source, not yet verified in play**
+- Scouts: wave scheduling and concurrent waves, food dropping and re-grabbing, alien physics and jump markers, all alien specials, the 12 towers' projectile behaviour, branch conversions, status effects, the skill screen and save file.
+- Pedro: the complete move set and Fury abilities, enemy state machines, the mail arenas, tag gates, Barrier and Master Yak finale, dialogue events with their side effects, profile persistence, stage unlock order.
+
+**Not implemented**
+- Pedro: the intro blimp flight, crash and parachute sequence.
+- Both: sound and music, mouse-style focus fire and alien targeting (Scouts), the speed slider and freeze-time key (Scouts), skill description text, screen shake and similar effects.
+- Both: frame-by-frame comparison against the original running in Ruffle, and physical-calculator testing.
+
 ## Shared acceptance gates
 
 - [ ] Original title, map screen, options, pause, retry, win/ending and skill screens are reachable; keypad substitutes have clear equivalents.

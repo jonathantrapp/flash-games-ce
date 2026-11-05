@@ -1,0 +1,7 @@
+{
+  "checks": 29678,
+  "failures": [],
+  "rounding_cases": 277,
+  "maximum_accepted_rounding": 1.519999999999925,
+  "limitations": "Runs actual native profile.c with fileIO stubs. Allows up to2.01 hundredths fixed-point damage quantization. Does not prove move timings, hitboxes, enemy AI or save IO."
+}

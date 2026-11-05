@@ -16,6 +16,7 @@ for field,fun in enumerate(functions):
  for index,name in enumerate(names):
   s=(root/('original/scripts/xplor/Monster/Tower_'+name+'.as')).read_text();m=re.search(r'public static function '+fun+r'\([^)]*\) : \w+\s*\{\s*return ([^;]+);',s)
   expr=m[1] if m else ('1' if fun=='SecondCalc' else '0')
+  if m and re.search(r'public static function '+fun+r'\([^)]*\) : int',s):expr='(int)('+expr+')'
   expr=re.sub(r'Profile.skills\[SkillDef.(\w+)\]',r'skills[SK_\1]',expr)
   expr=re.sub(r'Tower_(\w+)\.(\w+)\(param1\)',lambda m:'rule_'+m[2]+'('+str(names.index(m[1]))+',param1)',expr)
   out.append('case %d:return %s;'%(index,expr))

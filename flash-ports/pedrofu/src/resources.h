@@ -3,7 +3,7 @@
 #define RESOURCES_H
 typedef struct { unsigned short stride,frames; unsigned char w,h,bw,bh; signed char ox,oy; } ArtDef;
 static const ArtDef artdef[60]={
-[0]={382,40,20,19,20,12,0,6}, /* Pedro */
+[0]={382,40,20,19,8,15,6,3}, /* Pedro */
 [2]={363,22,19,19,11,14,4,4}, /* Monster/Yak */
 [13]={632,5,35,18,35,16,0,0}, /* Monster/Tent */
 [14]={632,5,35,18,35,16,0,0}, /* Monster/Tent */
@@ -33,7 +33,7 @@ static const ArtDef artdef[60]={
 [43]={192,4,5,38,11,32,-3,3}, /* Monster/Barrier */
 [44]={632,5,35,18,35,16,0,0}, /* Monster/Tent_Grass */
 [45]={402,10,20,20,12,14,4,5}, /* Monster/Yakolyte */
-[46]={1218,10,38,32,20,30,9,0}, /* Monster/Robot */
+[46]={1218,10,38,32,20,30,5,0}, /* Monster/Robot */
 [47]={402,10,20,20,12,14,4,5}, /* Monster/Iron_Priest */
 [48]={258,8,16,16,16,16,0,0}, /* Monster/PowerUp */
 [49]={35,1,11,3,3,3,4,0}, /* Bullet/Arrow */

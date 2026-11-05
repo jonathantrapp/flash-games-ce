@@ -1,3 +1,4 @@
+/* Scouts vs Aliens CE: keypad front end for the rules engine in engine.h/combat.h. */
 #include <tice.h>
 #include <graphx.h>
 #include <keypadc.h>
@@ -8,113 +9,394 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-typedef struct { const uint16_t *cells; uint16_t length; } Route;
-typedef struct { uint8_t width,height; uint16_t camp; uint8_t routeCount; const uint8_t *rle; const Route *routes; } Map;
-typedef struct { const uint16_t *groups; uint8_t count; } Wave;
-#include "data.h"
 #include "art.h"
-#define MAXEN 48
-#define MAXTOWER 40
-#define TOP 18
-#define VIEW 184
-volatile uint8_t scout_diag[8]; /* mode,level,wave,towers,alive,escaped,paused,victories */
-typedef struct { int x,y,hp,maxhp; uint16_t step,progress,slow; uint8_t active,type,route,back,carry; } Enemy;
-typedef struct { uint16_t cell; uint8_t active,type,level; int cooldown; } Tower;
-typedef struct { int x,y,xx,yy; uint8_t age,color; } Shot;
-static Enemy enemies[MAXEN];static Tower towers[MAXTOWER];static Shot shots[24];
-static uint8_t layers[4][2500],mode,level,selection,escaped,wave,group,remaining,spawnRoute,unlocked=1,stageWon[17];
-static int money,cx,cy,camx,camy,tick,spawnTimer,nextWave,statusTicks;static bool activeWave,paused;
-static const Map *map;static char status[48],textbuf[80];
-static const char *towerNames[]={"Rock Tower","Roly Poly","Snow Fort","Shock Tower"};
-static const uint8_t prices[]={50,100,60,80};
-static const uint8_t speeds[]={16,26,12,10,20,40,23,16,8};
-static const uint8_t healthBase[]={3,2,20,80,16,5,18,30,220};
-static const uint8_t healthScale[]={2,1,9,25,5,3,7,10,50};
-static void say(const char*s){strncpy(status,s,47);status[47]=0;statusTicks=70;}
-static void save(void){ti_var_t f=ti_Open("SCTSV01","w");if(f){ti_Write(stageWon,1,17,f);ti_Close(f);}}
-static void load(void){ti_var_t f=ti_Open("SCTSV01","r");if(f){if(ti_GetSize(f)==17)ti_Read(stageWon,1,17,f);ti_Close(f);}for(int i=0;i<17;i++)if(stageWon[i]&&i<16&&unlocked<i+2)unlocked=i+2;}
-static int towerAt(int cell){for(int i=0;i<MAXTOWER;i++)if(towers[i].active&&towers[i].cell==cell)return i;return -1;}
-static int upgradeCost(Tower*t){int l=t->level;return (l+1)*(l+1)*(l+1)*(t->type==1?8:7)+(t->type==0?60:t->type==1?100:t->type==2?70:80);}
-static bool valid(int x,int y){int p=y*map->width+x;if(x<2||x>=map->width-2||y<1||y>=map->height-1)return false;if(y==map->camp/map->width&&abs(x-map->camp%map->width)<=1)return false;return !layers[1][p]&&layers[1][p+map->width]&&!layers[2][p]&&!(layers[0][p]>=28&&layers[0][p]<=32);}
-static void startLevel(void){map=maps[level];memset(layers,0,sizeof layers);const uint8_t*p=map->rle;int n=map->width*map->height;for(int l=0;l<4;l++){int k=0;while(k<n){int count=*p++,v=*p++;while(count--)layers[l][k++]=v;}}memset(enemies,0,sizeof enemies);memset(towers,0,sizeof towers);memset(shots,0,sizeof shots);money=160+20*level;wave=group=remaining=escaped=spawnRoute=0;activeWave=paused=false;nextWave=20*waveTimes[level];spawnTimer=0;cx=map->routes[0].cells[0]%map->width+4;cy=map->routes[0].cells[0]/map->width;selection=0;mode=1;tick=0;say("Build towers, then press + for a wave");}
-static void build(void){int cell=cy*map->width+cx;if(towerAt(cell)>=0){say("ENTER upgrades; DEL sells this tower");return;}if(!valid(cx,cy)){say("Build on clear, solid ground");return;}if(money<prices[selection]){say("Not enough money");return;}for(int i=0;i<MAXTOWER;i++)if(!towers[i].active){towers[i]=(Tower){cell,1,selection,1,0};money-=prices[selection];say("Tower built");return;}say("Tower limit reached");}
-static void upgrade(void){int i=towerAt(cy*map->width+cx);if(i<0){build();return;}Tower*t=&towers[i];if(t->level>=5){say("Maximum tower level");return;}int cost=upgradeCost(t);if(money<cost){say("Not enough money to upgrade");return;}money-=cost;t->level++;say("Tower upgraded");}
-static int alive(void){int count=0;for(int i=0;i<MAXEN;i++)count+=enemies[i].active;return count;}
-static int carried(void){int n=0;for(int i=0;i<MAXEN;i++)if(enemies[i].active&&enemies[i].carry)n++;return n;}
-static void sendWave(void){if(activeWave){say("Finish spawning this wave first");return;}if(wave>=waveCounts[level])return;wave++;activeWave=true;group=0;remaining=waveSets[level][wave-1].groups[0];spawnTimer=0;nextWave=20*waveTimes[level];say("Aliens incoming!");}
-static bool spawn(uint8_t type){for(int i=0;i<MAXEN;i++)if(!enemies[i].active){Enemy*e=&enemies[i];memset(e,0,sizeof *e);e->active=1;e->type=type;e->route=spawnRoute++%map->routeCount;int p=map->routes[e->route].cells[0];e->x=p%map->width*8+4;e->y=p/map->width*8+4;int lv=level*2+wave;e->hp=e->maxhp=healthBase[type]+healthScale[type]*lv;return true;}return false;}
-static void hurt(Enemy*e,int damage){e->hp-=damage;if(e->hp<=0){money+=5+level+e->type*2;e->active=0;}}
-static void stepEnemies(void){for(int i=0;i<MAXEN;i++){Enemy*e=&enemies[i];if(!e->active)continue;const Route*r=&map->routes[e->route];int speed=speeds[e->type];if(e->slow){e->slow--;speed=speed*2/5;}e->progress+=speed;if(e->progress>=256){e->progress-=256;if(e->back){if(e->step)e->step--;else{if(e->carry)escaped++;e->active=0;continue;}}else{if(e->step+1<r->length)e->step++;else{e->back=1;e->carry=(5-escaped-carried())>0;e->progress=0;}}}int a=r->cells[e->step],b=a;if(e->back){if(e->step)b=r->cells[e->step-1];}else if(e->step+1<r->length)b=r->cells[e->step+1];int ax=a%map->width*8+4,ay=a/map->width*8+4;int bx=b%map->width*8+4,by=b/map->width*8+4;e->x=ax+(bx-ax)*e->progress/256;e->y=ay+(by-ay)*e->progress/256;}}
-static void shoot(int x,int y,int xx,int yy,int color){for(int s=0;s<24;s++)if(!shots[s].age){shots[s]=(Shot){x,y,xx,yy,4,color};return;}}
-static void stepTowers(void){for(int i=0;i<MAXTOWER;i++){Tower*t=&towers[i];if(!t->active)continue;if(t->cooldown){t->cooldown--;continue;}int x=t->cell%map->width*8+4,y=t->cell/map->width*8+4;int range=(t->type==0?60+t->level*15:t->type==1?25+t->level*10:t->type==2?70+t->level*10:50+t->level*15)/2;Enemy*target=0;int best=999999;for(int j=0;j<MAXEN;j++){Enemy*e=&enemies[j];if(!e->active)continue;int dx=e->x-x,dy=e->y-y,dist=dx*dx+dy*dy;if(dist<=range*range&&dist<best){best=dist;target=e;}}if(!target)continue;int damage=t->type==0?5+t->level*2:t->type==1?15+t->level*4:t->type==2?3:5+t->level*4;shoot(x,y,target->x,target->y,t->type==2?31:t->type==3?252:222);if(t->type==2)target->slow=100+t->level*20;if(t->type==1||t->type==3){int targets=0,limit=t->type==1?MAXEN:t->level+1;for(int j=0;j<MAXEN;j++){Enemy*e=&enemies[j];int dx=e->x-target->x,dy=e->y-target->y;if(e->active&&dx*dx+dy*dy<=(t->type==1?225:100)&&targets<limit){hurt(e,damage);targets++;}}}else hurt(target,damage);t->cooldown=t->type==0?40-t->level*6:t->type==1?100-t->level*8:t->type==2?30-t->level*4:60-t->level*5;}}
-static void update(void){tick++;for(int i=0;i<24;i++)if(shots[i].age)shots[i].age--;if(statusTicks)statusTicks--;if(paused)return;if(activeWave){if(spawnTimer)spawnTimer--;else{const Wave*w=&waveSets[level][wave-1];const uint16_t*g=w->groups+group*3;if(spawn(g[1])){spawnTimer=g[2];if(--remaining==0){group++;if(group>=w->count)activeWave=false;else remaining=w->groups[group*3];}}}}if(nextWave>0)nextWave--;if(!activeWave&&wave<waveCounts[level]&&nextWave<=0)sendWave();stepEnemies();stepTowers();if(escaped>=5){mode=3;return;}if(wave==waveCounts[level]&&!activeWave&&!alive()){mode=4;if(!stageWon[level]){stageWon[level]=1;save();}if(level<16&&unlocked<level+2)unlocked=level+2;}}
-static void pixel(int x,int y){if(x>=0&&x<320&&y>=TOP&&y<TOP+VIEW)gfx_SetPixel(x,y);}
-static void label(const char*s,int x,int y,int color){gfx_SetTextFGColor(color);gfx_PrintStringXY(s,x,y);}
-static void box(int y){gfx_SetColor(1);gfx_FillRectangle(15,y,290,66);gfx_SetColor(150);gfx_Rectangle(15,y,290,66);}
-static void renderMenu(void){art_background(ART_TITLESTATE_TITLEIMAGE_LEFT);box(155);snprintf(textbuf,sizeof textbuf,"<  Stage %u / 17  >",level+1);label(textbuf,80,165,255);label(stageWon[level]?"CAMP SAVED":"CAMP NEEDS YOUR HELP",73,184,stageWon[level]?92:222);label("LEFT / RIGHT choose stage",45,200,255);label("ENTER play   ALPHA controls",40,213,255);label("CLEAR quit",115,227,182);}
-static void renderHelp(void){gfx_FillScreen(1);label("DEFEND THE CAMP'S FIVE MEALS",22,12,222);const char*lines[]={"Arrows: move building cursor","1 Rock $50     2 Roly Poly $100","3 Snow $60     4 Shock $80","2nd: build     ENTER: upgrade","DEL: sell      +: send next wave","ALPHA: pause   MODE: stage menu","CLEAR: exit (progress saves)","Snow slows; Shock chains; Roly blasts.","Kill thieves before they escape!","ENTER returns"};for(int i=0;i<10;i++)label(lines[i],10,36+i*19,255);}
-static const uint8_t mobArt[]={ART_LUMPY,ART_SQUIRMY,ART_BEEFY,ART_BEASTY,ART_WORMY,ART_SPEEDY,ART_BLINKY,ART_SCARY,ART_HUNGRY};
-static const uint8_t towerArt[]={ART_TOWER_ROCK,ART_TOWER_ROLL,ART_TOWER_SNOW,ART_TOWER_SHOCK};
+#include "engine.h"
+#include "combat.h"
+#include "tips.h"
+
+enum { MODE_MENU = 0, MODE_PLAY = 1, MODE_LOST = 3, MODE_WON = 4, MODE_HELP = 5, MODE_SKILLS = 6 };
+#define STEP_TICKS (32768 / HZ)
+#define KEY_DOWN(k) (kb_Data[(k) >> 8] & ((k) & 0xFF))
+#define KEY_PRESS(k) (KEY_DOWN(k) && !(prev[(k) >> 8] & ((k) & 0xFF)))
+
+static uint8_t prev[8];
+static bool showTip;
+static uint8_t cBlack, cWhite, cYellow, cRed, cGreen, cCyan, cPanel;
+static uint8_t flipBuffer[64 * 48 + 2];
+
+typedef struct { const uint8_t *walk; uint8_t walkLength, jump; const uint8_t *disabled; uint8_t disabledLength, disabledJump; } Anim;
+static const uint8_t seqLumpy[] = {0, 1, 2, 3, 0, 4, 5, 6}, seqFour[] = {0, 1, 2, 3}, seqBeefy[] = {0, 1, 2, 3, 4, 5, 6};
+static const uint8_t seqBeasty[] = {1, 2, 3, 4, 5, 6}, seqWormy[] = {4, 5}, seqWormyOff[] = {0, 1, 2, 1};
+static const uint8_t seqSpeedyOff[] = {5, 6, 7, 8}, seqScaryOff[] = {4, 5, 6, 7}, seqBlinkyOff[] = {8, 9, 10, 11};
+static const uint8_t seqBlinky[] = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4};
+static const uint8_t seqBaby[] = {0, 1, 2, 1}, seqZero[] = {0};
+static const Anim anims[10] = {
+    {seqLumpy, 8, 7, seqLumpy, 8, 7},   {seqFour, 4, 4, seqFour, 4, 4},       {seqBeefy, 7, 7, seqBeefy, 7, 7},
+    {seqBeasty, 6, 7, seqBeasty, 6, 7}, {seqWormy, 2, 3, seqWormyOff, 4, 3},  {seqFour, 4, 4, seqSpeedyOff, 4, 9},
+    {seqBlinky, 23, 0, seqBlinkyOff, 4, 8}, {seqFour, 4, 0, seqScaryOff, 4, 5}, {seqZero, 1, 0, seqZero, 1, 0},
+    {seqBaby, 4, 3, seqBaby, 4, 3}};
+static const uint8_t monsterArt[10] = {ART_LUMPY, ART_SQUIRMY, ART_BEEFY, ART_BEASTY, ART_WORMY, ART_SPEEDY, ART_BLINKY, ART_SCARY, ART_HUNGRY, ART_HUNGRYBABY};
+static const uint8_t towerArt[12] = {ART_TOWER_ROCK, ART_TOWER_ROLL, ART_TOWER_SNOW, ART_TOWER_SHOCK, ART_TOWER_SLING, ART_TOWER_SOAPBOX,
+                                      ART_TOWER_CRUSHER, ART_TOWER_QUAKE, ART_TOWER_ICE, ART_TOWER_SLUSHEE, ART_TOWER_CRIPPLER, ART_TOWER_LIGHTNINGROD};
+static const uint8_t bulletArt[12] = {ART_BULLET_ROCK, ART_BULLET_BOULDER, ART_BULLET_SNOWBALL, ART_BULLET_ROCK, ART_BULLET_SLINGBULLET, ART_BULLET_ROCK,
+                                       ART_BULLET_BOULDER, ART_BULLET_ROCK, ART_BULLET_ICEBULLET, ART_BULLET_SLUSHBALL, ART_BULLET_ROCK, ART_BULLET_ROCK};
+
+static uint8_t nearestColor(int r, int g, int b) {
+    int best = 1, bestDistance = 0x7fffff;
+    for (int i = 1; i < 256; i++) {
+        int p = artPalette[i], pr = ((p >> 10) & 31) * 255 / 31, pg = ((p >> 5) & 31) * 255 / 31, pb = (p & 31) * 255 / 31;
+        int d = (pr - r) * (pr - r) + (pg - g) * (pg - g) + (pb - b) * (pb - b);
+        if (d < bestDistance) { bestDistance = d; best = i; }
+    }
+    return (uint8_t)best;
+}
+static void pickColors(void) {
+    cBlack = nearestColor(0, 0, 0); cWhite = nearestColor(255, 255, 255); cYellow = nearestColor(255, 230, 40);
+    cRed = nearestColor(230, 30, 30); cGreen = nearestColor(40, 200, 60); cCyan = nearestColor(90, 220, 255); cPanel = nearestColor(24, 24, 48);
+}
+static void label(const char *s, int x, int y, int color) { gfx_SetTextFGColor(color); gfx_PrintStringXY(s, x, y); }
+static void shadowLabel(const char *s, int x, int y, int color) { label(s, x + 1, y + 1, cBlack); label(s, x, y, color); }
+static void centered(const char *s, int y, int color) { shadowLabel(s, (320 - gfx_GetStringWidth(s)) / 2, y, color); }
+static void panel(int x, int y, int w, int h) { gfx_SetColor(cPanel); gfx_FillRectangle(x, y, w, h); gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, h); }
+static void wrapText(const char *s, int x, int y, int width, int step, int color) {
+    char line[96]; int n = 0; gfx_SetTextFGColor(color);
+    while (*s) {
+        if (*s == '\n') { line[n] = 0; gfx_PrintStringXY(line, x, y); n = 0; y += step; s++; continue; }
+        if (*s == ' ') { if (n && n < 90) line[n++] = ' '; s++; continue; }
+        int len = 0; while (s[len] && s[len] != ' ' && s[len] != '\n') len++;
+        if (len > 40) len = 40;
+        memcpy(line + n, s, len); line[n + len] = 0;
+        if (n && (int)gfx_GetStringWidth(line) > width) {
+            while (n && line[n - 1] == ' ') n--;
+            line[n] = 0; gfx_PrintStringXY(line, x, y); y += step; memcpy(line, s, len); n = len; line[n] = 0;
+        } else n += len;
+        s += len;
+    }
+    line[n] = 0; if (n) gfx_PrintStringXY(line, x, y);
+}
+static void drawArt(int id, int frame, int x, int y, bool flip) {
+    gfx_sprite_t *sprite = art_sprite(id, frame);
+    if (!flip) { gfx_TransparentSprite(sprite, x, y); return; }
+    gfx_FlipSpriteY(sprite, (gfx_sprite_t *)flipBuffer);
+    gfx_TransparentSprite((gfx_sprite_t *)flipBuffer, x, y);
+}
+static int skyFor(int stage) { return stage == 16 ? ART_SKY_CAVEIMAGE_LEFT : stage > 11 ? ART_SKY_DESERTIMAGE_LEFT : stage > 7 ? ART_SKY_CAVEIMAGE_LEFT : stage > 3 ? ART_SKY_SUNSETIMAGE_LEFT : ART_SKY_DESERTIMAGE_LEFT; }
+static int xpNeeded(void) { return playerLevel * (playerLevel < 5 ? 50 : 100); }
+static void xpBar(int x, int y, int w) {
+    gfx_SetColor(cBlack); gfx_FillRectangle(x, y, w, 6);
+    gfx_SetColor(cYellow); gfx_FillRectangle(x + 1, y + 1, (w - 2) * xp / xpNeeded(), 4);
+    gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, 6);
+}
+
+/* ---------- menus ---------- */
+static void renderMenu(void) {
+    art_background(ART_TITLESTATE_TITLEIMAGE_LEFT);
+    panel(12, 150, 296, 84);
+    snprintf(textbuf, sizeof textbuf, "<  Stage %u / 17  >", level + 1);
+    centered(textbuf, 155, cWhite);
+    centered(stageTitles[level], 167, cYellow);
+    if (level >= unlocked) centered("LOCKED - win the previous stage", 179, cRed);
+    else centered(stageWon[level] ? "CAMP SAVED" : "THE CAMP NEEDS YOU", 179, stageWon[level] ? cGreen : cWhite);
+    snprintf(textbuf, sizeof textbuf, "Level %d  Skill points %d", playerLevel, skillPoints);
+    label(textbuf, 22, 192, cWhite); xpBar(210, 193, 88);
+    label("ENTER play   STAT skills   ALPHA help", 22, 205, cWhite);
+    label("LEFT/RIGHT stage            CLEAR quit", 22, 218, cCyan);
+}
+static void renderHelp(void) {
+    gfx_FillScreen(cPanel);
+    shadowLabel("DEFEND THE CAMP'S FIVE MEALS", 40, 4, cYellow);
+    static const char *const lines[] = {
+        "Arrows: move the building cursor",
+        "1 Rock  2 Roly Poly  3 Snow  4 Shock",
+        "2nd: build the chosen tower here",
+        "ENTER: upgrade the tower (5 levels)",
+        "MATH / APPS: branch a base tower into",
+        "  its two specializations (needs skill)",
+        "DEL: sell for half of all money spent",
+        "+: send the next wave early (bonus)",
+        "ALPHA: pause   MODE: back to stages",
+        "STAT: skills (on the stage menu)",
+        "CLEAR: save and exit",
+        "Kill thieves to drop the food they carry;",
+        "dropped food can be grabbed again."};
+    for (int i = 0; i < 13; i++) label(lines[i], 10, 22 + i * 14, cWhite);
+    label("Press ENTER or MODE to return", 50, 224, cCyan);
+}
+
+/* Skill grid positions follow the original SkillState layout. */
+static int skillX(const SkillRule *r) { return 7 + r->group * 81 + r->column * 23 + (r->group > 1); }
+static int skillY(const SkillRule *r) { return 33 + r->rank * 25; }
+static void moveSkill(int dx, int dy) {
+    const SkillRule *c = &skillRules[skillCursor]; int best = -1, bestScore = 0x7fffff;
+    for (int i = 0; i < 48; i++) {
+        if (i == skillCursor) continue;
+        int ddx = skillX(&skillRules[i]) - skillX(c), ddy = skillY(&skillRules[i]) - skillY(c);
+        if (dx && ddx * dx <= 0) continue;
+        if (dy && ddy * dy <= 0) continue;
+        int score = dx ? abs(ddx) + abs(ddy) * 3 : abs(ddy) + abs(ddx) * 3;
+        if (score < bestScore) { bestScore = score; best = i; }
+    }
+    if (best >= 0) skillCursor = best;
+}
+static void buySkill(void) {
+    int id = skillRules[skillCursor].icon;
+    if (skills[id] >= 5) { say("Already at maximum rank"); return; }
+    if (skillNeeded(skillCursor) > 0) { say("Spend more points in earlier ranks first"); return; }
+    if (!skillPoints) { say("No skill points - win battles for XP"); return; }
+    skills[id]++; skillPoints--; save(); say("Skill learned");
+}
+static void resetSkills(void) {
+    int refund = 0;
+    for (int i = 0; i < 48; i++) refund += skills[i];
+    refund -= 1; skillPoints += refund; memset(skills, 0, sizeof skills); skills[SK_ROCKTOWER] = 1; save(); say("Skills reset - full refund");
+}
+static void renderSkills(void) {
+    art_background(ART_SKY_DESERTIMAGE_LEFT);
+    shadowLabel("SKILLS", 140, 1, cWhite);
+    snprintf(textbuf, sizeof textbuf, "Points left: %d", skillPoints); shadowLabel(textbuf, 3, 12, cWhite);
+    snprintf(textbuf, sizeof textbuf, "Level %d", playerLevel); shadowLabel(textbuf, 250, 12, cWhite); xpBar(190, 13, 56);
+    for (int g = 0; g < 4; g++) art_draw(ART_SKILL_BACK, g, g * 81 + (g > 1), 26);
+    for (int i = 0; i < 48; i++) {
+        const SkillRule *r = &skillRules[i]; int x = skillX(r), y = skillY(r), id = r->icon; bool enabled = skillNeeded(i) <= 0;
+        art_draw(ART_SKILL_FRAME, enabled ? r->group + 1 : 0, x - 3, y - 3);
+        art_draw(ART_SKILL_ICON, id + (enabled ? 0 : 48), x, y);
+        if (enabled) {
+            art_draw(ART_SKILL_TRAY, r->group, x, y + 15);
+            for (int k = 0; k < skills[id]; k++) art_draw(ART_SKILL_POINT, r->group, x + 1 + k * 3, y + 16);
+        }
+    }
+    const SkillRule *c = &skillRules[skillCursor];
+    gfx_SetColor(cYellow); gfx_Rectangle(skillX(c) - 4, skillY(c) - 4, 24, 24); gfx_Rectangle(skillX(c) - 5, skillY(c) - 5, 26, 26);
+    panel(4, 164, 312, 40);
+    snprintf(textbuf, sizeof textbuf, "%s   rank %d / 5", c->name, skills[c->icon]); centered(textbuf, 168, cYellow);
+    int need = skillNeeded(skillCursor);
+    if (need >= 999) snprintf(textbuf, sizeof textbuf, "Requires the tower's base skill first");
+    else if (need > 0) snprintf(textbuf, sizeof textbuf, "Needs %d more points in earlier ranks", need);
+    else snprintf(textbuf, sizeof textbuf, "Available - ENTER spends a point");
+    centered(textbuf, 180, cWhite);
+    label("Arrows move   ENTER learn   DEL reset all", 36, 192, cCyan);
+    label("MODE back", 130, 210, cCyan);
+    if (statusTicks) shadowLabel(status, (320 - gfx_GetStringWidth(status)) / 2, 224, cWhite);
+}
+
+/* ---------- gameplay rendering ---------- */
+static int monsterFrame(const Enemy *e, int index) {
+    const Anim *a = &anims[e->type]; bool off = e->disabled || e->crippled; int t = tick / 2 + index;
+    if (e->action == 1 || !e->ground) return off ? a->disabledJump : a->jump;
+    return off ? a->disabled[t % a->disabledLength] : a->walk[t % a->walkLength];
+}
+static void drawTowerArt(const Tower *t, int x, int y) {
+    int id = towerArt[t->type]; const Art *art = &artTable[id];
+    if (t->born) { drawArt(ART_BUILD, (tick / 3) % 2, x, y, false); return; }
+    int frame = 0;
+    if (t->animation && art->frames > 2) frame = 2 + (tick / 2) % (art->frames - 2);
+    drawArt(id, frame, x + 8 - art->width / 2, y + 16 - art->height, t->facing < 0);
+    for (int l = 0; l <= t->level && l < 6; l++) art_draw(ART_UPGRADE, 0, x + (l % 3) * 5, y - 5 - (l / 3) * 5);
+}
 static void renderGame(void) {
-    camx = cx * 16 - 152;
-    camy = cy * 16 - 112;
+    camx = cx * 16 + 8 - 160; camy = cy * 16 + 8 - 110;
     if (camx > map->width * 16 - 320) camx = map->width * 16 - 320;
     if (camy > map->height * 16 - 240) camy = map->height * 16 - 240;
     if (camx < 0) camx = 0;
     if (camy < 0) camy = 0;
-    int theme = level == 16 ? 2 : level > 11 ? 3 : level > 7 ? 2 : level > 3 ? 1 : 0;
-    art_background(theme == 2 ? ART_SKY_CAVEIMAGE_LEFT : theme == 1 ? ART_SKY_SUNSETIMAGE_LEFT : ART_SKY_DESERTIMAGE_LEFT);
-    for (int layer=0;layer<3;layer++) {
-        for (int y=camy/16;y<map->height && y*16-camy<240;y++) {
-            for(int x=camx/16;x<map->width && x*16-camx<320;x++) {
-                int tile=layers[layer][y*map->width+x];
-                if(tile&&tile<128) art_draw(ART_TILES0+theme,tile,x*16-camx,y*16-camy);
+    art_background(skyFor(level));
+    for (int layer = 0; layer < 3; layer++)
+        for (int y = camy / 16; y < map->height && y * 16 - camy < 240; y++)
+            for (int x = camx / 16; x < map->width && x * 16 - camx < 320; x++) {
+                int tile = layers[layer][y * map->width + x];
+                if (tile && tile < 128) art_draw(ART_TILES0, tile, x * 16 - camx, y * 16 - camy);
             }
+    int fx = map->camp % map->width * 16 - camx, fy = map->camp / map->width * 16 - camy;
+    art_draw(ART_TENT, 0, fx - 20, fy + 6); art_draw(ART_TENT, 0, fx + 20, fy + 6); art_draw(ART_FIRE, tick / 2, fx, fy - 3);
+    for (int i = 0; i < 5; i++) {
+        const Food *f = &foods[i];
+        if (f->active) art_draw(ART_FOOD, i, f->x / FP - 8 - camx, f->y / FP - 16 - camy);
+    }
+    for (int i = 0; i < MAXTOWER; i++) {
+        const Tower *t = &towers[i];
+        if (t->active) drawTowerArt(t, t->cell % map->width * 16 - camx, t->cell / map->width * 16 - camy);
+    }
+    for (int i = 0; i < MAXEN; i++) {
+        const Enemy *e = &enemies[i]; if (!e->active) continue;
+        int id = monsterArt[e->type]; const Art *art = &artTable[id];
+        int x = e->x / FP - art->width / 2 - camx, y = e->y / FP - art->height - camy;
+        if (x > 320 || x + art->width < 0 || y > 240 || y + art->height < 0) continue;
+        drawArt(id, monsterFrame(e, i) % art->frames, x, y, e->facing < 0);
+        if (e->hp < e->maxhp) {
+            gfx_SetColor(cBlack); gfx_FillRectangle(x, y - 3, art->width, 2);
+            gfx_SetColor(cGreen); gfx_FillRectangle(x, y - 3, art->width * e->hp / e->maxhp + 1, 2);
+        }
+        int pip = x;
+        if (e->freeze) { gfx_SetColor(cCyan); gfx_FillRectangle(pip, y - 6, 3, 2); pip += 4; }
+        if (e->slow) { gfx_SetColor(cWhite); gfx_FillRectangle(pip, y - 6, 3, 2); pip += 4; }
+        if (e->shock) { gfx_SetColor(cYellow); gfx_FillRectangle(pip, y - 6, 3, 2); pip += 4; }
+        if (e->poison) { gfx_SetColor(cGreen); gfx_FillRectangle(pip, y - 6, 3, 2); pip += 4; }
+        if (e->crippled || e->disabled) { gfx_SetColor(cRed); gfx_FillRectangle(pip, y - 6, 3, 2); }
+        if (e->immune) { gfx_SetColor(cWhite); gfx_Rectangle(x - 1, y - 1, art->width + 2, art->height + 2); }
+    }
+    for (int i = 0; i < MAXBULLET; i++) {
+        const Bullet *b = &bullets[i]; if (!b->active) continue;
+        int bx = b->x / FP - camx, by = b->y / FP - camy;
+        if (b->pop) { art_draw(ART_BULLET_BOOM, b->pop > 5 ? 5 : b->pop, bx - 12, by - 12); continue; }
+        int id = bulletArt[b->type]; const Art *art = &artTable[id];
+        art_draw(id, b->age % art->frames, bx - art->width / 2, by - art->height / 2);
+    }
+    for (int i = 0; i < MAXTOWER; i++) {
+        const Tower *t = &towers[i];
+        if (!t->active || t->born) continue;
+        int x = t->cell % map->width * 16 + 8 - camx, y = t->cell / map->width * 16 + 8 - camy;
+        if (t->animation && (t->type == SHOCK || t->type == CRIPPLER || t->type == LIGHTNING)) {
+            gfx_SetColor(t->type == CRIPPLER ? cRed : cYellow);
+            if (t->type == LIGHTNING) gfx_VertLine(x, 0, y); else gfx_Circle(x, y, t->range / 2);
         }
     }
-    int fx=map->camp%map->width*16-camx, fy=map->camp/map->width*16-camy;
-    art_draw(ART_TENT,0,fx-16,fy+8);
-    art_draw(ART_TENT,0,fx+16,fy+8);
-    art_draw(ART_FIRE,tick/2,fx,fy);
-    for(int f=0;f<5-escaped-carried();f++) art_draw(ART_FOOD,f,fx-16+f*8,fy+2);
-    for(int i=0;i<MAXTOWER;i++) {
-        Tower *t=&towers[i];
-        if(!t->active) continue;
-        int x=t->cell%map->width*16-camx, y=t->cell/map->width*16-camy;
-        int id=towerArt[t->type];
-        art_draw(id,t->cooldown>0?(tick/2)%2:0,x,y+16-artTable[id].height);
-        for(int l=0;l<t->level;l++) art_draw(ART_UPGRADE,0,x+(l%3)*5,y-5-(l/3)*5);
+    int x = cx * 16 - camx, y = cy * 16 - camy;
+    int ti = towerAt(cy * map->width + cx);
+    if (ti >= 0 && towers[ti].range) { gfx_SetColor(cWhite); gfx_Circle(x + 8, y + 8, towers[ti].range); }
+    art_draw(ART_BOX, valid(cx, cy) || ti >= 0 ? 1 : 0, x - 4, y - 4);
+    art_draw(ART_CURSOR, (valid(cx, cy) || ti >= 0) ? 1 : 0, x, y);
+    art_draw(ART_HUD, 0, 195, 0);
+    snprintf(textbuf, sizeof textbuf, "$%d", money); label(textbuf, 267, 23, cWhite);
+    snprintf(textbuf, sizeof textbuf, "W%u/%u", wave, waveCounts[level]); label(textbuf, 204, 5, cWhite);
+    if (wave < waveCounts[level] && waveDue[wave] > 0) { snprintf(textbuf, sizeof textbuf, "%ds", (waveDue[wave] + HZ - 1) / (sendFast ? HZ * HZ : HZ)); label(textbuf, 204, 23, cYellow); }
+    snprintf(textbuf, sizeof textbuf, "FOOD %d", foodLeft()); shadowLabel(textbuf, 3, 3, foodLeft() < 3 ? cRed : cWhite);
+    snprintf(textbuf, sizeof textbuf, "LV %d", playerLevel); shadowLabel(textbuf, 3, 13, cWhite); xpBar(33, 14, 50);
+    gfx_SetColor(cPanel); gfx_FillRectangle(0, 217, 320, 23);
+    if (statusTicks) shadowLabel(status, 3, 219, cYellow);
+    else if (ti >= 0) {
+        const Tower *t = &towers[ti];
+        snprintf(textbuf, sizeof textbuf, "%s L%d  upgrade $%d  sell $%d", towerNames[t->type], t->level + 1, t->level >= 5 ? 0 : upgradeCost((Tower *)t), t->spent / 2);
+        label(textbuf, 3, 219, cWhite);
+    } else {
+        snprintf(textbuf, sizeof textbuf, "%d %s $%d   2nd = build", selection + 1, towerNames[baseTypes[selection]], (int)rule_BasePrice(baseTypes[selection], 0));
+        label(textbuf, 3, 219, cWhite);
     }
-    for(int i=0;i<MAXEN;i++) {
-        Enemy *e=&enemies[i];
-        if(!e->active) continue;
-        int id=mobArt[e->type];
-        int x=e->x*2-camx-artTable[id].width/2, y=e->y*2-camy+8-artTable[id].height;
-        art_draw(id,tick/2,x,y);
-        if(e->hp<e->maxhp) {
-            gfx_SetColor(92);
-            gfx_FillRectangle(x,y-2,artTable[id].width*e->hp/e->maxhp+1,1);
-        }
-        if(e->carry) art_draw(ART_FOOD,0,x,y-12);
+    if (ti >= 0 && towers[ti].type <= SHOCK) {
+        snprintf(textbuf, sizeof textbuf, "MATH %s  APPS %s", towerNames[branchTypes[towers[ti].type][0]], towerNames[branchTypes[towers[ti].type][1]]);
+        label(textbuf, 3, 229, cCyan);
+    } else label("+ wave  DEL sell  ALPHA pause  MODE menu", 3, 229, cCyan);
+    if (paused && !showTip) { panel(70, 90, 180, 40); centered("PAUSED", 98, cYellow); centered("ALPHA resumes", 112, cWhite); }
+    if (showTip) {
+        panel(2, 4, 316, 232); snprintf(textbuf, sizeof textbuf, "- %s -", stageTitles[level]); centered(textbuf, 11, cYellow);
+        wrapText(stageTips[level], 12, 26, 296, 9, cWhite);
+        label("Arrows move, 2nd builds, ENTER upgrades", 12, 208, cCyan);
+        label("ENTER: DEFEND!", 112, 221, cYellow);
     }
-    for(int i=0;i<24;i++) if(shots[i].age) {
-        Shot *shot=&shots[i];gfx_SetColor(shot->color);
-        gfx_Line(shot->x*2-camx,shot->y*2-camy,shot->xx*2-camx,shot->yy*2-camy);
+    if (mode == MODE_WON || mode == MODE_LOST) {
+        panel(30, 70, 260, 96);
+        centered(mode == MODE_WON ? "CAMP SAVED!" : "THE FOOD IS GONE", 78, mode == MODE_WON ? cGreen : cRed);
+        snprintf(textbuf, sizeof textbuf, "Level %d   Skill points %d", playerLevel, skillPoints); centered(textbuf, 98, cWhite);
+        xpBar(110, 112, 100);
+        centered(mode == MODE_WON ? "ENTER next stage" : "ENTER try again", 128, cWhite);
+        centered("STAT skills   MODE stage menu", 142, cCyan);
     }
-    int x=cx*16-camx,y=cy*16-camy;
-    art_draw(ART_BOX,valid(cx,cy)?1:0,x-4,y-4);
-    art_draw(ART_CURSOR,0,x+4,y+4);
-    art_draw(ART_HUD,0,195,0);
-    snprintf(textbuf,sizeof textbuf,"$%d",money);label(textbuf,267,23,255);
-    snprintf(textbuf,sizeof textbuf,"W%u/%u",wave,waveCounts[level]);label(textbuf,204,5,255);
-    snprintf(textbuf,sizeof textbuf,"FOOD %d",5-escaped);label(textbuf,3,5,255);
-    gfx_SetColor(1);gfx_FillRectangle(0,219,320,21);
-    int ti=towerAt(cy*map->width+cx);
-    if(ti>=0) {Tower*t=&towers[ti];snprintf(textbuf,sizeof textbuf,"%s L%u  Upgrade $%d",towerNames[t->type],t->level,upgradeCost(t));}
-    else snprintf(textbuf,sizeof textbuf,"%u %s $%u   2nd BUILD",selection+1,towerNames[selection],prices[selection]);
-    label(textbuf,3,222,255);
-    if(paused) {box(90);label("PAUSED: ALPHA resumes",50,115,255);}
-    if(mode==3||mode==4) {box(85);label(mode==4?"CAMP SAVED!":"THE FOOD IS GONE",85,98,255);label("ENTER retry / next   MODE menu",39,125,255);}
 }
-int main(void){if(!art_open()){os_ClrHome();os_PutStrFull("Send all SCAxx AppVars");while(!os_GetCSC());return 1;}load();gfx_Begin();gfx_SetPalette(artPalette,sizeof artPalette,0);gfx_SetTransparentColor(0);gfx_SetTextTransparentColor(0);gfx_SetTextBGColor(1);gfx_SetDrawBuffer();uint8_t prev[8]={0};int repeat=0;mode=0;bool running=true;while(running){kb_Scan();bool enter=(kb_Data[6]&kb_Enter)&&!(prev[6]&kb_Enter),alpha=(kb_Data[2]&kb_Alpha)&&!(prev[2]&kb_Alpha),modekey=(kb_Data[1]&kb_Mode)&&!(prev[1]&kb_Mode);if(kb_Data[6]&kb_Clear)break;if(mode==0){if((kb_Data[7]&kb_Left)&&!(prev[7]&kb_Left))level=(level+16)%17;if((kb_Data[7]&kb_Right)&&!(prev[7]&kb_Right))level=(level+1)%17;if(enter)startLevel();if(alpha)mode=5;}else if(mode==5){if(enter||modekey||alpha)mode=0;}else if(mode==3||mode==4){if(modekey)mode=0;else if(enter){if(mode==4)level=(level+1)%17;startLevel();}}else{if(modekey)mode=0;else{if(alpha)paused=!paused;bool move=kb_Data[7]&(kb_Left|kb_Right|kb_Up|kb_Down);if(move){if(!repeat||repeat>=4){if(kb_Data[7]&kb_Left)cx--;if(kb_Data[7]&kb_Right)cx++;if(kb_Data[7]&kb_Up)cy--;if(kb_Data[7]&kb_Down)cy++;if(cx<1)cx=1;if(cx>map->width-2)cx=map->width-2;if(cy<1)cy=1;if(cy>map->height-2)cy=map->height-2;repeat=1;}else repeat++;}else repeat=0;if(kb_Data[3]&kb_1)selection=0;if(kb_Data[4]&kb_2)selection=1;if(kb_Data[5]&kb_3)selection=2;if(kb_Data[3]&kb_4)selection=3;if((kb_Data[1]&kb_2nd)&&!(prev[1]&kb_2nd))build();if(enter)upgrade();if((kb_Data[1]&kb_Del)&&!(prev[1]&kb_Del)){int i=towerAt(cy*map->width+cx);if(i>=0){money+=prices[towers[i].type]/2+towers[i].level*10;towers[i].active=0;say("Tower sold");}}if((kb_Data[6]&kb_Add)&&!(prev[6]&kb_Add))sendWave();update();}}if(mode==0)renderMenu();else if(mode==5)renderHelp();else renderGame();scout_diag[0]=mode;scout_diag[1]=level;scout_diag[2]=wave;int count=0;for(int i=0;i<MAXTOWER;i++)count+=towers[i].active;scout_diag[3]=count;scout_diag[4]=alive();scout_diag[5]=escaped;scout_diag[6]=paused;scout_diag[7]=stageWon[level];for(int k=0;k<8;k++)prev[k]=kb_Data[k];gfx_SwapDraw();delay(50);}save();gfx_End();return 0;}
 
+static void beginStage(bool bypass) {
+    if (level >= unlocked && !bypass) { say("Locked - win the previous stage first"); return; }
+    startLevel(); showTip = true; paused = true; statusTicks = 0;
+}
+static void updateDiagnostics(void) {
+    int count = 0;
+    for (int i = 0; i < MAXTOWER; i++) count += towers[i].active;
+    scout_diag[0] = mode; scout_diag[1] = level; scout_diag[2] = wave; scout_diag[3] = count; scout_diag[4] = alive(); scout_diag[5] = escaped;
+    scout_diag[6] = paused; scout_diag[7] = stageWon[level]; scout_diag[8] = skillPoints; scout_diag[9] = playerLevel; scout_diag[10] = foodLeft(); scout_diag[11] = showTip;
+}
+static void handleMenu(void) {
+    if (KEY_PRESS(kb_KeyLeft)) level = (level + 16) % 17;
+    if (KEY_PRESS(kb_KeyRight)) level = (level + 1) % 17;
+    if (KEY_PRESS(kb_KeyEnter)) beginStage(KEY_DOWN(kb_KeyVars));
+    if (KEY_PRESS(kb_KeyAlpha)) mode = MODE_HELP;
+    if (KEY_PRESS(kb_KeyStat)) mode = MODE_SKILLS;
+}
+static void handleSkills(void) {
+    if (KEY_PRESS(kb_KeyLeft)) moveSkill(-1, 0);
+    if (KEY_PRESS(kb_KeyRight)) moveSkill(1, 0);
+    if (KEY_PRESS(kb_KeyUp)) moveSkill(0, -1);
+    if (KEY_PRESS(kb_KeyDown)) moveSkill(0, 1);
+    if (KEY_PRESS(kb_KeyEnter)) buySkill();
+    if (KEY_PRESS(kb_KeyDel)) resetSkills();
+    if (KEY_PRESS(kb_KeyMode)) { mode = MODE_MENU; save(); }
+    if (statusTicks) statusTicks--;
+}
+static void handlePlay(void) {
+    static int repeat;
+    if (showTip) {
+        if (KEY_PRESS(kb_KeyEnter) || KEY_PRESS(kb_KeyAlpha) || KEY_PRESS(kb_Key2nd)) { showTip = false; paused = false; }
+        if (KEY_PRESS(kb_KeyMode)) mode = MODE_MENU;
+        return;
+    }
+    if (KEY_PRESS(kb_KeyMode)) { mode = MODE_MENU; return; }
+    if (KEY_PRESS(kb_KeyAlpha)) paused = !paused;
+    bool move = kb_Data[7] & (kb_Left | kb_Right | kb_Up | kb_Down);
+    if (move) {
+        if (!repeat || repeat >= 4) {
+            if (kb_Data[7] & kb_Left) cx--;
+            if (kb_Data[7] & kb_Right) cx++;
+            if (kb_Data[7] & kb_Up) cy--;
+            if (kb_Data[7] & kb_Down) cy++;
+            if (cx < 1) cx = 1;
+            if (cx > map->width - 2) cx = map->width - 2;
+            if (cy < 1) cy = 1;
+            if (cy > map->height - 2) cy = map->height - 2;
+            repeat = 1;
+        } else repeat++;
+    } else repeat = 0;
+    if (KEY_DOWN(kb_Key1)) selection = 0;
+    if (KEY_DOWN(kb_Key2)) selection = 1;
+    if (KEY_DOWN(kb_Key3)) selection = 2;
+    if (KEY_DOWN(kb_Key4)) selection = 3;
+    if (KEY_PRESS(kb_Key2nd)) build();
+    if (KEY_PRESS(kb_KeyEnter)) upgrade();
+    if (KEY_PRESS(kb_KeyDel)) sellTower();
+    if (KEY_PRESS(kb_KeyMath)) convertTower(0);
+    if (KEY_PRESS(kb_KeyApps)) convertTower(1);
+    if (KEY_PRESS(kb_KeyAdd)) { if (wave < waveCounts[level]) { sendWave(); say("Wave sent early"); } }
+}
+static void handleResult(void) {
+    if (KEY_PRESS(kb_KeyMode)) mode = MODE_MENU;
+    else if (KEY_PRESS(kb_KeyStat)) mode = MODE_SKILLS;
+    else if (KEY_PRESS(kb_KeyEnter)) {
+        if (mode == MODE_WON && level < 16) level++;
+        beginStage(true);
+    }
+}
+
+int main(void) {
+    if (!art_open()) { os_ClrHome(); os_PutStrFull("Send all SCAxx AppVars"); while (!os_GetCSC()) { } return 1; }
+    load();
+#ifdef QA_MAXED /* test builds only (see tests/README.md): every skill at rank 5, spare points, all stages open */
+    memset(skills, 5, sizeof skills); skillPoints = 6; playerLevel = 30; unlocked = 17;
+#endif
+    gfx_Begin(); gfx_SetPalette(artPalette, sizeof artPalette, 0); gfx_SetTransparentColor(0); gfx_SetTextTransparentColor(0); gfx_SetTextBGColor(0); gfx_SetDrawBuffer();
+    pickColors();
+    timer_Set(1, 0); timer_Enable(1, TIMER_32K, TIMER_NOINT, TIMER_UP);
+    uint32_t last = timer_GetSafe(1, TIMER_UP), accumulator = 0;
+    mode = MODE_MENU;
+    while (1) {
+        kb_Scan();
+        if (kb_Data[6] & kb_Clear) break;
+        uint32_t now = timer_GetSafe(1, TIMER_UP); accumulator += now - last; last = now;
+        if (mode == MODE_MENU) handleMenu();
+        else if (mode == MODE_HELP) { if (KEY_PRESS(kb_KeyEnter) || KEY_PRESS(kb_KeyMode) || KEY_PRESS(kb_KeyAlpha)) mode = MODE_MENU; }
+        else if (mode == MODE_SKILLS) handleSkills();
+        else if (mode == MODE_PLAY) {
+            handlePlay();
+            if (mode == MODE_PLAY && !paused) {
+                int steps = 0;
+                while (accumulator >= STEP_TICKS && steps < 6) { update(); accumulator -= STEP_TICKS; steps++; if (mode != MODE_PLAY) break; }
+                if (steps == 6) accumulator = 0;
+            } else accumulator = 0;
+        } else handleResult();
+        if (mode != MODE_PLAY || paused) accumulator = 0;
+        if (mode == MODE_MENU) renderMenu();
+        else if (mode == MODE_HELP) renderHelp();
+        else if (mode == MODE_SKILLS) renderSkills();
+        else renderGame();
+        updateDiagnostics();
+        for (int k = 0; k < 8; k++) prev[k] = kb_Data[k];
+        gfx_SwapDraw();
+    }
+    save(); gfx_End();
+    return 0;
+}

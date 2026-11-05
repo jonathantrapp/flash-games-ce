@@ -1,45 +1,59 @@
 # Scouts vs Aliens CE
 
-Native calculator adaptation of the supplied `scoutcamp_unlocked.swf` (the title in the game is **Scouts vs Aliens**, Hamumu Software, 2012).
+Native calculator rebuild of the supplied `scoutcamp_unlocked.swf` (the in-game title is **Scouts vs Aliens**, Hamumu Software, 2012). It is built from the AS3 recovered with JPEXS, not from a Flash emulator. This is a work in progress; the [parity audit](../PARITY-AUDIT.md) lists what is verified and what is not.
 
-`bin/SCOUTCE.8xp` is the compiled TI-84 Plus CE program. Use the runtime libraries and launch instructions in the parent package README.
+`bin/SCOUTCE.8xp` is the program; the 18 `SCAxx.8xv` banks hold the artwork and must be sent with it. Runtime libraries and install steps are in the parent README.
 
 ## Play
 
-Choose any of the 17 stages with Left/Right and press Enter. Move the white building cursor with the arrows. Ground that can accept a tower gets a white cursor; invalid ground gets a red cursor. The faint dotted route shows the aliens' path. Aliens grab one of the camp's five meals and carry it back to a portal. Kill a thief to return its meal to the camp. Losing all five meals loses the stage; clearing all waves wins.
+Choose a stage with Left/Right on the stage menu. Stages unlock in order as you win. Aliens walk from their portals to the camp, grab one of the five meals and carry it back; kill a thief to drop its meal where it dies, and nearby aliens can pick it up again. Lose all five meals and the stage is lost. Win by clearing every wave.
 
-- **1 / 2 / 3 / 4:** select Rock Tower ($50), Roly Poly ($100), Snow Fort ($60), Shock Tower ($80).
-- **2nd:** build at the cursor.
-- **Enter:** upgrade the tower at the cursor; build if empty. Towers have five levels.
-- **Del:** sell the tower at the cursor.
-- **+:** send the next wave early, once the current wave has finished spawning.
-- **Alpha:** pause/resume; opens controls on the stage menu.
-- **Mode:** return to the stage menu.
-- **Clear:** save stage victories and exit.
+| Key | Action |
+| --- | --- |
+| Arrows | Move the building cursor |
+| 1 / 2 / 3 / 4 | Choose Rock Tower, Roly Poly, Snow Fort or Shock Tower |
+| 2nd | Build the chosen tower (needs the tower's skill, Rock Tower is free) |
+| Enter | Upgrade the tower under the cursor (five upgrades); builds if the spot is empty |
+| Math / Apps | Specialize a base tower into its first / second branch tower (needs the branch skill) |
+| Del | Sell for half of everything spent |
+| + | Send the next wave early (On A Roll skill pays a bonus) |
+| Alpha | Pause; opens the controls page on the stage menu |
+| Mode | Back to the stage menu |
+| Stat | Skills (stage menu and result screens) |
+| Clear | Save and exit |
+| Vars (held on the stage menu) | QA only: starts any stage regardless of progress |
 
-Snow slows enemies, Roly Poly does area damage, and Shock hits several nearby enemies. All stages are available immediately. Victory marks persist in the `SCTSV01` AppVar.
+On the skill screen: arrows move, Enter learns a rank, Del resets everything for a full refund, Mode goes back. Defeating aliens earns XP, win or lose; each level gives one skill point.
 
-## Adaptation scope
+## What is in this build
 
-Includes all 17 original map layouts and original enemy wave compositions/spawn intervals, original downsampled character/tower/tile artwork, scrolling side view, four base tower types, upgrades/selling, nine enemy appearances, cash rewards, food theft and recovery, stage victory/loss, and saved victory marks.
+- All 17 original maps (four layers each), the original wave schedules, concurrent waves and the enemy-level formula from `WaveManager.as`.
+- Original full-size artwork, palette and sky progression, with the stage briefings from the original game.
+- The 12 towers (four bases and eight branch towers), upgrade and build prices, damage, range, reload and special values generated from the original AS3 formulas (`src/rules.h`).
+- Ten alien types with the original life, money and speed formulas and their specials: Wormy immunity while grounded, Speedy acceleration, Blinky healing, Scary tower suppression, Hungry and its babies.
+- Projectile-based combat (arcing, rolling and falling shots, sprays, lightning, cripple and quake), with freeze, slow, shock, poison, cripple, flatten, fling and disable as separate effects.
+- All 48 skills in four trees with the original prerequisites, applied in the simulation; save file `SCTSV02` keeps skills, level, XP, points and stage wins.
+- A 20 Hz fixed-step simulation on a hardware timer, independent of drawing speed.
 
-This is a smaller native adaptation, not a SWF player or a complete reproduction. Enemy movement follows routes computed through the original terrain with a preference for ground; the original physics, jump-arrow logic, and enemy special abilities are simplified. Attacks apply damage immediately and display brief shot lines. The original skill tree, branching tower evolutions, boss mechanics, sounds, music, menus, and cinematics are omitted. The first original terrain theme is reused across stages. Graphics are half-size, with a shared reduced palette. Economy and enemy scaling are adjusted, and at most 48 enemies/40 towers are active. Waves wait for the previous wave's spawning to finish before the next can start.
+## Not done, or not verified
 
-No complete balance pass or physical-calculator test has been performed. Native emulator validation is recorded by the parent package.
+- No music or sound; no mouse-style tower focus-fire or alien targeting (the original lets you click an alien to focus fire).
+- The speed slider and freeze-time key of the original are not reproduced.
+- Skill descriptions are not shown; the skill screen shows names, ranks and prerequisites.
+- Tower and alien behaviour is translated from the AS3 but has not been compared frame by frame with the original running in Ruffle. Stages are verified to load and run in the emulator, not to be winnable.
+- Tower animation frames are approximated (idle, then a generic firing cycle).
+- Not yet tested on a physical calculator.
+- Numerical rules (tower stats, prices, monster life/money, skill prerequisites) are checked against the original formulas by `tests/check_original_rules.py`.
 
 ## Source and build
 
-`src/main.c` is the native implementation. `src/data.h` contains generated level RLE, route tables, wave tables, and indexed artwork. `generate.py` rebuilds those tables from the supplied SWF's FFDec exports under `original/` and `assets/`. These files retain original third-party content and attribution; this private conversion does not grant redistribution rights.
+`src/main.c` is the keypad front end and renderer. `src/engine.h`, `src/combat.h` and `src/rules.h` hold the simulation; `src/data.h` holds generated map, route and wave tables; `src/art.h`/`art.c` load the art banks; `src/tips.h` holds the original stage briefings.
 
-From this directory, with the workspace-local toolchain:
+Generators (Python 3.12 with Pillow from `local-tools/plot-libs`): `generate.py` (maps/waves), `generate_rules.py` (rules and skills), `build_art.py` (art banks), `generate_tips.py` (briefings). Build from this directory with the workspace-local toolchain:
 
 ```powershell
 & ../../local-tools/cedev/CEdev/bin/make.exe
+python tests/check_original_rules.py
 ```
 
-To regenerate data, Python 3.12 plus Pillow is required. The script currently locates Pillow in the workspace's `local-tools/plot-libs`.
-
-```powershell
-& 'C:/Users/jonat/AppData/Local/Programs/Python/Python312/python.exe' generate.py
-python verify_data.py
-```
+These files retain original third-party content and attribution; this private conversion does not grant redistribution rights.

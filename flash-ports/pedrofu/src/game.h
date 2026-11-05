@@ -11,6 +11,7 @@
 #include <string.h>
 #include "resources.h"
 #include "skill_meta.h"
+#include "ui_resources.h"
 
 #define FPS 30
 #define FX 16
@@ -19,7 +20,7 @@
 #define MAX_SHOTS 48
 #define COUNT(a) (sizeof(a)/sizeof((a)[0]))
 enum { TITLE, PLAY, PAUSE, DEFEAT, VICTORY, MAP, SKILLS, DIALOGUE, ENDING, HELP };
-enum { LEFT=1,RIGHT=2,UP=4,DOWN=8,JUMPKEY=16,HITKEY=32,FURYKEY=64,ACCEPT=128,MENUKEY=256,EXITKEY=512,SKILLKEY=1024,MINUSKEY=2048 };
+enum { LEFT=1,RIGHT=2,UP=4,DOWN=8,JUMPKEY=16,HITKEY=32,FURYKEY=64,ACCEPT=128,MENUKEY=256,EXITKEY=512,SKILLKEY=1024,MINUSKEY=2048,QAKEY=4096 };
 enum { PA_IDLE,PA_JUMP,PA_DUCK,PA_DASH,PA_GLIDE,PA_DIE,PA_JUMPKICK,PA_CARRY,PA_CARRYJUMP,PA_PUNCH,PA_HITSTUN,PA_TORNADO,PA_FURYPICK,PA_INACTIVE,PA_DIVEKICK,PA_FURYHEAL,PA_PEDROKEN,PA_CHARGEKICK,PA_PILEDRIVE };
 typedef struct {uint8_t skills[45],have[45],hearts[15],souls[15],passed[15],rank,points;uint16_t xp;uint32_t best[15];} Progress;
 typedef struct {int x,y,vx,vy,hp,maxhp;int timer,reload,cool,freeze,freezehits,ghost,aux,age,stun,thrown;uint8_t type,tag,state,fr,active,bw,bh;int8_t face;} Enemy;
@@ -32,7 +33,7 @@ typedef struct {
  int action,actiontime,attackcool,invul,dodge,dash,combo,kicks,carry,berserk,rage,inner,healspent;
  int lastdir,taptime,anim,frame,mailleft,totalmail,kills;
  int enemies,props,arena,arenaround,arenatime,skillpick,skillgroup,notice_timer;
- int story_event,story_page,story_enemy;uint16_t story_done;
+ int story_event,story_page,story_enemy,excess;uint16_t story_done;
  uint32_t ticks;uint16_t keys,tap,previouskeys;
  Enemy enemy[MAX_ENEMIES];Prop prop[MAX_PROPS];Shot shot[MAX_SHOTS];
  const char *notice;
@@ -40,7 +41,9 @@ typedef struct {
 extern Game g;
 extern Progress progress;
 extern volatile uint8_t pedro_diag[8];
-extern const uint8_t *artdata[60],*tiledata[2],*uidata[3][2];
+extern const uint8_t *artdata[60],*tiledata[2],*uidata[3][2],*uiimg[UI_COUNT];
+extern uint8_t cBlack,cWhite,cYellow,cGold,cRed,cGreen,cCyan,cPanel;
+const uint8_t *bundle_find(const char *name,unsigned *size);int levels_passed(void);void draw_ui(int id,int frame,int x,int y);void pick_colors(void);void game_step(void);void shot_sprite(const Shot *s);
 int absi(int v);int clampi(int v,int lo,int hi);int approach(int v,int target,int amount);
 bool load_resources(void);void draw_sprite(int id,int frame,int face,int x,int y);
 bool load_level(int level);int tile_at(int x,int y);bool blocked(int x,int y);bool body_collides(int x,int y,int bw,int bh);

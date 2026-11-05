@@ -5,3 +5,5 @@
 **/*.rgba
 **/*.rom
 local-tools/
+**/bin_qa/
+**/obj_qa/

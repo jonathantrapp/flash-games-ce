@@ -71,18 +71,18 @@ case 10:return 25 + 5 * skills[SK_CRIPPLER];
 case 11:return (skills[SK_LIGHTNINGROD] * 15 + 35 + 10 * param1) * (1 + skills[SK_FIREPOWER] * 0.02);
 default:return 0;} }
 static float rule_RangeCalc(int type,int param1) { switch(type) {
-case 0:return (60 + param1 * 15) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 1:return (25 + param1 * 10) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 2:return (70 + param1 * 10) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 3:return (50 + param1 * 15) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 4:return (120 + param1 * 30) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 5:return (20 + param1 * 10) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 6:return 0;
-case 7:return (16 + 4.8 * skills[SK_QUAKE]) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 8:return (70 + param1 * 10) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 9:return 10;
-case 10:return (20 + param1 * 20) * (1 + skills[SK_EAGLEEYE] * 0.02);
-case 11:return 0;
+case 0:return (int)((60 + param1 * 15) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 1:return (int)((25 + param1 * 10) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 2:return (int)((70 + param1 * 10) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 3:return (int)((50 + param1 * 15) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 4:return (int)((120 + param1 * 30) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 5:return (int)((20 + param1 * 10) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 6:return (int)(0);
+case 7:return (int)((16 + 4.8 * skills[SK_QUAKE]) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 8:return (int)((70 + param1 * 10) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 9:return (int)(10);
+case 10:return (int)((20 + param1 * 20) * (1 + skills[SK_EAGLEEYE] * 0.02));
+case 11:return (int)(0);
 default:return 0;} }
 static float rule_ReloadCalc(int type,int param1) { switch(type) {
 case 0:return (2 - 0.3 * param1) * (1 - skills[SK_RAPIDFIRE] * 0.02);
@@ -102,43 +102,43 @@ static float rule_SecondCalc(int type,int param1) { switch(type) {
 case 0:return 1;
 case 1:return skills[SK_ROLYPOLY] + 5;
 case 2:return 3 + skills[SK_SNOWFORT] * 1;
-case 3:return 1 + param1 * 1;
+case 3:return (int)(1 + param1 * 1);
 case 4:return 1;
 case 5:return 1;
 case 6:return skills[SK_ROLYPOLY] * 2;
-case 7:return 0;
+case 7:return (int)(0);
 case 8:return 0.25 + skills[SK_ICELAUNCHER] * 0.25;
 case 9:return 1.5 + param1 * 1.5;
-case 10:return 0;
-case 11:return 0;
+case 10:return (int)(0);
+case 11:return (int)(0);
 default:return 0;} }
 static float rule_UpgradePrice(int type,int param1) { switch(type) {
-case 0:return (param1 + 1) * (param1 + 1) * (param1 + 1) * 7 + 60;
-case 1:return (param1 + 1) * (param1 + 1) * (param1 + 1) * 8 + 100;
-case 2:return (param1 + 1) * (param1 + 1) * (param1 + 1) * 7 + 70;
-case 3:return (param1 + 1) * (param1 + 1) * (param1 + 1) * 7 + 80;
-case 4:return rule_UpgradePrice(0,param1);
-case 5:return rule_UpgradePrice(0,param1);
-case 6:return rule_UpgradePrice(1,param1);
-case 7:return rule_UpgradePrice(1,param1);
-case 8:return rule_UpgradePrice(2,param1);
-case 9:return rule_UpgradePrice(2,param1);
-case 10:return rule_UpgradePrice(3,param1);
-case 11:return rule_UpgradePrice(3,param1);
+case 0:return (int)((param1 + 1) * (param1 + 1) * (param1 + 1) * 7 + 60);
+case 1:return (int)((param1 + 1) * (param1 + 1) * (param1 + 1) * 8 + 100);
+case 2:return (int)((param1 + 1) * (param1 + 1) * (param1 + 1) * 7 + 70);
+case 3:return (int)((param1 + 1) * (param1 + 1) * (param1 + 1) * 7 + 80);
+case 4:return (int)(rule_UpgradePrice(0,param1));
+case 5:return (int)(rule_UpgradePrice(0,param1));
+case 6:return (int)(rule_UpgradePrice(1,param1));
+case 7:return (int)(rule_UpgradePrice(1,param1));
+case 8:return (int)(rule_UpgradePrice(2,param1));
+case 9:return (int)(rule_UpgradePrice(2,param1));
+case 10:return (int)(rule_UpgradePrice(3,param1));
+case 11:return (int)(rule_UpgradePrice(3,param1));
 default:return 0;} }
 static float rule_BasePrice(int type,int param1) { switch(type) {
-case 0:return 50 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 1:return 100 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 2:return 60 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 3:return 80 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 4:return 150 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 5:return 200 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 6:return 100 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 7:return 100 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 8:return 100 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 9:return 70 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 10:return 120 * (1 - skills[SK_CONSTRUCTION] * 0.04);
-case 11:return 100 * (1 - skills[SK_CONSTRUCTION] * 0.04);
+case 0:return (int)(50 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 1:return (int)(100 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 2:return (int)(60 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 3:return (int)(80 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 4:return (int)(150 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 5:return (int)(200 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 6:return (int)(100 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 7:return (int)(100 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 8:return (int)(100 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 9:return (int)(70 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 10:return (int)(120 * (1 - skills[SK_CONSTRUCTION] * 0.04));
+case 11:return (int)(100 * (1 - skills[SK_CONSTRUCTION] * 0.04));
 default:return 0;} }
 static int monster_Life(int type,int param1) {switch(type){
 case 0:return 3 + param1 * 2;

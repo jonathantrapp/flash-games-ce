@@ -15,13 +15,15 @@ p.add_argument('scenario')
 p.add_argument('--rom', type=Path, required=True)
 p.add_argument('--sequence', default='[]', help='JSON list of CEmu sequence commands')
 p.add_argument('--check', action='append', default=[], help='symbol:value:bytecount')
+p.add_argument('--bin-dir', default='bin', help='build output folder inside the game directory (default bin)')
+p.add_argument('--extra', action='append', default=[], type=Path, help='additional .8xv/.8xp to transfer (for example a prepared save)')
 a = p.parse_args()
 name = {'scoutcamp': 'SCOUTCE', 'pedrofu': 'PEDROCE'}[a.game]
 out = ROOT / 'flash-ports' / 'verification' / a.game / a.scenario
 out.mkdir(parents=True, exist_ok=True)
-program = ROOT / 'flash-ports' / a.game / 'bin' / (name + '.8xp')
+program = ROOT / 'flash-ports' / a.game / a.bin_dir / (name + '.8xp')
 lib = ROOT / 'local-tools/cemu/clibs/clibs'
-files = [lib / (n + '.8xv') for n in ['libload', 'graphx', 'keypadc', 'fileioc']] + [program]
+files = [lib / (n + '.8xv') for n in ['libload', 'graphx', 'keypadc', 'fileioc']] + [f.resolve() for f in a.extra] + [program]
 files += sorted(program.parent.glob('*.8xv'))
 config = dict(rom=str(a.rom.resolve()), transfer_files=[str(f) for f in files],
               target=dict(name=name, isASM=True), delay_after_step=0,

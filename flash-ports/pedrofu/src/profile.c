@@ -8,8 +8,9 @@ void profile_load(void){
  for(int i=0;i<45;i++)if(progress.skills[i]>5)progress.skills[i]=0;
  if(progress.rank>99)progress.rank=0;
 }
-void profile_save(void){uint8_t f=ti_Open("PDPROG2","w");if(f){ti_Write("PDF2",1,4,f);ti_Write(&progress,1,sizeof progress,f);ti_SetArchiveStatus(true,f);ti_Close(f);}}
-void profile_xp(int n){n=n*(100+progress.skills[FANCYFOOTWORK]*6)/100;if(progress.rank==99){progress.xp=1;return;}progress.xp+=n;while(progress.rank<99&&progress.xp>=progress.rank*10+50){progress.xp-=progress.rank*10+50;progress.rank++;progress.points++;notice("Level up! A skill point is ready.");}}
+void profile_save(void){uint8_t f=ti_Open("PDPROG2","w");if(f){ti_Write("PDF2",1,4,f);ti_Write(&progress,1,sizeof progress,f);ti_Close(f);}}
+/* Original Profile.GetXP: truncate the Fancy Footwork bonus, level at most once per gain, keep the remainder. */
+void profile_xp(int n){n=n*(100+progress.skills[FANCYFOOTWORK]*6)/100;if(progress.rank==99){progress.xp=1;return;}progress.xp+=n;int need=progress.rank*10+50;if(progress.xp>=need){progress.xp-=need;progress.rank++;progress.points++;if(progress.rank==99)progress.xp=1;notice("Level up! A skill point is ready.");}}
 int skill_need(int id){int spent=0,rank=(id%15)/3;for(int i=id/15*15;i<id/15*15+rank*3;i++)spent+=progress.skills[i];return rank*3-spent;}
 bool skill_adjust(int id,int change){if(id<0||id>=45)return false;
  if(change>0){if(!progress.have[id]||!progress.points||progress.skills[id]>=5||skill_need(id)>0)return false;progress.skills[id]++;progress.points--;}
@@ -17,9 +18,14 @@ bool skill_adjust(int id,int change){if(id<0||id>=45)return false;
  profile_save();return true;
 }
 void notice(const char *s){g.notice=s;g.notice_timer=100;}
+/* Original Pedro.AddFury: surplus fury accumulates; each (0.5 - 0.08*rank) of it heals one heart. */
 void add_fury(int n){
  if(n<0&&rand()%100<progress.skills[FURYMASTER]*3)return;
- g.fury+=n;if(g.fury>maxfury()){int excess=g.fury-maxfury(),p=progress.skills[FURYOVERLOAD];if(p&&excess>=50-8*p)g.hp=clampi(g.hp+100,0,maxlife());g.fury=maxfury();}if(g.fury<0)g.fury=0;
+ int top=maxfury();
+ if(n>0){if(g.fury>=top)g.excess+=n;else if(g.fury+n>top)g.excess+=g.fury+n-top;}
+ int p=progress.skills[FURYOVERLOAD];
+ if(p){int threshold=50-8*p;while(g.excess>threshold){g.excess-=threshold;if(g.hp<maxlife())g.hp=clampi(g.hp+100,0,maxlife());}}
+ g.fury=clampi(g.fury+n,0,top);
 }
 void collect_power(int which){
  switch(which){
@@ -34,17 +40,18 @@ void collect_power(int which){
 int punch_bonus(void){return 100+10*progress.skills[IRONFIST]+3*progress.skills[FISTOFFURY]+2*progress.skills[GALEFIST];}
 int kick_bonus(void){return 100+3*progress.skills[FEETOFFURY]+3*progress.skills[POWERKICK]+10*progress.skills[STEELTOES];}
 int fury_bonus(void){return 100+3*progress.skills[HEARTOFFURY]+4*progress.skills[MAXIMUMFORCE]+4*progress.skills[FURYMASTER];}
-/* Damage is in hundredths of the original game's heart units. */
-int skill_damage(int type){int n=0;switch(type){
- case PA_PUNCH:n=(100+10*progress.skills[PEDROPUNCH])*punch_bonus()/100;break;
- case PA_DASH:n=(200+100*progress.skills[BURROBASH])*punch_bonus()/100;break;
- case PA_CARRY:n=progress.skills[MIGHTYGRAB]*300*(100+10*progress.skills[STRONGARM]+3*progress.skills[COCONUTBONK])/100;break;
- case PA_PILEDRIVE:n=progress.skills[PILEDRIVER]*300*(100+10*progress.skills[STRONGARM]+3*progress.skills[COCONUTBONK])/100;break;
- case PA_PEDROKEN:n=progress.skills[PEDROKEN]*150*punch_bonus()/100;break;
- case PA_JUMPKICK:n=(100+100*progress.skills[FLYINGKICK])*kick_bonus()/100;break;
- case PA_DIVEKICK:n=(200+50*progress.skills[KOKICK])*kick_bonus()/100;break;
- case PA_CHARGEKICK:n=(100+100*progress.skills[CHARGEKICK])*kick_bonus()/100;break;
+/* Damage is in hundredths of the original game's heart units; each stage rounds to nearest. */
+#define RDIV(a,b) (((a)+(b)/2)/(b))
+int skill_damage(int type){long n=0;switch(type){
+ case PA_PUNCH:n=RDIV((100L+10*progress.skills[PEDROPUNCH])*punch_bonus(),100);break;
+ case PA_DASH:n=RDIV((200L+100*progress.skills[BURROBASH])*punch_bonus(),100);break;
+ case PA_CARRY:n=RDIV(progress.skills[MIGHTYGRAB]*300L*(100+10*progress.skills[STRONGARM]+3*progress.skills[COCONUTBONK]),100);break;
+ case PA_PILEDRIVE:n=RDIV(progress.skills[PILEDRIVER]*300L*(100+10*progress.skills[STRONGARM]+3*progress.skills[COCONUTBONK]),100);break;
+ case PA_PEDROKEN:n=RDIV(progress.skills[PEDROKEN]*150L*punch_bonus(),100);break;
+ case PA_JUMPKICK:n=RDIV((100L+100*progress.skills[FLYINGKICK])*kick_bonus(),100);break;
+ case PA_DIVEKICK:n=RDIV((200L+50*progress.skills[KOKICK])*kick_bonus(),100);break;
+ case PA_CHARGEKICK:n=RDIV((100L+100*progress.skills[CHARGEKICK])*kick_bonus(),100);break;
  case PA_TORNADO:n=kick_bonus();break;
- case PA_FURYPICK:n=(progress.skills[FURIOUSBLAST]*300+progress.skills[FURIOUSROAR]*200)*fury_bonus()/100;break;
- }if(g.berserk)n*=2;if(g.rage)n=n*(100+8*progress.skills[RAGINGBURRO])/100;if(g.hp==maxlife()&&g.fury==maxfury())n=n*(100+6*progress.skills[MAXIMUMFORCE])/100;return n;
+ case PA_FURYPICK:n=RDIV((progress.skills[FURIOUSBLAST]*300L+progress.skills[FURIOUSROAR]*200L)*fury_bonus(),100);break;
+ }if(g.berserk)n*=2;if(g.rage)n=RDIV(n*(100+8*progress.skills[RAGINGBURRO]),100);if(g.hp==maxlife()&&g.fury==maxfury())n=RDIV(n*(100+6*progress.skills[MAXIMUMFORCE]),100);return (int)n;
 }

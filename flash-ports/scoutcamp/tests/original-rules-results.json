@@ -1,0 +1,5 @@
+{
+  "checks": 120030,
+  "failures": [],
+  "method": "Native compiled rules.h compared to original AS3 independently; includes int return coercion."
+}

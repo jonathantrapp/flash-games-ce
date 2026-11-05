@@ -1,37 +1,51 @@
 # Pedro Kicks Back CE
 
-`pedrofu_unlocked.swf` identifies its original game as **Pedro Kicks Back**, by Hamumu Software (2012). This is a native TI-84 Plus CE adaptation built from inspection of the supplied SWF, not a Flash emulator or automatic bytecode conversion.
+`pedrofu_unlocked.swf` identifies its original game as **Pedro Kicks Back**, by Hamumu Software (2012). This is a native TI-84 Plus CE rebuild from the AS3 recovered with JPEXS, not a Flash emulator or an automatic bytecode conversion. It is a work in progress; the [parity audit](../PARITY-AUDIT.md) lists what is verified and what is not.
 
-## Included
+## What is in this build
 
-- All 15 original stage layouts, including the original back, solid and decoration tile layers.
-- Original pixel art for terrain, Pedro and the basic Yak enemy, converted to a common 256-color palette.
-- Scrolling camera, terrain collision, slopes and one-way platforms.
-- Walking, crouching, double jumping, punches, aerial attacks, dash and area fury attack.
-- Original mail locations and collectible placement; collect all mail in a stage to finish.
-- Enemies placed from the original map entity layer, with simplified pursuing/jumping AI, health, hit stun and damage. Defeating tagged enemies opens corresponding tagged gates.
-- Stage selection, retry, pause, next stage and saved recommended stage (`PDSAVE`). All stages remain selectable.
+- All 15 original stage layouts (back, solid, decoration and marker layers) with original tile collision, slopes and one-way platforms.
+- Full-size original art: Pedro, the Yak clan, projectiles, props, powerups, HUD, title, world map and sky. Frames, offsets and hitboxes come from the original `loadGraphic` and constructor values.
+- A 30 Hz fixed-step simulation driven by a hardware timer, so game speed no longer depends on how long a frame takes to draw.
+- Persistent profile (`PDPROG2`): level, XP, skill points, 45 skill ranks, discovered techniques, collected hearts and Fury Souls, passed stages and best times. Stages unlock in order as on the original map.
+- Original progression rules: XP to level is `level*10+50`, Fancy Footwork bonus, one level per gain, heart and Fury Soul maxima, skill prerequisites (3 points per earlier rank in the same set).
+- Move set gated by skills: punch chains, Gale Fist, Burro Bash with grab/carry/throw, Piledriver and Atomic Piledriver, Pedroken, flying/dive/charge/tornado kicks, dodge, glide, Retaliate, and the four Fury abilities (blast, freeze, frenzy, fix) with Fury Overload and Fury Master.
+- Enemy classes with their own state machines: Yak, Bruiser, Armor, Archer and Elite Archer, Ninja, Yakolyte, Iron Priest, Torgo/Robot, Master Yak, Barrier Orbs and the Barrier object. Projectiles include arrows, ninja stars, homing shots, rock spikes, ground fire and pike slashes.
+- Stage scripts: tents that spawn Yaks, the five-round mail arenas on stages 11 and 14 (timed bonuses and rewards), tag gates, the Master Yak finale with respawning orbs, and the original conversations (28 pages across 12 events) with their gameplay side effects.
+- Title, stage map, skill screen (original layout and artwork), help, pause, defeat, victory and ending screens.
 
 ## Controls
 
 | Key | Action |
 | --- | --- |
-| Left / Right | Walk; choose stage in menu |
-| Up or 2nd | Jump; tap again for double jump |
-| Down | Crouch |
-| Alpha | Punch / aerial attack (holding repeats) |
-| Math | Dash; uses fury |
-| Del | Area fury attack; costs 40 fury |
-| Mode | Pause; press again for stage menu |
-| Enter | Start / resume / retry / next stage |
-| Clear | Exit |
+| Arrows | Run; hold Down to duck; double-tap a direction for Burro Bash (once learned) |
+| Up or 2nd | Jump; again in the air to double-jump; hold 2nd while falling to glide |
+| Alpha | Punch; in the air, kick; duck + Alpha for Pedroken; hold to grab/carry after a Burro Bash |
+| Down (in the air) | Dive kick |
+| Del | Fury. With a full Fury bar, hold Del and press Down (blast), Left (freeze), Right (frenzy) or Up (fix) |
+| Mode | Pause (Enter resume, Stat skills, Mode back to the map) |
+| Stat | Skills (from the map, pause and result screens) |
+| Enter | Confirm, advance conversation, next stage |
+| Clear | Save and exit |
+| Vars (held on the map) | QA only: opens any stage regardless of progress |
 
-## Adaptation limits
+## Not done, or not verified
 
-This is a playable reduced adaptation, not a feature-complete reproduction. Original conversations, introduction, music, sound, skill trees, shops, extensive move unlocks, original enemy-specific animation/AI, projectiles and scripted boss/arena encounters are not reproduced. Enemy variants share Yak art and differ mainly in health/speed. Stages with no map mail finish when their placed enemies are defeated; original scripted enemy waves are omitted. Water and moving/breakable objects are simplified. The maps are retained, but full traversal and completion of all original layouts has not been verified; the stage selector provides direct access if an original scripted obstacle remains. Health, damage, fury costs and progression are adapted for this version.
+- The opening blimp flight, crash and parachute sequence is not reproduced; stage 1 starts on the ground with its opening conversation.
+- No music or sound (the calculator has none); screen shake and some flash effects are omitted.
+- Skill descriptions are not shown. The original builds them from live formulas; the screen shows rank and prerequisites only.
+- Move timing, hitboxes, enemy AI and boss phases are translated from the AS3 but have not been compared frame by frame with the original running in Ruffle. Stages are verified to load and run in the emulator, not to be completable.
+- Not yet tested on a physical calculator.
+- Numerical rules (XP, level-ups, damage multipliers, prerequisites, maxima, Fury Overload) are checked against the original formulas by `tests/check_profile.py` (see `verification/RESULTS.md`).
 
 ## Build
 
-`src/main.c` builds with CEdev using the included `makefile`. Run `build_assets.py` with Pillow available to rebuild the AppVars from the exported original images and compressed maps under `assets/`. The converter uses the workspace's CEdev `convbin.exe`. Transfer `PEDROCE.8xp`, every included `PD*.8xv` data file, and the CE runtime libraries. Data files are archived by default and the graphics are read directly from archive.
+`makefile` builds `PEDROCE` with the workspace CEdev. Assets are generated, in this order, with Python 3.12 and Pillow (`local-tools/plot-libs`):
 
-Original behavior was inspected in `original/scripts/xplor/MapStore.as`, `Pedro.as`, `PlayState.as`, `Level.as`, `LevelSet.as` and `TileSets/TileSet_Grave.as`. These establish original entity IDs, map compression/layer ordering, tile collision properties, sprite sizes and core movement mechanics. Actual calculator hardware testing remains necessary.
+1. `build_assets.py`: stage maps (`PDLV01..15`) and base tiles.
+2. `build_full_assets.py`: original sprite sheets, UI art, palette, skill metadata (`src/resources.h`, `src/ui_resources.h`, `src/skill_meta.h`).
+3. `bundle_assets.py`: packs the small resources into 18 banks of at most 32 KB (`PDB00..`) and writes `src/bundle.h`. Larger banks made the emulator's USB transfer stall.
+
+Transfer `PEDROCE.8xp` with every `PD*.8xv` file and the CE runtime libraries. The game keeps its profile in RAM; archived resources are only read, never rewritten, so saving cannot move them.
+
+Original behaviour was read from `original/scripts/xplor/` (`MapStore.as`, `Pedro.as`, `Monster/*.as`, `Profile.as`, `Menus/*.as`, `Arena.as`, `Conversation.as`).

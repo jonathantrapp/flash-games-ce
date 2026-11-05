@@ -1,19 +1,27 @@
 #include "game.h"
+#include "bundle.h"
 Game g;
 volatile uint8_t pedro_diag[8];
-const uint8_t *artdata[60],*tiledata[2],*uidata[3][2];
+const uint8_t *artdata[60],*tiledata[2],*uidata[3][2],*uiimg[UI_COUNT];
 int absi(int v){return v<0?-v:v;}
 int clampi(int v,int lo,int hi){return v<lo?lo:(v>hi?hi:v);}
 int approach(int v,int target,int amount){return v<target?clampi(v+amount,v,target):clampi(v-amount,target,v);}
-static const uint8_t *resource(const char *name,unsigned min){uint8_t f=ti_Open(name,"r");if(!f)return NULL;const uint8_t *p=ti_GetSize(f)>=min?ti_GetDataPtr(f):NULL;ti_Close(f);return p;}
+static const uint8_t *banks[BUNDLE_BANKS];
+static bool open_banks(void){for(int i=0;i<BUNDLE_BANKS;i++){char name[9];snprintf(name,sizeof name,"PDB%02d",i);uint8_t f=ti_Open(name,"r");if(!f)return false;banks[i]=ti_GetDataPtr(f);ti_Close(f);}return true;}
+const uint8_t *bundle_find(const char *name,unsigned *size){for(unsigned i=0;i<COUNT(bundle);i++)if(!strcmp(bundle[i].name,name)){if(size)*size=bundle[i].size;return banks[bundle[i].bank]+bundle[i].offset;}return NULL;}
+static const uint8_t *resource(const char *name,unsigned min){unsigned size=0;const uint8_t *p=bundle_find(name,&size);if(p)return size>=min?p:NULL;uint8_t f=ti_Open(name,"r");if(!f)return NULL;p=ti_GetSize(f)>=min?ti_GetDataPtr(f):NULL;ti_Close(f);return p;}
 bool load_resources(void){
+ if(!open_banks())return false;
  const uint8_t *pal=resource("PDCOLOR",512);if(!pal)return false;gfx_SetPalette(pal,512,0);
  tiledata[0]=resource("PDTILE0",148*258);tiledata[1]=resource("PDTILE1",148*258);
  for(int i=0;i<60;i++){char name[9];snprintf(name,sizeof name,"PDG%02d",i);if(artdef[i].frames)artdata[i]=resource(name,artdef[i].stride*artdef[i].frames*2);}
  for(int i=0;i<3;i++)for(int half=0;half<2;half++){char name[9];snprintf(name,sizeof name,"PDU%d%d",i,half);uidata[i][half]=resource(name,38402);}
- return tiledata[0]&&tiledata[1]&&artdata[0]&&artdata[2]&&uidata[0][0]&&uidata[0][1];
+ for(int i=0;i<UI_COUNT;i++)uiimg[i]=resource(uidef[i].name,uidef[i].stride*uidef[i].frames);
+ return tiledata[0]&&tiledata[1]&&artdata[0]&&artdata[2]&&uidata[0][0]&&uidata[0][1]&&uidata[1][0]&&uidata[1][1]&&uidata[2][0]&&uidata[2][1]&&uiimg[UI_HEART]&&uiimg[UI_SKI]&&uiimg[UI_SKB];
 }
 void draw_sprite(int id,int fr,int facing,int x,int y){if(id<0||id>=60||!artdata[id])return;const ArtDef *a=&artdef[id];fr%=a->frames;if(fr<0)fr=0;gfx_TransparentSprite((gfx_sprite_t *)(artdata[id]+((facing<0?a->frames:0)+fr)*a->stride),x,y);}
+void draw_ui(int id,int fr,int x,int y){if(id<0||id>=UI_COUNT||!uiimg[id])return;const UiDef *u=&uidef[id];if(fr<0)fr=0;if(fr>=u->frames)fr=u->frames-1;gfx_TransparentSprite((gfx_sprite_t *)(uiimg[id]+fr*u->stride),x,y);}
+int levels_passed(void){int n=0;while(n<15&&progress.passed[n])n++;return n;}
 int tile_at(int x,int y){if(x<0||x>=(int)g.w*16)return 1;if(y<0)return 1;if(y>=(int)g.h*16)return 0;return g.solid[(y/16)*g.w+x/16];}
 static int slope(int t){switch(t){case 14:case 86:case 121:case 123:case 171:return 1;case 18:case 90:case 122:case 125:case 170:return 2;default:return 0;}}
 bool blocked(int x,int y){int t=tile_at(x,y);return t&&!slope(t)&&t!=55&&(t<62||t>66);}
@@ -26,13 +34,13 @@ void move_body(int *x,int *y,int *v,int dx,int bw,int bh,int *floor){
  if(dy>=0){int bot=*y/16+bh;for(int k=0;k<2;k++){int fx=tx+(k?bw-1:0),t=tile_at(fx,bot),s=slope(t),surface=(bot/16)*16;if(s)surface+=s==1?15-(fx&15):(fx&15);if((s||t==55||(t>=62&&t<=66))&&oldbottom<=surface+5&&bot>=surface){*y=(surface-bh)*16;*v=0;*floor=1;}}}
 }
 bool load_level(int level){
- if(level<0||level>=15)return false;char name[9];snprintf(name,sizeof name,"PDLV%02d",level+1);uint8_t f=ti_Open(name,"r"),head[4];unsigned sz=f?ti_GetSize(f):0;
- if(sz<4||sz>21004){if(f)ti_Close(f);notice("Missing stage data.");return false;}ti_Read(head,1,4,f);g.w=head[0]+256*head[1];g.h=head[2]+256*head[3];g.n=g.w*g.h;
- if(!g.w||!g.h||g.n>5250||sz!=4+4*g.n){ti_Close(f);return false;}ti_Read(g.mapdata,1,g.n*4,f);ti_Close(f);
+ if(level<0||level>=15)return false;char name[9];snprintf(name,sizeof name,"PDLV%02d",level+1);unsigned sz=0;const uint8_t *data=bundle_find(name,&sz);
+ if(!data||sz<4||sz>21004){notice("Missing stage data.");return false;}g.w=data[0]+256*data[1];g.h=data[2]+256*data[3];g.n=g.w*g.h;
+ if(!g.w||!g.h||g.n>5250||sz!=4+4*g.n)return false;memcpy(g.mapdata,data+4,g.n*4);
  g.back=g.mapdata;g.solid=g.mapdata+g.n;g.decor=g.mapdata+g.n*2;g.good=g.mapdata+g.n*3;g.level=level;g.selected=level;
  memset(g.enemy,0,sizeof g.enemy);memset(g.prop,0,sizeof g.prop);memset(g.shot,0,sizeof g.shot);
  g.enemies=g.props=g.mailleft=g.kills=0;g.hp=maxlife();g.fury=20*progress.skills[INNERFURY];g.vx=g.vy=0;g.attackcool=g.invul=g.dash=0;g.ground=0;g.doublejump=1;g.canjump=3;g.px=g.py=32*16;g.face=1;
- g.action=PA_IDLE;g.carry=-1;g.berserk=g.rage=g.inner=g.kicks=g.story_done=g.notice_timer=0;g.story_event=-1;g.arena=-1;g.ticks=0;
+ g.action=PA_IDLE;g.carry=-1;g.berserk=g.rage=g.inner=g.kicks=g.story_done=g.notice_timer=g.excess=0;g.story_event=-1;g.arena=-1;g.ticks=0;
  for(unsigned i=0;i<g.n;i++){
   int t=g.good[i],tx=i%g.w,ty=i/g.w,tag=(i>=g.w&&g.good[i-g.w]>=26&&g.good[i-g.w]<=28)?g.good[i-g.w]-25:0;
   if(t==1){g.px=(tx*16+4)*16;g.py=(ty*16-10)*16;}
