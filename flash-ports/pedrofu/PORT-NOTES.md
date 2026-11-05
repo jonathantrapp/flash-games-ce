@@ -1,6 +1,6 @@
 # Pedro Kicks Back CE
 
-`pedrofu_unlocked.swf` identifies its original game as **Pedro Kicks Back**, by Hamumu Software (2012). This is a native TI-84 Plus CE rebuild from the AS3 recovered with JPEXS, not a Flash emulator or an automatic bytecode conversion. It is a work in progress; the [parity audit](../PARITY-AUDIT.md) lists what is verified and what is not.
+`pedrofu_unlocked.swf` identifies its original game as **Pedro Kicks Back**, by Hamumu Software (2012; see [CREDITS.md](../CREDITS.md)). This is a native TI-84 Plus CE rebuild from the AS3 recovered with JPEXS, not a Flash emulator or an automatic bytecode conversion. It is a work in progress; the [parity audit](../PARITY-AUDIT.md) lists what is verified and what is not.
 
 ## What is in this build
 

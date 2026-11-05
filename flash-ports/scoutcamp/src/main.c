@@ -54,25 +54,32 @@ static void pickColors(void) {
     cBlack = nearestColor(0, 0, 0); cWhite = nearestColor(255, 255, 255); cYellow = nearestColor(255, 230, 40);
     cRed = nearestColor(230, 30, 30); cGreen = nearestColor(40, 200, 60); cCyan = nearestColor(90, 220, 255); cPanel = nearestColor(24, 24, 48);
 }
-static void label(const char *s, int x, int y, int color) { gfx_SetTextFGColor(color); gfx_PrintStringXY(s, x, y); }
+/* GraphX does not clip text at the right edge (it wraps into the next scanline), so truncate to fit. */
+static void printFit(const char *s, int x, int y) {
+    if (x + (int)gfx_GetStringWidth(s) <= 316) { gfx_PrintStringXY(s, x, y); return; }
+    char buffer[96]; int n = 0;
+    while (s[n] && n < 90) { buffer[n] = s[n]; buffer[n + 1] = 0; if (x + (int)gfx_GetStringWidth(buffer) > 316) { buffer[n] = 0; break; } n++; }
+    gfx_PrintStringXY(buffer, x, y);
+}
+static void label(const char *s, int x, int y, int color) { gfx_SetTextFGColor(color); printFit(s, x, y); }
 static void shadowLabel(const char *s, int x, int y, int color) { label(s, x + 1, y + 1, cBlack); label(s, x, y, color); }
 static void centered(const char *s, int y, int color) { shadowLabel(s, (320 - gfx_GetStringWidth(s)) / 2, y, color); }
 static void panel(int x, int y, int w, int h) { gfx_SetColor(cPanel); gfx_FillRectangle(x, y, w, h); gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, h); }
 static void wrapText(const char *s, int x, int y, int width, int step, int color) {
     char line[96]; int n = 0; gfx_SetTextFGColor(color);
     while (*s) {
-        if (*s == '\n') { line[n] = 0; gfx_PrintStringXY(line, x, y); n = 0; y += step; s++; continue; }
+        if (*s == '\n') { line[n] = 0; printFit(line, x, y); n = 0; y += step; s++; continue; }
         if (*s == ' ') { if (n && n < 90) line[n++] = ' '; s++; continue; }
         int len = 0; while (s[len] && s[len] != ' ' && s[len] != '\n') len++;
         if (len > 40) len = 40;
         memcpy(line + n, s, len); line[n + len] = 0;
         if (n && (int)gfx_GetStringWidth(line) > width) {
             while (n && line[n - 1] == ' ') n--;
-            line[n] = 0; gfx_PrintStringXY(line, x, y); y += step; memcpy(line, s, len); n = len; line[n] = 0;
+            line[n] = 0; printFit(line, x, y); y += step; memcpy(line, s, len); n = len; line[n] = 0;
         } else n += len;
         s += len;
     }
-    line[n] = 0; if (n) gfx_PrintStringXY(line, x, y);
+    line[n] = 0; if (n) printFit(line, x, y);
 }
 static void drawArt(int id, int frame, int x, int y, bool flip) {
     gfx_sprite_t *sprite = art_sprite(id, frame);
@@ -91,16 +98,17 @@ static void xpBar(int x, int y, int w) {
 /* ---------- menus ---------- */
 static void renderMenu(void) {
     art_background(ART_TITLESTATE_TITLEIMAGE_LEFT);
-    panel(12, 150, 296, 84);
+    panel(12, 146, 296, 92);
     snprintf(textbuf, sizeof textbuf, "<  Stage %u / 17  >", level + 1);
-    centered(textbuf, 155, cWhite);
-    centered(stageTitles[level], 167, cYellow);
-    if (level >= unlocked) centered("LOCKED - win the previous stage", 179, cRed);
-    else centered(stageWon[level] ? "CAMP SAVED" : "THE CAMP NEEDS YOU", 179, stageWon[level] ? cGreen : cWhite);
+    centered(textbuf, 150, cWhite);
+    centered(stageTitles[level], 161, cYellow);
+    if (level >= unlocked) centered("LOCKED - win the previous stage", 172, cRed);
+    else centered(stageWon[level] ? "CAMP SAVED" : "THE CAMP NEEDS YOU", 172, stageWon[level] ? cGreen : cWhite);
     snprintf(textbuf, sizeof textbuf, "Level %d  Skill points %d", playerLevel, skillPoints);
-    label(textbuf, 22, 192, cWhite); xpBar(210, 193, 88);
-    label("ENTER play   STAT skills   ALPHA help", 22, 205, cWhite);
-    label("LEFT/RIGHT stage            CLEAR quit", 22, 218, cCyan);
+    label(textbuf, 22, 184, cWhite); xpBar(210, 185, 88);
+    label("ENTER play   STAT skills   ALPHA help", 22, 196, cWhite);
+    label("LEFT/RIGHT stage            CLEAR quit", 22, 207, cCyan);
+    centered("Original game: Hamumu Software, 2012", 224, cYellow);
 }
 static void renderHelp(void) {
     gfx_FillScreen(cPanel);
@@ -120,6 +128,7 @@ static void renderHelp(void) {
         "Kill thieves to drop the food they carry;",
         "dropped food can be grabbed again."};
     for (int i = 0; i < 13; i++) label(lines[i], 10, 22 + i * 14, cWhite);
+    centered("Original game: Hamumu Software, 2012", 208, cYellow);
     label("Press ENTER or MODE to return", 50, 224, cCyan);
 }
 

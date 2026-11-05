@@ -1,6 +1,6 @@
 # Scouts vs Aliens CE
 
-Native calculator rebuild of the supplied `scoutcamp_unlocked.swf` (the in-game title is **Scouts vs Aliens**, Hamumu Software, 2012). It is built from the AS3 recovered with JPEXS, not from a Flash emulator. This is a work in progress; the [parity audit](../PARITY-AUDIT.md) lists what is verified and what is not.
+Native calculator rebuild of the supplied `scoutcamp_unlocked.swf` (the in-game title is **Scouts vs Aliens**, created by Hamumu Software, 2012). It is built from the AS3 recovered with JPEXS, not from a Flash emulator. This is a work in progress; the [parity audit](../PARITY-AUDIT.md) lists what is verified and what is not.
 
 `bin/SCOUTCE.8xp` is the program; the 18 `SCAxx.8xv` banks hold the artwork and must be sent with it. Runtime libraries and install steps are in the parent README.
 
@@ -56,4 +56,4 @@ Generators (Python 3.12 with Pillow from `local-tools/plot-libs`): `generate.py`
 python tests/check_original_rules.py
 ```
 
-These files retain original third-party content and attribution; this private conversion does not grant redistribution rights.
+The original game, artwork and music are by Hamumu Software (2012); see [CREDITS.md](../CREDITS.md). This is an unofficial fan port and grants no rights to the original content.

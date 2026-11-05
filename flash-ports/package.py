@@ -21,7 +21,7 @@ inputs += [ROOT / 'local-tools/cemu/clibs/clibs' / (n + '.8xv')
            for n in ['libload', 'graphx', 'keypadc', 'fileioc']]
 for source in inputs:
     shutil.copy2(source, OUT / source.name)
-for source, name in [(HERE / 'README.md', 'START-HERE.md'),
+for source, name in [(HERE / 'README.md', 'START-HERE.md'), (HERE / 'CREDITS.md', 'CREDITS.md'),
                      (HERE / 'scoutcamp/README.md', 'Scouts-Controls-and-Notes.md'),
                      (HERE / 'pedrofu/PORT-NOTES.md', 'Pedro-Controls-and-Notes.md'),
                      (HERE / 'verification/RESULTS.md', 'Verification.md')]:

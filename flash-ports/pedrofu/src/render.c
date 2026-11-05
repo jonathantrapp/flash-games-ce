@@ -23,22 +23,29 @@ void pick_colors(void) {
     cWhite = 255; cYellow = 254; cGold = 252;
 }
 
-void center_text(int y, const char *s) { gfx_PrintStringXY(s, (320 - gfx_GetStringWidth(s)) / 2, y); }
+/* GraphX does not clip text at the right edge (it wraps into the next scanline), so truncate to fit. */
+void print_fit(const char *s, int x, int y) {
+    if (x + (int)gfx_GetStringWidth(s) <= 316) { gfx_PrintStringXY(s, x, y); return; }
+    char buffer[96]; int n = 0;
+    while (s[n] && n < 90) { buffer[n] = s[n]; buffer[n + 1] = 0; if (x + (int)gfx_GetStringWidth(buffer) > 316) { buffer[n] = 0; break; } n++; }
+    gfx_PrintStringXY(buffer, x, y);
+}
+void center_text(int y, const char *s) { int w = gfx_GetStringWidth(s); print_fit(s, w >= 316 ? 2 : (320 - w) / 2, y); }
 void wrap_text(int x, int y, int width, const char *s, int step) {
     char line[96]; int n = 0;
     while (*s) {
-        if (*s == '\n') { line[n] = 0; gfx_PrintStringXY(line, x, y); n = 0; y += step; s++; continue; }
+        if (*s == '\n') { line[n] = 0; print_fit(line, x, y); n = 0; y += step; s++; continue; }
         if (*s == ' ') { if (n && n < 90) line[n++] = ' '; s++; continue; }
         int len = 0; while (s[len] && s[len] != ' ' && s[len] != '\n') len++;
         if (len > 40) len = 40;
         memcpy(line + n, s, len); line[n + len] = 0;
         if (n && (int)gfx_GetStringWidth(line) > width) {
             while (n && line[n - 1] == ' ') n--;
-            line[n] = 0; gfx_PrintStringXY(line, x, y); y += step; memcpy(line, s, len); n = len; line[n] = 0;
+            line[n] = 0; print_fit(line, x, y); y += step; memcpy(line, s, len); n = len; line[n] = 0;
         } else n += len;
         s += len;
     }
-    line[n] = 0; if (n) gfx_PrintStringXY(line, x, y);
+    line[n] = 0; if (n) print_fit(line, x, y);
 }
 
 static void tile(int t, int x, int y) {

@@ -7,7 +7,7 @@ These are native C rebuilds of the two supplied SWFs, written from the AS3 recov
 | scoutcamp_unlocked.swf | Scouts vs Aliens | SCOUTCE (+ 18 `SCAxx` art banks) |
 | pedrofu_unlocked.swf | Pedro Kicks Back | PEDROCE (+ 18 `PDBxx` banks, `PDCOLOR`, `PDTILE0/1`, six `PDUxx` images) |
 
-The original games and extracted artwork are credited to Hamumu Software (2012), as identified by the supplied games. This folder contains the calculator implementation and local recovery work. The Flash files themselves cannot run on the calculator.
+The original games, artwork and characters were created by Hamumu Software (2012); see [CREDITS.md](CREDITS.md). This is an unofficial fan project. This folder contains the calculator implementation and local recovery work. The Flash files themselves cannot run on the calculator.
 
 ## Install
 

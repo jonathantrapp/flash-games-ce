@@ -54,5 +54,5 @@ Enemy *spawn_enemy(int type,int tx,int ty,int tag);void enemy_update(void);void 
 void player_update(void);void projectile_update(void);void fire_shot(int type,int side,int x,int y,int vx,int vy,int damage);
 void prop_update(void);void arena_setup(void);void arena_update(void);void drop_power(int which,int x,int y);
 void story_start(int event,int enemy);void story_update(void);void story_draw(void);void story_triggers(void);
-void draw_game(void);void draw_frontend(void);void frontend_update(void);void wrap_text(int x,int y,int width,const char *s,int lineheight);void center_text(int y,const char *s);
+void draw_game(void);void draw_frontend(void);void frontend_update(void);void wrap_text(int x,int y,int width,const char *s,int lineheight);void print_fit(const char *s,int x,int y);void center_text(int y,const char *s);
 #endif

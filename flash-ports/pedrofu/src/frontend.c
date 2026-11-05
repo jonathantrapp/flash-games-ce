@@ -7,7 +7,7 @@ static int menu_selection, skill_cursor;
 static char text[64];
 
 static void panel(int x, int y, int w, int h) { gfx_SetColor(cPanel); gfx_FillRectangle(x, y, w, h); gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, h); }
-static void shadow(const char *s, int x, int y, int color) { gfx_SetTextFGColor(cBlack); gfx_PrintStringXY(s, x + 1, y + 1); gfx_SetTextFGColor(color); gfx_PrintStringXY(s, x, y); }
+static void shadow(const char *s, int x, int y, int color) { gfx_SetTextFGColor(cBlack); print_fit(s, x + 1, y + 1); gfx_SetTextFGColor(color); print_fit(s, x, y); }
 static void centered(int y, const char *s, int color) { shadow(s, (320 - gfx_GetStringWidth(s)) / 2, y, color); }
 static int available_levels(void) { int n = levels_passed(); return n > 14 ? 14 : n; }
 static void start_stage(int level) { if (load_level(level)) { g.mode = PLAY; g.previousmode = MAP; } }
@@ -32,7 +32,7 @@ static void draw_skills(void) {
     gfx_Sprite((gfx_sprite_t *)uidata[2][0], 0, 0); gfx_Sprite((gfx_sprite_t *)uidata[2][1], 160, 0);
     centered(1, "SKILLS", cWhite);
     snprintf(text, sizeof text, "Points left: %d", progress.points); shadow(text, 4, 12, cWhite);
-    snprintf(text, sizeof text, "Level %d", progress.rank + 1); shadow(text, 262, 12, cWhite);
+    snprintf(text, sizeof text, "Level %d", progress.rank + 1); shadow(text, 250, 12, cWhite);
     for (int group = 0; group < 3; group++) draw_ui(UI_SKB, 0, 11 + group * 103, 26);
     for (int id = 0; id < 45; id++) {
         int x = skill_x(id), y = skill_y(id), state = skill_state(id), group = skillgrid[id][0];
@@ -43,7 +43,7 @@ static void draw_skills(void) {
     gfx_SetColor(cYellow); gfx_Rectangle(skill_x(skill_cursor) - 4, skill_y(skill_cursor) - 4, 24, 24); gfx_Rectangle(skill_x(skill_cursor) - 5, skill_y(skill_cursor) - 5, 26, 26);
     panel(4, 168, 312, 44);
     int state = skill_state(skill_cursor);
-    if (state < 0) centered(173, "??? Find an Ancient Technique to learn it", cWhite);
+    if (state < 0) centered(173, "Find an Ancient Technique first", cWhite);
     else {
         snprintf(text, sizeof text, "%s   rank %d / 5", skillnames[skill_cursor], progress.skills[skill_cursor]); centered(173, text, cYellow);
         int need = skill_need(skill_cursor);
@@ -113,26 +113,21 @@ void draw_frontend(void) {
         centered(197, "ENTER  Play game", cWhite); centered(207, "ALPHA  Controls", cWhite); centered(217, "CLEAR  Quit", cCyan);
         shadow("Game copyright 2012, Hamumu Software", 60, 231, cWhite);
         break;
-    case HELP: {
+    case HELP:
         gfx_FillScreen(cPanel);
         centered(4, "PEDRO KICKS BACK - CONTROLS", cYellow);
-        static const char *const lines[] = {
-            "Arrows: run, duck (hold Down), double-tap = Burro Bash",
-            "Up or 2nd: jump, again in the air = double jump",
-            "Hold 2nd while falling: glide",
-            "Alpha: punch; in the air: kick; duck + Alpha: Pedroken",
-            "Down in the air: dive kick     Hold Alpha: carry/throw",
-            "Del: fury - hold it with 1 full bar and press",
-            "  Down = blast, Left = freeze, Right = frenzy, Up = fix",
-            "MODE: pause (ENTER resume, STAT skills, MODE map)",
-            "Collect all the lost mail to finish a stage.",
-            "Find Ancient Techniques, hearts and Fury Souls.",
-            "Level up for skill points and spend them with STAT.",
-            "CLEAR: save and quit"};
         gfx_SetTextFGColor(cWhite);
-        for (int i = 0; i < 12; i++) gfx_PrintStringXY(lines[i], 8, 22 + i * 15);
+        wrap_text(8, 20, 304,
+                  "Arrows: run; hold Down to duck; double-tap a direction for Burro Bash.\n"
+                  "Up or 2nd: jump, again in the air to double-jump; hold 2nd while falling to glide.\n"
+                  "Alpha: punch; in the air, kick; duck + Alpha: Pedroken; Down in the air: dive kick; hold Alpha after a Burro Bash hit to grab.\n"
+                  "Del: Fury. With a full bar, hold Del and press Down (blast), Left (freeze), Right (frenzy) or Up (fix).\n"
+                  "MODE: pause. STAT: skills. CLEAR: save and quit.\n"
+                  "Collect all the lost mail to finish a stage. Find Ancient Techniques, hearts and Fury Souls; level up for skill points.",
+                  11);
+        centered(204, "Original game: Hamumu Software, 2012", cYellow);
         centered(224, "ENTER returns", cCyan);
-        break; }
+        break;
     case MAP: {
         gfx_Sprite((gfx_sprite_t *)uidata[1][0], 0, 0); gfx_Sprite((gfx_sprite_t *)uidata[1][1], 160, 0);
         int top = available_levels(), blink = (g.frame / 8) & 1;

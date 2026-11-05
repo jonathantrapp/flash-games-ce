@@ -13,7 +13,7 @@ void story_draw(void){
 }
 void story_triggers(void){
  if(g.level==3&&g.px>37*16*16&&g.ground)story_start(3,-1);
- if(g.level==0){const char *tip=NULL;int x=g.px/16;if(x<300)tip="Arrows move. Up or 2nd jumps; hold to glide.";else if(x<700)tip="Alpha attacks. Tap again in the air for a kick.";else if(x<1200)tip="Pick up Ancient Techniques, then spend XP points.";else if(x<1600)tip="Collect all lost mail to complete the stage.";else tip="MODE pauses; SKILLS are available from the map.";if(!g.notice_timer)notice(tip);}
+ if(g.level==0){const char *tip=NULL;int x=g.px/16;if(x<300)tip="Arrows move. Up or 2nd jumps; hold to glide.";else if(x<700)tip="Alpha attacks. Alpha in the air kicks.";else if(x<1200)tip="Collect Ancient Techniques, then use STAT.";else if(x<1600)tip="Collect all the lost mail to finish.";else tip="MODE pauses. STAT opens your skills.";if(!g.notice_timer)notice(tip);}
  for(int i=0;i<g.enemies;i++){Enemy *e=&g.enemy[i];if(!e->active)continue;int distance=absi(e->x-g.px)+absi(e->y-g.py);
   if(g.level==1&&e->type==17&&distance<100*16&&e->tag)story_start(2,i);
   if(g.level==4&&e->type==35&&distance<130*16)story_start(4,i);
