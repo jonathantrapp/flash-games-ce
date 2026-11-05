@@ -6,11 +6,12 @@ The earlier native releases recovered maps and basic gameplay, but did not meet 
 
 ## Status (2026-11-05)
 
-This section summarizes the checklist below; it is not a parity percentage. The checklist items stay unchecked unless both source inspection and a relevant native test exist.
+This section summarizes the checklist below. [PARITY-SCORE.md](PARITY-SCORE.md) scores every item and gives the resulting counts; those are audit-coverage figures, not a measure of how closely the games play like the originals. The checklist items stay unchecked unless both source inspection and a relevant native test exist.
 
 **Verified by native tests**
 - Scouts rules: all 12 towers x 6 stat fields x levels 0..5 under 246 skill profiles, all 48 skill prerequisite entries, and 10 monsters at levels 0..64 match values evaluated from the original AS3 (`scoutcamp/tests/check_original_rules.py`, 120,030 checks, 0 differences).
 - Pedro rules: per-move damage with berserk/rage/maximum-force modifiers, skill prerequisites, life and fury maxima, XP and level-up (including the original one-level-per-gain behaviour and level 99) and Fury Overload match the original (`pedrofu/tests/check_profile.py`, 29,678 checks, 0 differences).
+- Pedro data: the six arena tables equal `Arena.as`, all 28 conversation pages across 12 events equal the recovered original text, and all 15 stage layouts read back from the packed banks equal the decompressed original level data (`pedrofu/tests/check_data.py`, 33 checks, 0 differences).
 - Both games build, launch in CEmu, and every stage opens and keeps running (`verification/STAGE-SMOKE.md`). This is launch and survival only.
 
 **Implemented from the original source, not yet verified in play**
