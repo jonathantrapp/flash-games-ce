@@ -256,10 +256,10 @@
   "returncode": 0,
   "stderr": "",
   "source_sha256": {
-    "enemies.c": "37eb9a4607e4bbc6716df3b2335c89106ece4872c984016fe9ae2f1750a4ffa6",
-    "render.c": "13fe1ce61ab5425de0982e860300806df265f27ba7557934616be50ee58225c5",
-    "world.c": "1b415d1f1127b91e6007534de6e62f584aed27fc471151411d10d35348c942cf",
-    "game.h": "9e8fe59efa514077eaa526f9282f30668e3e7a2b1630065e3aa11b38466c7269"
+    "enemies.c": "ea179c63246a51892102aef04b29230d487bdedca0fbea8680b0b7567cdcc076",
+    "render.c": "43779d982d6d64202678e5af8e6747bcb873f1eb6f977fae1fd0e58b4615d97a",
+    "world.c": "bfc2dc73c1f5f0ae0166c6a861f95e55b9a8b5137fb4587a6f48a5c841ce4109",
+    "game.h": "aa5e246daab3583d1acb3b9c849ce6127bb05f3ce6bde9624d81c7ec8cfb04e8"
   },
   "limitations": "Host32-bit int is wider than ez80int24. Enemy code unchanged with hardware stubs. Text96-byte arrays replaced by guarded larger backing buffers only; synthetic narrow-glyph input establishes potential memory overwrite, not proof of user crash trigger."
 }

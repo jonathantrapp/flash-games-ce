@@ -2,19 +2,23 @@
 
 These are native C rebuilds of the two supplied SWFs, written from the AS3 recovered with JPEXS. Both are works in progress: see [PARITY-AUDIT.md](PARITY-AUDIT.md) for what is verified and what is not, and each game's notes for controls and known gaps.
 
+The current deliverable is a **v3 development checkpoint**, not a completed faithful port. Read [CHECKPOINT-2026-11-06.md](CHECKPOINT-2026-11-06.md) before installing. Pedro's frame-rate problem and the exact physical-calculator crash remain unresolved/unverified.
+
 | Supplied file | Original game | Calculator program |
 | --- | --- | --- |
-| scoutcamp_unlocked.swf | Scouts vs Aliens | SCOUTCE (+ 18 `SCAxx` art banks) |
-| pedrofu_unlocked.swf | Pedro Kicks Back | PEDROCE (+ 18 `PDBxx` banks, `PDCOLOR`, `PDTILE0/1`, six `PDUxx` images) |
+| scoutcamp_unlocked.swf | Scouts vs Aliens | SCOUTCE (+ 32 `SCAxx` banks) |
+| pedrofu_unlocked.swf | Pedro Kicks Back | PEDROCE (+ 19 `PDBxx` banks, `PDCOLOR`, `PDTILE0/1`, six `PDUxx` images) |
 
 The original games, artwork and characters were created by Hamumu Software (2012); see [CREDITS.md](CREDITS.md). This is an unofficial fan project. This folder contains the calculator implementation and local recovery work. The Flash files themselves cannot run on the calculator.
 
 ## Install
 
-1. Extract the release zip on your computer. (To build it yourself, run `python package.py`; it writes `release/FlashGamesCE-v2.zip`.)
+1. Extract `FlashGamesCE-v3-checkpoint.zip` on your computer. (To assemble it yourself from compiled programs, run `python flash-ports/package.py --name FlashGamesCE-v3-checkpoint` from the workspace root.)
 2. Connect the TI-84 Plus CE using USB and open TI Connect CE's Calculator Explorer.
 3. Send the `.8xp` and `.8xv` files from the extracted package. Keep the `.8xv` files in archive. Each game's asset AppVars must accompany its program.
 4. Launch `SCOUTCE` or `PEDROCE` through Cesium using your existing native-game setup.
+
+When updating, replace both programs and **all** supplied game data files. The versioned banks deliberately reject mixed old/new resources. Preserve your other programs and the save files `PDPROG2` and `SCTSV02`.
 
 If native games are not set up on your calculator, follow the current [arTIfiCE instructions](https://yvantt.github.io/arTIfiCE/) and obtain [Cesium](https://github.com/mateoconlechuga/cesium/releases). Compatibility depends on your OS and calculator revision; the linked project provides current instructions. There is no need to update the calculator OS to install these games.
 

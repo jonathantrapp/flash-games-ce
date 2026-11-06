@@ -1,0 +1,71 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\pedrofu\stage1_checkpoint\smoke.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 18000
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 3000
+Launching command release | right
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 3500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | 2nd
+Launching command delay | 500
+Launching command release | 2nd
+Launching command delay | 150
+Launching command hold | alpha
+Launching command delay | 500
+Launching command release | alpha
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 2000
+Launching command release | right
+Launching command delay | 150
+Launching command hold | 2nd
+Launching command delay | 500
+Launching command release | 2nd
+Launching command delay | 150
+Launching command hold | alpha
+Launching command delay | 500
+Launching command release | alpha
+Launching command delay | 150
+Launching command hold | mode
+Launching command delay | 500
+Launching command release | mode
+Launching command delay | 150
+Launching command hashWait | pedro_diag_0
+	[Test passed!] Hash #pedro_diag_0 had a matching CRC.
+[CPU] PC=d34474 SP=d1a77f
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.
+

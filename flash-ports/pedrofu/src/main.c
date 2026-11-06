@@ -1,6 +1,7 @@
 /* Pedro Kicks Back CE: input, fixed-step simulation and the main loop. */
 #include "game.h"
 #include <sys/timers.h>
+#include <sys/power.h>
 #include "intro.h"
 
 #define STEP_TICKS (32768 / FPS)
@@ -52,12 +53,13 @@ static void update_diagnostics(void) {
 }
 static void missing_resources(void) {
     gfx_FillScreen(1); gfx_SetTextFGColor(255);
-    center_text(70, "PEDRO KICKS BACK CE"); center_text(100, "Missing game data AppVars.");
-    center_text(120, "Send every PD*.8xv file."); center_text(160, "Press CLEAR to exit.");
+    center_text(70, "PEDRO KICKS BACK CE"); center_text(100, "Game data missing or incompatible.");
+    center_text(120, "Replace ALL PD*.8xv from this ZIP."); center_text(160, "Press CLEAR to exit.");
     gfx_SwapDraw();
     do { kb_Scan(); } while (!KEY_DOWN(kb_KeyClear));
 }
 int main(void) {
+    boot_Set48MHzMode();
     ti_CloseAll(); gfx_Begin(); gfx_SetDrawBuffer(); gfx_SetTransparentColor(0); gfx_SetTextTransparentColor(0); gfx_SetTextBGColor(0);
     if (!load_resources()) { missing_resources(); gfx_End(); ti_CloseAll(); return 0; }
     pick_colors(); profile_load();
@@ -109,6 +111,10 @@ int main(void) {
         update_diagnostics();
         gfx_SwapDraw();
     }
-    profile_save(); gfx_End(); ti_CloseAll();
+    profile_save(); gfx_End();
+    /* Archive only after rendering has stopped: flash garbage collection may
+     * move resource banks, so retain RAM saves while their pointers are used. */
+    {uint8_t save=ti_Open("PDPROG2","r");if(save){ti_SetArchiveStatus(true,save);ti_Close(save);}}
+    ti_CloseAll();
     return 0;
 }

@@ -27,7 +27,9 @@ typedef struct {int x,y,vx,vy,hp,maxhp;int timer,reload,cool,freeze,freezehits,g
 typedef struct {int x,y,timer;uint8_t type,tag,state,count,active;int8_t face;} Prop;
 typedef struct {int x,y,vx,vy,damage,ttl;uint8_t type,side,active,frame;int8_t face;} Shot;
 typedef struct {
- uint8_t mapdata[21000];uint8_t *back,*solid,*decor,*good;
+ /* Only solid tiles and pickups mutate. Background/decor stay in the
+  * validated archive bank, freeing 10.5 KB of RAM for graphics and effects. */
+ uint8_t mapdata[10500];const uint8_t *back,*decor;uint8_t *solid,*good;
  unsigned w,h,n;int level,selected,mode,previousmode;
  int px,py,vx,vy,face,ground,canjump,doublejump,safex,safey,hp,fury;
  int action,actiontime,attackcool,invul,dodge,dash,combo,kicks,carry,berserk,rage,inner,healspent;

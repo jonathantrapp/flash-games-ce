@@ -5,6 +5,7 @@
 Game g;
 volatile uint8_t pedro_diag[8];
 const uint8_t *artdata[60],*tiledata[2],*uidata[3][2],*uiimg[UI_COUNT];
+const uint8_t *pedro_flame;
 int absi(int v){return v<0?-v:v;}
 int clampi(int v,int lo,int hi){return v<lo?lo:(v>hi?hi:v);}
 int approach(int v,int target,int amount){return v<target?clampi(v+amount,v,target):clampi(v-amount,target,v);}
@@ -14,6 +15,7 @@ const uint8_t *bundle_find(const char *name,unsigned *size){for(unsigned i=0;i<C
 static const uint8_t *resource(const char *name,unsigned min){unsigned size=0;const uint8_t *p=bundle_find(name,&size);if(p)return size>=min?p:NULL;uint8_t f=ti_Open(name,"r");if(!f)return NULL;p=ti_GetSize(f)>=min?ti_GetDataPtr(f):NULL;ti_Close(f);return p;}
 bool load_resources(void){
  if(!open_banks())return false;
+ pedro_flame=resource("PDPFLAME",13*722);if(!pedro_flame)return false;
  const uint8_t *pal=resource("PDCOLOR",512);if(!pal)return false;gfx_SetPalette(pal,512,0);
  tiledata[0]=resource("PDTILE0",148*258);tiledata[1]=resource("PDTILE1",148*258);
  for(int i=0;i<60;i++){char name[9];snprintf(name,sizeof name,"PDG%02d",i);if(artdef[i].frames)artdata[i]=resource(name,artdef[i].stride*artdef[i].frames*2);}
@@ -46,8 +48,9 @@ bool load_level(int level){
  intro_cancel();
  if(level<0||level>=15)return false;char name[9];snprintf(name,sizeof name,"PDLV%02d",level+1);unsigned sz=0;const uint8_t *data=bundle_find(name,&sz);
  if(!data||sz<4||sz>21004){notice("Missing stage data.");return false;}g.w=data[0]+256*data[1];g.h=data[2]+256*data[3];g.n=g.w*g.h;
- if(!g.w||!g.h||g.n>5250||sz!=4+4*g.n)return false;memcpy(g.mapdata,data+4,g.n*4);
- g.back=g.mapdata;g.solid=g.mapdata+g.n;g.decor=g.mapdata+g.n*2;g.good=g.mapdata+g.n*3;g.level=level;g.selected=level;
+ if(!g.w||!g.h||g.n>5250||sz!=4+4*g.n)return false;
+ memcpy(g.mapdata,data+4+g.n,g.n);memcpy(g.mapdata+g.n,data+4+g.n*3,g.n);
+ g.back=data+4;g.solid=g.mapdata;g.decor=data+4+g.n*2;g.good=g.mapdata+g.n;g.level=level;g.selected=level;
  cache_stage_tiles(g.back,g.solid,g.decor,g.n);
  memset(g.enemy,0,sizeof g.enemy);memset(g.prop,0,sizeof g.prop);memset(g.shot,0,sizeof g.shot);
  g.enemies=g.props=g.mailleft=g.kills=0;g.hp=maxlife();g.fury=20*progress.skills[INNERFURY];g.vx=g.vy=0;g.attackcool=g.invul=g.dash=0;g.ground=0;g.doublejump=1;g.canjump=3;g.px=g.py=32*16;g.face=1;

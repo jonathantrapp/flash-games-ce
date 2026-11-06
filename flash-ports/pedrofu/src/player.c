@@ -3,10 +3,12 @@ void combat_vector(int dx,int dy,int speed,int *vx,int *vy);
 void enemy_flatten(Enemy *e,int ticks);
 void enemy_freeze(Enemy *e,int ticks,int hits);
 bool enemy_line_of_sight(const Enemy *e);
+void projectiles_freeze(int ticks);
+void enemy_throw(Enemy *e,int facing,int damage);
 static uint8_t attack_hit[(MAX_ENEMIES+7)/8];
 static bool uppercut_burns,reflection,retaliating,lightning_used;
-static int gravity_remainder,walk_remainder,last_level=-1,last_action=-1;
-static uint32_t last_tick;
+static int gravity_remainder,walk_remainder,player_last_level=-1,last_action=-1;
+static uint32_t player_last_tick;
 static void clear_hits(void){memset(attack_hit,0,sizeof attack_hit);lightning_used=false;}
 static bool already_hit(int i){return (attack_hit[i/8]&(1u<<(i%8)))!=0;}
 static void mark_hit(int i){attack_hit[i/8]|=1u<<(i%8);}
@@ -14,7 +16,7 @@ bool player_reflects(void){bool reflected=reflection;reflection=false;return ref
 bool player_is_burning(void){return uppercut_burns&&g.action==PA_PEDROKEN&&g.vy<0;}
 static void begin_uppercut(void){
  g.action=PA_PEDROKEN;g.actiontime=30;g.vy=-59;g.vx=g.face*21;g.dodge=0;clear_hits();uppercut_burns=false;
- int cost=2*progress.skills[FISTSOFFLAME];if(cost&&g.fury>=cost){add_fury(-cost);uppercut_burns=true;}
+ int cost=2*progress.skills[FISTSOFFLAME];if(cost&&g.fury>=cost){add_fury(-cost);uppercut_burns=true;fire_shot(60,2,g.px/16+4,g.py/16-5,g.face*16,0,0);}
 }
 static void begin_charge(bool counter){
  Enemy *target=NULL;long best=0x7fffffffL;
@@ -63,12 +65,12 @@ static void fury_update(void){
  if(!(g.keys&FURYKEY)){g.action=PA_IDLE;return;}
  g.vx=g.vy=0;
  if((g.tap&DOWN)&&progress.skills[FURIOUSBLAST]&&g.fury>=100){add_fury(-100);area_hit(skill_damage(PA_FURYPICK),190,true);for(int i=0;i<MAX_SHOTS;i++)if(g.shot[i].active&&g.shot[i].side==1&&rand()%100<progress.skills[FURIOUSROAR]*20)g.shot[i].active=0;g.action=PA_IDLE;}
- else if((g.tap&LEFT)&&progress.skills[FURIOUSFREEZE]&&g.fury>=100){add_fury(-100);for(int i=0;i<g.enemies;i++)if(nearby(&g.enemy[i],190,150))enemy_freeze(&g.enemy[i],45*progress.skills[FURIOUSFREEZE],progress.skills[DEEPFREEZE]+1);g.action=PA_IDLE;}
+ else if((g.tap&LEFT)&&progress.skills[FURIOUSFREEZE]&&g.fury>=100){add_fury(-100);for(int i=0;i<g.enemies;i++)if(g.enemy[i].active)enemy_freeze(&g.enemy[i],45*progress.skills[FURIOUSFREEZE],progress.skills[DEEPFREEZE]+1);projectiles_freeze(45*progress.skills[FURIOUSFREEZE]);g.action=PA_IDLE;}
  else if((g.tap&RIGHT)&&progress.skills[FURIOUSFRENZY]&&g.fury>=100){add_fury(-100);g.berserk=progress.skills[FURIOUSFRENZY]*60;g.action=PA_IDLE;}
  else if((g.keys&UP)&&progress.skills[FURIOUSFIX]&&g.fury>=100){g.action=PA_FURYHEAL;g.healspent=0;g.actiontime=0;}
 }
 void player_update(void){
- if(last_level!=g.level||g.ticks<last_tick){last_level=g.level;last_action=-1;uppercut_burns=reflection=retaliating=false;gravity_remainder=walk_remainder=0;clear_hits();}last_tick=g.ticks;
+ if(player_last_level!=g.level||g.ticks<player_last_tick){player_last_level=g.level;last_action=-1;uppercut_burns=reflection=retaliating=false;gravity_remainder=walk_remainder=0;clear_hits();}player_last_tick=g.ticks;
  if(g.action!=last_action){clear_hits();last_action=g.action;}
  if(g.tap&MENUKEY){g.mode=PAUSE;return;}
  if(g.invul)g.invul--;if(g.dodge)g.dodge--;if(g.attackcool)g.attackcool--;if(g.taptime)g.taptime--;if(g.canjump)g.canjump--;if(g.actiontime)g.actiontime--;if(g.berserk)g.berserk--;if(g.rage)g.rage--;
@@ -76,7 +78,7 @@ void player_update(void){
  if(g.action==PA_FURYPICK){fury_update();return;}
  if(g.action==PA_FURYHEAL){g.vx=0;if(!(g.keys&UP)||!g.fury){g.action=PA_IDLE;}else if(!g.actiontime&&g.fury>=5){g.actiontime=3;add_fury(-5);g.healspent+=5;while(g.healspent>=20-3*progress.skills[FURIOUSFIX]){g.healspent-=20-3*progress.skills[FURIOUSFIX];g.hp=clampi(g.hp+100,0,maxlife());}}return;}
  if((g.tap&FURYKEY)&&g.fury>=100&&(progress.skills[FURIOUSBLAST]||progress.skills[FURIOUSFREEZE]||progress.skills[FURIOUSFIX]||progress.skills[FURIOUSFRENZY])){g.action=PA_FURYPICK;return;}
- if(g.berserk&&(g.tap&HITKEY)&&progress.skills[BURNINGFURY])fire_shot(57,0,g.px/16+4,g.py/16+8,g.face*55,0,progress.skills[BURNINGFURY]*50*fury_bonus()/100);
+ if(g.berserk&&(g.tap&HITKEY)&&progress.skills[BURNINGFURY])fire_shot(57,0,g.px/16+4,g.py/16+8,g.face*53,0,progress.skills[BURNINGFURY]*50);
  bool normal=g.action==PA_IDLE||g.action==PA_JUMP||g.action==PA_DUCK||g.action==PA_CARRY||g.action==PA_CARRYJUMP;
  if(normal){
   int direction=(g.keys&LEFT)?-1:(g.keys&RIGHT)?1:0;
@@ -90,7 +92,7 @@ void player_update(void){
    * its unused dblJump field does not grant an extra airborne jump. */
   if((g.keys&(UP|JUMPKEY))&&g.canjump){g.vy=-67;gravity_remainder=300;g.ground=0;g.action=g.carry>=0?PA_CARRYJUMP:PA_JUMP;}
   if((g.keys&DOWN)&&g.ground){g.action=PA_DUCK;g.vx=approach(g.vx,0,10);if(!was_duck){g.py+=3*16;g.dodge=6*progress.skills[DODGE];}}
-  if(g.carry>=0){Enemy *e=&g.enemy[g.carry];if(!(g.keys&HITKEY)){e->thrown=90;e->vx=g.face*43;e->vy=-27;g.carry=-1;g.action=PA_IDLE;g.attackcool=15;}else if((g.tap&DOWN)&&!g.ground&&progress.skills[PILEDRIVER]){g.action=PA_PILEDRIVE;g.vy=27;g.vx=0;}}
+  if(g.carry>=0){Enemy *e=&g.enemy[g.carry];if(!e->active){g.carry=-1;g.action=PA_IDLE;}else if(!(g.keys&HITKEY)){enemy_throw(e,g.face,skill_damage(PA_CARRY));g.carry=-1;g.action=PA_IDLE;g.attackcool=15;}else if((g.tap&DOWN)&&!g.ground&&progress.skills[PILEDRIVER]){g.action=PA_PILEDRIVE;g.vy=27;g.vx=0;}}
   else if((g.tap&DOWN)&&!g.ground&&g.kicks<progress.skills[DIVEKICK]){g.kicks++;g.action=PA_DIVEKICK;g.vy=53;g.vx=g.face*32;clear_hits();}
   else if((g.keys&HITKEY)&&!g.attackcool){
    if(g.action==PA_DUCK&&progress.skills[PEDROKEN]){g.py-=3*16;begin_uppercut();}
@@ -99,7 +101,10 @@ void player_update(void){
   }
  }
  if(g.action==PA_DASH){g.vx=g.face*80*(g.dash+15)/(15*progress.skills[BURROBASH]+15);if((g.face<0&&(g.keys&RIGHT))||(g.face>0&&(g.keys&LEFT)))g.dash=0;if(--g.dash<=0){g.action=g.ground?PA_IDLE:PA_JUMP;g.vx=0;}else strike();}
- else if(g.action==PA_PUNCH){g.vx=approach(g.vx,0,5);if(g.actiontime==6)strike();if(g.actiontime<6&&(g.keys&HITKEY)&&g.combo<1+progress.skills[PEDROPUNCH]){if((g.keys&DOWN)&&progress.skills[PEDROKEN])begin_uppercut();else{g.combo++;g.actiontime=10;g.vx=g.face*13;clear_hits();}}if(!g.actiontime){g.action=g.ground?PA_IDLE:PA_JUMP;g.attackcool=6;}}
+ else if(g.action==PA_PUNCH){g.vx=approach(g.vx,0,5);if(g.actiontime==8)strike();
+  if(g.actiontime<6&&g.ground&&((g.keys&(UP|JUMPKEY))||(!(g.keys&HITKEY)&&(g.keys&(LEFT|RIGHT))))){g.action=PA_IDLE;g.attackcool=6;g.vx=g.vy=0;if(g.keys&(UP|JUMPKEY)){g.action=PA_JUMP;g.canjump=3;g.vy=-67;gravity_remainder=300;g.ground=0;}}
+  else if(g.actiontime<6&&(g.keys&HITKEY)&&g.combo<1+progress.skills[PEDROPUNCH]){if((g.keys&DOWN)&&progress.skills[PEDROKEN])begin_uppercut();else{g.combo++;g.actiontime=10;g.vx=g.face*13;clear_hits();}}
+  if(!g.actiontime){g.action=g.ground?PA_IDLE:PA_JUMP;g.attackcool=6;}}
  else if(g.action==PA_JUMPKICK){strike();if((g.tap&HITKEY)&&g.actiontime<8&&progress.skills[CHARGEKICK])begin_charge(false);if(!g.actiontime)g.action=PA_JUMP;}
  else if(g.action==PA_CHARGEKICK){strike();if(!g.actiontime){g.action=PA_JUMP;g.vx=g.vy=0;g.attackcool=8;}}
  else if(g.action==PA_DIVEKICK){g.vx=g.face*32;strike();if(g.ground)g.action=PA_IDLE;}
@@ -113,7 +118,7 @@ void player_update(void){
  move_body(&g.px,&g.py,&g.vy,dx,8,g.action==PA_DUCK?12:15,&g.ground);
  if(g.action==PA_CHARGEKICK&&((g.px==oldx&&g.vx)||(g.py==oldy&&g.vy)||g.ground)){g.action=PA_JUMP;g.vx=g.vy=0;g.attackcool=8;}
  if(g.action==PA_DASH&&g.px==oldx){g.action=PA_HITSTUN;g.actiontime=12;g.vx=-g.face*27;g.vy=-40;}
- if(g.action==PA_PILEDRIVE&&g.ground&&g.carry>=0){Enemy *e=&g.enemy[g.carry];e->cool=0;enemy_hit(e,skill_damage(PA_PILEDRIVE),0,false);e->stun=15*progress.skills[PILEDRIVER];if(progress.skills[ATOMICPILEDRIVER]&&g.fury>=progress.skills[ATOMICPILEDRIVER]){add_fury(-progress.skills[ATOMICPILEDRIVER]);area_hit(progress.skills[ATOMICPILEDRIVER]*200*fury_bonus()/100,10+progress.skills[ATOMICPILEDRIVER]*6,false);}g.carry=-1;g.action=PA_JUMP;g.vy=-32;}
+ if(g.action==PA_PILEDRIVE&&g.ground&&g.carry>=0){Enemy *e=&g.enemy[g.carry];e->cool=0;enemy_hit(e,skill_damage(PA_PILEDRIVE),0,false);e->stun=15*progress.skills[PILEDRIVER];if(progress.skills[ATOMICPILEDRIVER]&&g.fury>=5){add_fury(-5);fire_shot(53,0,g.px/16+4,g.py/16+7,0,0,progress.skills[ATOMICPILEDRIVER]*200*fury_bonus()/100);}g.carry=-1;g.action=PA_JUMP;g.vx=-g.face*21;g.vy=-32;}
  if(g.py/16>(int)g.h*16+32){g.invul=0;player_hurt(100,0,0,0);g.px=g.safex;g.py=g.safey;g.vx=g.vy=0;}
  if(g.ground&&tile_at(g.px/16+4,g.py/16+17)==63)player_hurt(100,-g.face,40,-40);
  if(g.hp<=0)g.mode=DEFEAT;

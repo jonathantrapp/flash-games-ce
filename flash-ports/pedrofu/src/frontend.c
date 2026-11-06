@@ -109,6 +109,7 @@ void draw_frontend(void) {
     switch (g.mode) {
     case TITLE:
         gfx_Sprite((gfx_sprite_t *)uidata[0][0], 0, 0); gfx_Sprite((gfx_sprite_t *)uidata[0][1], 160, 0);
+        shadow("v3 checkpoint",4,4,cWhite);
         panel(70, 193, 180, 36);
         centered(197, "ENTER  Play game", cWhite); centered(207, "ALPHA  Controls", cWhite); centered(217, "CLEAR  Quit", cCyan);
         shadow("Game copyright 2012, Hamumu Software", 60, 231, cWhite);
@@ -119,7 +120,7 @@ void draw_frontend(void) {
         gfx_SetTextFGColor(cWhite);
         wrap_text(8, 20, 304,
                   "Arrows: run; hold Down to duck; double-tap a direction for Burro Bash.\n"
-                  "Up or 2nd: jump, again in the air to double-jump; hold 2nd while falling to glide.\n"
+                  "Up or 2nd: jump.\n"
                   "Alpha: punch; in the air, kick; duck + Alpha: Pedroken; Down in the air: dive kick; hold Alpha after a Burro Bash hit to grab.\n"
                   "Del: Fury. With a full bar, hold Del and press Down (blast), Left (freeze), Right (frenzy) or Up (fix).\n"
                   "MODE: pause. STAT: skills. CLEAR: save and quit.\n"

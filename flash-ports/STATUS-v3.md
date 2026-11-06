@@ -1,15 +1,9 @@
-# Fidelity rebuild status
+# v3 checkpoint status
 
-This is development work, not a finished v3 release. Do not use a checklist percentage as a gameplay-fidelity measurement.
+The 6 November development checkpoint is ready for review. It is not a finished faithful port. Read [the completed/unfinished work report](CHECKPOINT-2026-11-06.md) and [verification results](verification/CHECKPOINT-v3.md).
 
-Pedro's stage-1 freeze/RAM-clear report came from a TI-84 Plus CE hardware revision 8 running OS 5.8.2.29. The local emulator uses the user's older OS 5.3 ROM. The exact reported crash has not yet been reproduced on that hardware.
+Pedro's original opening reaches its first conversation in the production emulator build. The stage-one tutorial input scenario passes, and targeted text/resource/cache safety checks pass. Its roughly 9 FPS instrumented result is still inadequate; the physical revision-8/OS-5.8.2.29 RAM-clear report remains unverified. CEmu uses the older OS-5.3 ROM.
 
-Completed and checked changes include text-buffer bounds and screen-coordinate guards, Master encounter activation, tagged-orb barrier checks, enemy stat corrections, bounded death-chain processing, original tent spawn sequences, and version/size validation of calculator resource banks. Existing host and native test outputs identify their exact source revisions.
+Scouts has checked original maps/waves/rules and targeted native regressions. Final production play/Hungry smoke checks pass; the last instrumented stage-one result is 24 FPS. Missing campaign UI, controls and ending work are listed in the checkpoint report.
 
-The original burning-blimp flight, explosions, parachute descent, landing and canopy-collapse code is integrated. Native captures show the blimp and descent; completion and replay tests are still in progress.
-
-Performance remains a release blocker. Pedro measured about 8 FPS in the initial instrumented emulator build; the first RAM sprite-cache test measures about 9 FPS. Lossless rendering experiments are being compared, and slower or unstable variants are excluded from release packaging. The current task is to improve the measured frame budget while preserving original pixels and mechanics.
-
-Scouts has exact map/wave validation and corrected skills, baby speeds, build visuals and resource checks. Its newer fidelity simulation and rendering are also under profiling; its performance target has not been met.
-
-No new finished release is claimed. Physical-calculator validation and complete original-versus-port stage playthroughs remain outstanding.
+No complete original-versus-port campaign or physical-calculator validation has been done. Historical checklist percentages are not gameplay-fidelity measurements. Further work should begin with crash reproduction and Pedro profiling, then full stage comparisons.

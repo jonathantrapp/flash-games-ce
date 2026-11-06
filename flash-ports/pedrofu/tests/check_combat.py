@@ -37,7 +37,7 @@ int main(void){
  reset();g.action=PA_HITSTUN;g.actiontime=9;g.ground=0;g.tap=DOWN;progress.skills[RECOVERY]=1;player_update();result("recovery_downward_speed_at_least_300pxs",g.vy>=160,1);result("recovery_ends_hitstun",g.action,PA_JUMP);
  reset();progress.skills[PEDROKEN]=1;progress.skills[FISTSOFFLAME]=2;g.fury=100;g.action=PA_DUCK;g.keys=DOWN|HITKEY;g.tap=HITKEY;player_update();result("burning_pedroken_initial_cost",g.fury,96);g.tap=0;for(int i=0;i<5;i++)player_update();result("burning_pedroken_cost_once_per_move",g.fury,96);g.invul=g.dodge=0;player_hurt(100,1,0,0);result("burning_rising_pedroken_is_invulnerable",g.hp,500);
  reset();progress.skills[PEDROKEN]=1;progress.skills[FISTSOFFLAME]=2;g.fury=0;g.action=PA_DUCK;g.keys=DOWN|HITKEY;g.tap=HITKEY;player_update();g.invul=g.dodge=0;player_hurt(100,1,0,0);result("unaffordable_flame_does_not_grant_invulnerability",g.hp,400);
- reset();g.action=PA_DASH;g.dash=30;Enemy*e=victim(8);for(int i=0;i<5;i++){e->cool=0;e->x=g.px+8*16;e->y=g.py;player_update();}result("dash_hits_each_enemy_once",e->hp,9800);
+ reset();g.action=PA_DASH;g.dash=30;Enemy*e=victim(4);for(int i=0;i<5;i++){e->cool=0;e->x=g.px+4*16;e->y=g.py;player_update();}result("dash_hits_each_enemy_once",e->hp,9800);
  reset();progress.skills[LIGHTNINGFIST]=1;g.action=PA_PUNCH;g.actiontime=7;victim(8);e=victim(25);player_update();result("lightning_rank1_stops_at_15px",e->hp,10000);
  reset();progress.skills[LIGHTNINGFIST]=2;g.action=PA_PUNCH;g.actiontime=7;victim(8);e=victim(43);player_update();result("lightning_rank2_stops_at_30px",e->hp,10000);
  reset();progress.skills[KOKICK]=2;progress.skills[DIVEKICK]=1;g.action=PA_DIVEKICK;g.ground=0;g.vy=53;e=victim(8);player_update();result("KO_kick_flatten_status_ticks",enemy_status_value(e,0),24);

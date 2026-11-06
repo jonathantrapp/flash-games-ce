@@ -4,6 +4,7 @@
 #include <keypadc.h>
 #include <fileioc.h>
 #include <sys/timers.h>
+#include <sys/power.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -243,7 +244,7 @@ static void renderGame(void) {
     art_draw(ART_TENT, 0, fx - 20, fy + 6); art_draw(ART_TENT, 0, fx + 20, fy + 6); art_draw(ART_FIRE, tick / 2, fx, fy - 3);
     for (int i = 0; i < 5; i++) {
         const Food *f = &foods[i];
-        if (f->active) art_draw(ART_FOOD, i, f->x / FP - 8 - camx, f->y / FP - 16 - camy);
+        if (f->active) art_draw(ART_FOOD, i, f->x_pixel - 8 - camx, f->y_pixel - 16 - camy);
     }
     for (int i = 0; i < MAXTOWER; i++) {
         const Tower *t = &towers[i];
@@ -253,8 +254,8 @@ static void renderGame(void) {
         const Enemy *e = &enemies[i]; if (!e->active) continue;
         int id = monsterArt[e->type]; const Art *art = &artTable[id];
         static const uint8_t offsetY[10]={0,0,6,8,0,0,0,0,31,3};
-        int x=e->x/FP-art->width/2-camx-((e->type==1||e->type==5)?2:0);
-        int y=e->y/FP-monsterHeight[e->type]-offsetY[e->type]-camy;
+        int x=e->x_pixel-art->width/2-camx-((e->type==1||e->type==5)?2:0);
+        int y=e->y_pixel-monsterHeight[e->type]-offsetY[e->type]-camy;
         if (x > 320 || x + art->width < 0 || y > 240 || y + art->height < 0) continue;
         int frame=monsterFrame(e,i)%art->frames;
         if(e->type==8||e->born||e->flat) {
@@ -285,10 +286,11 @@ static void renderGame(void) {
 #endif
     for (int i = 0; i < MAXBULLET; i++) {
         const Bullet *b = &bullets[i]; if (!b->active) continue;
-        int bx = b->x / FP - camx, by = b->y / FP - camy;
-        if (b->pop) { art_draw(ART_BULLET_BOOM, b->pop > 5 ? 5 : b->pop, bx - 12, by - 12); continue; }
-        int id = bulletArt[b->type]; const Art *art = &artTable[id];
-        art_draw(id, b->age % art->frames, bx - art->width / 2, by - art->height / 2);
+        int bx = b->x_pixel - camx, by = b->y_pixel - camy;
+        int id=bulletArt[b->type];const Art*art=&artTable[id];
+        static const uint8_t slushFrames[6]={0,1,2,3,2,1};
+        int frame=b->pop?b->pop:b->type==SLUSHEE?slushFrames[b->age%6]:0;
+        art_draw(id,frame,bx-art->width/2,by-art->height/2);
     }
     for (int i = 0; i < MAXTOWER; i++) {
         const Tower *t = &towers[i];
@@ -418,6 +420,7 @@ static void handleResult(void) {
 }
 
 int main(void) {
+    boot_Set48MHzMode();
     if (!art_open()) { os_ClrHome(); os_PutStrFull(art_error);os_NewLine();os_PutStrFull("Send all SCA resource files"); while (!os_GetCSC()) { } return 1; }
     load();
 #ifdef QA_MAXED /* test builds only (see tests/README.md): every skill at rank 5, spare points, all stages open */

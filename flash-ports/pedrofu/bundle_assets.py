@@ -17,7 +17,7 @@ LIMIT = 32000
 HEADER = 11
 UI_NAMES = ['PDHEART', 'PDMAIL', 'PDFURY', 'PDFURYI', 'PDFBOX', 'PDXP', 'PDBADG', 'PDBADGI', 'PDSKI', 'PDSKF', 'PDSKT', 'PDSKP', 'PDSKB']
 
-names = sorted(p.stem for p in (HERE / 'data').glob('PDG[0-9][0-9].bin')) + sorted(p.stem for p in (HERE / 'data').glob('PDLV[0-9][0-9].bin')) + UI_NAMES + ['PDBLIMP0', 'PDBLIMP1', 'PDBOOM']
+names = sorted(p.stem for p in (HERE / 'data').glob('PDG[0-9][0-9].bin')) + sorted(p.stem for p in (HERE / 'data').glob('PDLV[0-9][0-9].bin')) + UI_NAMES + ['PDBLIMP0', 'PDBLIMP1', 'PDBOOM', 'PDPFLAME']
 blobs = {n: (HERE / 'data' / (n + '.bin')).read_bytes() for n in names}
 assert all(0 < len(b) <= LIMIT-HEADER for b in blobs.values()), [n for n, b in blobs.items() if len(b) > LIMIT-HEADER]
 signature = hashlib.sha256(b''.join(n.encode('ascii') + b'\0' + struct.pack('<I', len(blobs[n])) + blobs[n] for n in sorted(blobs))).digest()[:8]

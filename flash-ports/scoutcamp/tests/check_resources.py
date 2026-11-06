@@ -3,7 +3,7 @@ from pathlib import Path
 import struct,re,json
 ROOT=Path(__file__).resolve().parents[1]
 h=(ROOT/'src/art.h').read_text()
-def block(name):return re.search(r'\b'+name+r'\[\]=\{(.*?)\};',h,re.S)[1]
+def block(name):return re.search(r'\b'+name+r'\[\](?:\[\d+\])?=\{(.*?)\};',h,re.S)[1]
 def rows(name):return [tuple(map(int,m.split(','))) for m in re.findall(r'\{([^}]+)\}',block(name))]
 sizes=list(map(int,block('artBankSizes').split(',')));signature=bytes(map(int,block('artSignature').split(',')))
 banks=[]
@@ -21,24 +21,31 @@ for i,n in enumerate(sizes):
  assert payload==(ROOT/'build-art'/(name+'.bin')).read_bytes()
  banks.append(payload[12:])
 frames=rows('artFrames');art=rows('artTable')
-for first,w,height,count in art:
- for frame in range(count):
-  bank,offset=frames[first+frame];raw=banks[bank][offset:offset+w*height+2]
-  assert len(raw)==w*height+2 and raw[:2]==bytes([w,height])
 names=re.findall(r'^ART_(\w+),?$',h,re.M)
+for idx,(first,w,height,count) in enumerate(art):
+ for f in range(count):
+  bank,offset=frames[first+f]
+  if names[idx].startswith('OVERLAY_'):continue
+  raw=banks[bank][offset:offset+w*height+2]
+  assert len(raw)==w*height+2 and raw[:2]==bytes([w,height])
 def frame(name,n):
- first,w,h,count=art[names.index(name)];bank,off=frames[first+n];return banks[bank][off+2:off+2+w*h]
-for sky,(bank,off,size) in zip(['SKY_SUNSETIMAGE','SKY_DESERTIMAGE'],rows('artSkies')):
- source=banks[bank][off:off+size];pixels=bytearray();p=0
- while p<len(source):
-  op=source[p];p+=1;count=(op&127)+1
-  if op&128:pixels+=bytes([source[p]])*count;p+=1
-  else:pixels+=source[p:p+count];p+=count
- assert len(pixels)==76800
- for side,label in enumerate(['LEFT','RIGHT']):
+ first,w,height,count=art[names.index(name)];bank,off=frames[first+n];return banks[bank][off+2:off+2+w*height]
+for sky,(left,right,lsize,rsize,rowid,count) in zip(['SKY_SUNSETIMAGE','SKY_DESERTIMAGE'],re.findall(r'\{(\d+),(\d+),(\d+),(\d+),artSkyRows(\d+),(\d+)\}',block('artSkies'))):
+ left,right,lsize,rsize,rowid,count=map(int,[left,right,lsize,rsize,rowid,count]);base=[0]*240
+ for color,y,n in rows('artSkyRows'+str(rowid)):base[y:y+n]=[color]*n
+ for side,(id,size) in enumerate([(left,lsize),(right,rsize)]):
+  first,w,height,n=art[id];bank,off=frames[first];stream=banks[bank][off:off+size];assert stream[:2]==bytes([160,240]);p=2;pixels=bytearray()
   for y in range(240):
-   expected=frame(sky+'_'+label,y//120)[y%120*160:(y%120+1)*160]
-   assert pixels[y*320+side*160:y*320+side*160+160]==expected
-print(json.dumps({'banks':len(banks),'frames':len(frames),'assets':len(art),'signature':signature.hex(),'sky_pixels_compared':153600,'status':'PASS'}))
-
+   line=bytearray([base[y]])*160;x=0
+   while x<160:
+    x+=stream[p];p+=1
+    if x==160:break
+    n=stream[p];p+=1;line[x:x+n]=stream[p:p+n];x+=n;p+=n
+   assert x==160
+   expected=frame(sky+('_RIGHT' if side else '_LEFT'),y//120)[y%120*160:(y%120+1)*160]
+   assert line==expected
+  assert p==len(stream)
+mapbank=int(re.search(r'#define ART_MAP_BANK (\d+)',h)[1]);mapoffset=int(re.search(r'#define ART_MAP_OFFSET (\d+)',h)[1]);mapsize=int(re.search(r'#define ART_MAP_SIZE (\d+)',h)[1])
+assert banks[mapbank][mapoffset:mapoffset+mapsize]==(ROOT/'build-art/maps.bin').read_bytes()
+print(json.dumps({'banks':len(banks),'frames':len(frames),'assets':len(art),'signature':signature.hex(),'sky_pixels_compared':153600,'map_bytes':mapsize,'status':'PASS'}))
 

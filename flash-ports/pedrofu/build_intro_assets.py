@@ -55,3 +55,12 @@ payload = b''.join(sprite(boom.crop((i % columns * 32, i // columns * 32,
 assert len(payload) == 14364
 (HERE / 'data/PDBOOM.bin').write_bytes(payload)
 print('Built PDBLIMP0 (9922), PDBLIMP1 (9922), PDBOOM (14364 bytes).')
+
+flame = image('PedroFlame_SmokeImage')
+assert flame.width % 20 == 0 and flame.height % 36 == 0
+cols = flame.width // 20
+assert cols * (flame.height // 36) >= 13
+payload = b''.join(sprite(flame.crop((i%cols*20,i//cols*36,i%cols*20+20,i//cols*36+36))) for i in range(13))
+assert len(payload) == 13*722
+(HERE/'data/PDPFLAME.bin').write_bytes(payload)
+print('Built original 13-frame Pedro flame effect (9386 bytes).')

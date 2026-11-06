@@ -15,6 +15,18 @@ volatile uint32_t pedro_draw_profile[6];
 
 uint8_t cBlack, cWhite = 255, cYellow = 254, cGold = 252, cRed, cGreen, cCyan, cPanel;
 static int camx, camy;
+extern const uint8_t *pedro_flame;
+int enemy_status_value(const Enemy *e,int which);
+static uint8_t flat_sprite[2+64*8];
+
+static void draw_flattened(const Enemy *e,const ArtDef *a,int x,int y) {
+    unsigned h=(a->h+9)/10;
+    if(a->w>64||h>8||!artdata[e->type]){draw_sprite(e->type,0,e->face,x-camx,y-camy+22);return;}
+    flat_sprite[0]=a->w;flat_sprite[1]=h;
+    const uint8_t *p=artdata[e->type]+(e->face<0?a->frames:0)*a->stride+2;
+    for(unsigned row=0;row<h;row++)memcpy(flat_sprite+2+row*a->w,p+(row*a->h/h)*a->w,a->w);
+    gfx_TransparentSprite((gfx_sprite_t *)flat_sprite,x-camx,y-camy+22+a->h-h);
+}
 
 static void draw_sky(void) {
     for (unsigned i=0;i<COUNT(cached_sky_rows);i++) {
@@ -127,6 +139,8 @@ static void prop_sprite(const Prop *p) {
 }
 void shot_sprite(const Shot *s) {
     int x = s->x / 16, y = s->y / 16;
+    if(s->type==60){if(pedro_flame)cached_sprite(pedro_flame+clampi(s->frame,0,12)*722,x-10-camx,y-18-camy+22);return;}
+    if(s->type>=60)return;
     if (s->type == 51) { gfx_SetColor(cYellow); gfx_FillCircle(x - camx, y - camy + 22, 3); return; }
     const ArtDef *a = &artdef[s->type];
     if (!a->frames) return;
@@ -182,20 +196,28 @@ void draw_game(void) {
     DRAW_PHASE(0);
     int x0 = camx / 16, y0 = camy / 16, x1 = (camx + 320) / 16 + 1, y1 = (camy + 218) / 16 + 1;
     if (x1 > (int)g.w) x1 = g.w; if (y1 > (int)g.h) y1 = g.h;
-    for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) { int i = y * g.w + x; tile(g.back[i], x * 16 - camx, y * 16 - camy + 22); tile(g.solid[i], x * 16 - camx, y * 16 - camy + 22); }
+    /* Keep immutable loop data local: drawing calls cannot force a reload and
+     * software multiply of g.w for every single visible tile. */
+    const unsigned width=g.w;
+    const uint8_t *back=g.back,*solid=g.solid,*decor=g.decor,*good=g.good;
+    for(int y=y0,sy=y0*16-camy+22;y<y1;y++,sy+=16){
+        const uint8_t *b=back+y*width,*s=solid+y*width;
+        for(int x=x0,sx=x0*16-camx;x<x1;x++,sx+=16){int t=b[x];if(t)tile(t,sx,sy);t=s[x];if(t)tile(t,sx,sy);}
+    }
     DRAW_PHASE(1);
     for (int i = 0; i < g.props; i++) if (g.prop[i].active) prop_sprite(&g.prop[i]);
     for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) {
-        int t = g.good[y * g.w + x], which = t == 12 ? 5 : t == 6 ? 0 : (t >= 7 && t <= 9) ? t - 6 : t == 36 ? 4 : t == 37 ? 6 : -1;
+        int t = good[y * width + x], which = t == 12 ? 5 : t == 6 ? 0 : (t >= 7 && t <= 9) ? t - 6 : t == 36 ? 4 : t == 37 ? 6 : -1;
         if (which >= 0) sprite_at(48, which, 1, x * 16, y * 16 + ((g.ticks / 6) & 1));
     }
     for (int i = 0; i < g.enemies; i++) {
-        const Enemy *e = &g.enemy[i]; if (!e->active) continue;
+        const Enemy *e = &g.enemy[i]; if (!e->active || (e->type==35&&e->state==5)) continue;
         if (g.carry == i) continue;
         const ArtDef *a = &artdef[e->type];
         int ex = e->x / 16 - a->ox, ey = e->y / 16 - a->oy;
         if (ex - camx > 320 || ex - camx + a->w < 0 || ey - camy > 240 || ey - camy + a->h < 0) continue;
-        sprite_at(e->type, e->fr, e->face, ex, ey);
+        if(enemy_status_value(e,0))draw_flattened(e,a,ex,ey);
+        else sprite_at(e->type, e->fr, e->face, ex, ey);
         if (e->freeze) { gfx_SetColor(cCyan); gfx_Rectangle(ex - camx, ey - camy + 22, a->w, a->h); }
         if (e->type == 42 || e->type == 40) { /* barrier orbs and the master need no extra overlay */ }
     }
@@ -204,7 +226,7 @@ void draw_game(void) {
     for (int i = 0; i < MAX_SHOTS; i++) if (g.shot[i].active) shot_sprite(&g.shot[i]);
     if (intro_is_active())intro_draw(camx,camy-22);
     else if (g.mode != DEFEAT && (!g.invul || (g.ticks & 2)) && g.action != PA_DIE) sprite_at(0, pedro_frame(), g.face, g.px / 16 - 6, g.py / 16 - 3);
-    for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) tile(g.decor[y * g.w + x], x * 16 - camx, y * 16 - camy + 22);
+    for(int y=y0,sy=y0*16-camy+22;y<y1;y++,sy+=16){const uint8_t*d=decor+y*width;for(int x=x0,sx=x0*16-camx;x<x1;x++,sx+=16){int t=d[x];if(t)tile(t,sx,sy);}}
     DRAW_PHASE(3);
     gfx_SetColor(cBlack); gfx_FillRectangle(0, 0, 320, 22);
     draw_hud();

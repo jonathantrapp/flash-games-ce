@@ -9,7 +9,7 @@
 - A 30 Hz fixed-step simulation driven by a hardware timer, so game speed no longer depends on how long a frame takes to draw.
 - Persistent profile (`PDPROG2`): level, XP, skill points, 45 skill ranks, discovered techniques, collected hearts and Fury Souls, passed stages and best times. Stages unlock in order as on the original map.
 - Original progression rules: XP to level is `level*10+50`, Fancy Footwork bonus, one level per gain, heart and Fury Soul maxima, skill prerequisites (3 points per earlier rank in the same set).
-- Move set gated by skills: punch chains, Gale Fist, Burro Bash with grab/carry/throw, Piledriver and Atomic Piledriver, Pedroken, flying/dive/charge/tornado kicks, dodge, glide, Retaliate, and the four Fury abilities (blast, freeze, frenzy, fix) with Fury Overload and Fury Master.
+- Move set gated by skills: punch chains, Gale Fist, Burro Bash with grab/carry/throw, Piledriver and Atomic Piledriver, burning Pedroken, flying/dive/charge/tornado kicks, dodge, Retaliate, and the four Fury abilities (blast, freeze, frenzy, fix) with Fury Overload and Fury Master. The earlier invented double-jump and glide were removed after checking their actual activation paths in the original source.
 - Enemy classes with their own state machines: Yak, Bruiser, Armor, Archer and Elite Archer, Ninja, Yakolyte, Iron Priest, Torgo/Robot, Master Yak, Barrier Orbs and the Barrier object. Projectiles include arrows, ninja stars, homing shots, rock spikes, ground fire and pike slashes.
 - Stage scripts: tents that spawn Yaks, the five-round mail arenas on stages 11 and 14 (timed bonuses and rewards), tag gates, the Master Yak finale with respawning orbs, and the original conversations (28 pages across 12 events) with their gameplay side effects.
 - Title, stage map, skill screen (original layout and artwork), help, pause, defeat, victory and ending screens.
@@ -19,7 +19,7 @@
 | Key | Action |
 | --- | --- |
 | Arrows | Run; hold Down to duck; double-tap a direction for Burro Bash (once learned) |
-| Up or 2nd | Jump; again in the air to double-jump; hold 2nd while falling to glide |
+| Up or 2nd | Jump |
 | Alpha | Punch; in the air, kick; duck + Alpha for Pedroken; hold to grab/carry after a Burro Bash |
 | Down (in the air) | Dive kick |
 | Del | Fury. With a full Fury bar, hold Del and press Down (blast), Left (freeze), Right (frenzy) or Up (fix) |
@@ -31,7 +31,8 @@
 
 ## Not done, or not verified
 
-- The opening blimp flight, crash and parachute sequence is not reproduced; stage 1 starts on the ground with its opening conversation.
+- The original burning-blimp flight, explosions, parachute descent and canopy collapse are now integrated before the opening conversation. Native captures and the checkpoint test cover that transition. Fire scaling, additive alpha and camera effects are approximated.
+- Performance is still a blocker: the latest measured Pedro stage-1 diagnostic runs are around 9 FPS in the local emulator. No claim is made that the physical-calculator frame rate or RAM-clear report is fixed.
 - No music or sound (the calculator has none); screen shake and some flash effects are omitted.
 - Skill descriptions are not shown. The original builds them from live formulas; the screen shows rank and prerequisites only.
 - Move timing, hitboxes, enemy AI and boss phases are translated from the AS3 but have not been compared frame by frame with the original running in Ruffle. Stages are verified to load and run in the emulator, not to be completable.
@@ -44,8 +45,10 @@
 
 1. `build_assets.py`: stage maps (`PDLV01..15`) and base tiles.
 2. `build_full_assets.py`: original sprite sheets, UI art, palette, skill metadata (`src/resources.h`, `src/ui_resources.h`, `src/skill_meta.h`).
-3. `bundle_assets.py`: packs the small resources into 18 banks of at most 32 KB (`PDB00..`) and writes `src/bundle.h`. Larger banks made the emulator's USB transfer stall.
+3. `build_intro_assets.py`: blimp, explosion and burning-uppercut frames using the existing palette.
+4. `build_render_cache.py`: exact original sky pixels in a row-fill/RLET representation.
+5. `bundle_assets.py`: packs the small resources into 19 signed banks of at most 32 KB (`PDB00..`) and writes `src/bundle.h`.
 
-Transfer `PEDROCE.8xp` with every `PD*.8xv` file and the CE runtime libraries. The game keeps its profile in RAM; archived resources are only read, never rewritten, so saving cannot move them.
+Transfer `PEDROCE.8xp` with every `PD*.8xv` file and the CE runtime libraries. In-play saves stay in RAM; clean exit archives `PDPROG2` after drawing has stopped, so resource pointers are no longer used if flash garbage collection occurs.
 
 Original behaviour was read from `original/scripts/xplor/` (`MapStore.as`, `Pedro.as`, `Monster/*.as`, `Profile.as`, `Menus/*.as`, `Arena.as`, `Conversation.as`).

@@ -1,0 +1,22 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\pedrofu\checkpoint_exit\smoke.json loaded and verified. 0 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 2000
+Launching command hold | clear
+Launching command delay | 500
+Launching command release | clear
+Launching command delay | 150
+Launching command delay | 1000
+[CPU] PC=3a3f1 SP=d1a835
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 0 tests attempted, 0 passed, and 0 failed.
+

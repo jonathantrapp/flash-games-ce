@@ -1,0 +1,52 @@
+{
+  "rom": "C:/Users/jonat/Downloads/ti-84ce.rom",
+  "transfer_files": [
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\libload.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\graphx.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\keypadc.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\fileioc.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB00.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB01.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB02.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB03.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB04.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB05.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB06.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB07.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB08.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB09.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB10.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB11.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB12.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB13.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB14.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB15.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB16.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB17.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB18.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDTILE0.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDTILE1.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\tests\\rlet-native\\bin\\PDRLET.8xp"
+  ],
+  "target": {
+    "name": "PDRLET",
+    "isASM": true
+  },
+  "delay_after_step": 0,
+  "sequence": [
+    "action|launch",
+    "delay|10000",
+    "hashWait|roundtrip"
+  ],
+  "hashes": {
+    "roundtrip": {
+      "description": "All tiles/selected actor frames preserve pixels and RLET canaries",
+      "start": "0xd052c6",
+      "size": 14,
+      "expected_CRCs": [
+        "189FEC90"
+      ],
+      "timeout": 30000
+    }
+  }
+}

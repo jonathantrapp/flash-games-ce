@@ -1,0 +1,141 @@
+{
+  "tests": [
+    {
+      "name": "dash_is_vulnerable",
+      "actual": 400,
+      "expected": 400,
+      "passed": true
+    },
+    {
+      "name": "chargekick_is_vulnerable",
+      "actual": 400,
+      "expected": 400,
+      "passed": true
+    },
+    {
+      "name": "nonburning_pedroken_is_vulnerable",
+      "actual": 400,
+      "expected": 400,
+      "passed": true
+    },
+    {
+      "name": "piledrive_is_invulnerable",
+      "actual": 500,
+      "expected": 500,
+      "passed": true
+    },
+    {
+      "name": "hitstun_is_invulnerable",
+      "actual": 500,
+      "expected": 500,
+      "passed": true
+    },
+    {
+      "name": "recovery_downward_speed_at_least_300pxs",
+      "actual": 1,
+      "expected": 1,
+      "passed": true
+    },
+    {
+      "name": "recovery_ends_hitstun",
+      "actual": 1,
+      "expected": 1,
+      "passed": true
+    },
+    {
+      "name": "burning_pedroken_initial_cost",
+      "actual": 96,
+      "expected": 96,
+      "passed": true
+    },
+    {
+      "name": "burning_pedroken_cost_once_per_move",
+      "actual": 96,
+      "expected": 96,
+      "passed": true
+    },
+    {
+      "name": "burning_rising_pedroken_is_invulnerable",
+      "actual": 500,
+      "expected": 500,
+      "passed": true
+    },
+    {
+      "name": "unaffordable_flame_does_not_grant_invulnerability",
+      "actual": 400,
+      "expected": 400,
+      "passed": true
+    },
+    {
+      "name": "dash_hits_each_enemy_once",
+      "actual": 9800,
+      "expected": 9800,
+      "passed": true
+    },
+    {
+      "name": "lightning_rank1_stops_at_15px",
+      "actual": 10000,
+      "expected": 10000,
+      "passed": true
+    },
+    {
+      "name": "lightning_rank2_stops_at_30px",
+      "actual": 10000,
+      "expected": 10000,
+      "passed": true
+    },
+    {
+      "name": "KO_kick_flatten_status_ticks",
+      "actual": 24,
+      "expected": 24,
+      "passed": true
+    },
+    {
+      "name": "friendly_fireball_eight_second_lifetime",
+      "actual": 240,
+      "expected": 240,
+      "passed": true
+    },
+    {
+      "name": "bad_fireball_six_second_lifetime",
+      "actual": 180,
+      "expected": 180,
+      "passed": true
+    },
+    {
+      "name": "frozen_enemy_holds_x",
+      "actual": 3328,
+      "expected": 3328,
+      "passed": true
+    },
+    {
+      "name": "frozen_enemy_holds_y",
+      "actual": 3200,
+      "expected": 3200,
+      "passed": true
+    },
+    {
+      "name": "frozen_enemy_hit_budget",
+      "actual": 3,
+      "expected": 3,
+      "passed": true
+    }
+  ],
+  "returncode": 0,
+  "source_sha256": {
+    "player.c": "56bcef4a6c5513bd61cd220344ce9ae5522d6f29ea73fee237edce2f0d1c0276",
+    "enemies.c": "ea179c63246a51892102aef04b29230d487bdedca0fbea8680b0b7567cdcc076",
+    "projectiles.c": "5a451759805a370c1cb652daad7ac75f2af2ed0c70c5724e7bc9439c6bb57aaf",
+    "profile.c": "8d76e0daa1dcad9dd8a47614ce22b2915a5cd1f440298dd3ec27676e1f6d0b91",
+    "game.h": "aa5e246daab3583d1acb3b9c849ce6127bb05f3ce6bde9624d81c7ec8cfb04e8"
+  },
+  "source_rules": {
+    "vulnerability": "Pedro.as:248-301",
+    "recovery": "Pedro.as:1321-1330",
+    "flame_cost": "Pedro.as:1243-1262",
+    "lightning_range": "Pedro.as:1111",
+    "KO_flatten": "Pedro.as:599-601",
+    "projectile_lifetimes": "Bullet/Fireball.as:52, Bullet/BadFireball.as:48"
+  },
+  "limitations": "Runs actual C modules together with no-op hardware/collision stubs; models scripted interactions and exact state changes, not complete physical movement or hardware timing."
+}

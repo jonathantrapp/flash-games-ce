@@ -6,7 +6,7 @@
 void scout_unpack(void *dst,const uint8_t *src,const uint8_t *end);
 const uint8_t *artBanks[ART_BANKS];
 char art_error[40];
-static uint8_t skyCache[13000], tileCache[16][258];
+static uint8_t skyCache[13000], tileCache[16][410];
 static const uint8_t *cachedTiles[128];
 static int cachedSky=-1,cachedTheme=-1;
 static const uint8_t emptySprite[3]={1,1,0};
@@ -27,7 +27,6 @@ gfx_sprite_t *art_sprite(int id,int frame) {
     const Art*art=&artTable[id];
     if(frame<0)frame=0;
     if(frame>=art->frames)frame%=art->frames;
-    if(id==cachedTheme&&frame<128&&cachedTiles[frame])return(gfx_sprite_t*)cachedTiles[frame];
     const ArtFrame*ref=&artFrames[art->first+frame];
     return(gfx_sprite_t*)(artBanks[ref->bank]+ref->offset);
 }
@@ -35,6 +34,11 @@ void art_draw(int id,int frame,int x,int y) {
     if(id<0||id>=ART_COUNT)return;
     const Art*art=&artTable[id];
     if(x>=320||y>=240||x+art->width<=0||y+art->height<=0)return;
+    if(id==cachedTheme&&frame>=0&&frame<128&&cachedTiles[frame]){
+        gfx_rletsprite_t*sprite=(gfx_rletsprite_t*)cachedTiles[frame];
+        if(x>=0&&y>=0&&x+16<=320&&y+16<=240)gfx_RLETSprite_NoClip(sprite,x,y);else gfx_RLETSprite(sprite,x,y);
+        return;
+    }
     gfx_sprite_t*sprite=art_sprite(id,frame);
     if(x>=0&&y>=0&&x+art->width<=320&&y+art->height<=240)gfx_TransparentSprite_NoClip(sprite,x,y);
     else gfx_TransparentSprite(sprite,x,y);
@@ -47,7 +51,7 @@ void art_cache_level(const uint8_t*back,const uint8_t*solid,const uint8_t*decor,
     for(int slot=0;slot<16;slot++) {
         int best=0;for(int i=1;i<128;i++)if(counts[i]>counts[best])best=i;
         if(!counts[best])break;counts[best]=0;
-        memcpy(tileCache[slot],art_sprite(theme,best),258);cachedTiles[best]=tileCache[slot];
+        gfx_ConvertToRLETSprite(art_sprite(theme,best),(gfx_rletsprite_t*)tileCache[slot]);cachedTiles[best]=tileCache[slot];
     }
     cachedTheme=theme;
 }

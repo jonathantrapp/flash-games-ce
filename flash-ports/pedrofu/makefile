@@ -12,5 +12,5 @@ include ../../local-tools/cedev/CEdev/meta/makefile.mk
 
 ifeq ($(FAST_RENDER),YES)
 # Keep gameplay/menu code compact while compiling pixel loops for speed.
-$(OBJDIR)/src/render.c.s $(OBJDIR)/src/render_cache.c.s $(OBJDIR)/src/world.c.s: override CFLAGS += -O2
+$(OBJDIR)/src/render.c.s $(OBJDIR)/src/render_cache.c.s: override CFLAGS += -O2
 endif

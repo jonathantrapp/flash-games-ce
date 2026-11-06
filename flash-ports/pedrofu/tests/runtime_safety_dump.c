@@ -3,6 +3,7 @@ static int parity_rand(void){return 99;}
 #define rand parity_rand
 #include "../src/enemies.c"
 Game g; Progress progress;
+static uint8_t fixture_map[19200];
 static int story_calls,story_event,drop_calls,maxdepth,depth;
 void __cyg_profile_func_enter(void *fn,void *caller) __attribute__((no_instrument_function));
 void __cyg_profile_func_exit(void *fn,void *caller) __attribute__((no_instrument_function));
@@ -19,6 +20,12 @@ void drop_power(int a,int b,int c){(void)a;(void)b;(void)c;drop_calls++;}
 void player_hurt(int a,int b,int c,int d){(void)a;(void)b;(void)c;(void)d;}
 void story_start(int a,int b){(void)b;story_calls++;story_event=a;g.mode=DIALOGUE;}
 void fire_shot(int a,int b,int c,int d,int e,int f,int h){(void)a;(void)b;(void)c;(void)d;(void)e;(void)f;(void)h;}
+/* Aiming/projectile effects are outside this fixture's safety assertions;
+ * check_combat.py links their real implementations instead. */
+void combat_vector(int dx,int dy,int speed,int*vx,int*vy){(void)dx;(void)dy;(void)speed;*vx=*vy=0;}
+void combat_angle(int angle,int speed,int*vx,int*vy){(void)angle;(void)speed;*vx=*vy=0;}
+void fire_straight_arrow(int x,int y,int vx,int vy,int damage){(void)x;(void)y;(void)vx;(void)vy;(void)damage;}
+void projectile_reset_stomp(void){}
 void move_body(int*x,int*y,int*v,int dx,int bw,int bh,int*floor){(void)bw;(void)bh;*x+=dx;*y+=*v;*floor=1;*v=0;}
 void collect_power(int w){(void)w;}
 static void tent_launch(Prop *p) {
@@ -83,7 +90,7 @@ void wrap_text(int x, int y, int width, const char *s, int step) {
     }
     line[n] = 0; if (n) print_fit(line, x, y);
 }
-static void reset(void){memset(&g,0,sizeof g);memset(&progress,0,sizeof progress);g.mode=PLAY;g.w=120;g.h=40;g.n=4800;g.back=g.mapdata;g.solid=g.mapdata+4800;g.decor=g.mapdata+9600;g.good=g.mapdata+14400;g.face=1;g.carry=-1;g.hp=500;g.px=200*16;g.py=200*16;story_calls=drop_calls=0;story_event=-1;}
+static void reset(void){memset(&g,0,sizeof g);memset(&progress,0,sizeof progress);memset(fixture_map,0,sizeof fixture_map);g.mode=PLAY;g.w=120;g.h=40;g.n=4800;g.back=fixture_map;g.solid=fixture_map+4800;g.decor=fixture_map+9600;g.good=fixture_map+14400;g.face=1;g.carry=-1;g.hp=500;g.px=200*16;g.py=200*16;story_calls=drop_calls=0;story_event=-1;}
 static void result(const char*name,int actual,int expected){printf("R %s %d %d\n",name,actual,expected);}
 static int corrupted(const unsigned char*a){int n=0;for(int i=0;i<4096;i++)if((i<128||i>=224)&&a[i]!=0xa5)n++;return n;}
 int main(void){

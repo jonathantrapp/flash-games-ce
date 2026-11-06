@@ -1,5 +1,7 @@
 # Parity score (2026-11-05)
 
+**Historical scoring snapshot.** Subsequent code changes are documented in [CHECKPOINT-2026-11-06.md](CHECKPOINT-2026-11-06.md). These percentages have not been recalculated and must not be presented as current completion or gameplay fidelity.
+
 This scores every item of the [parity audit](PARITY-AUDIT.md) checklist against the current code and test evidence. It measures **audit coverage and evidence**, not how closely the games play like the originals: no side-by-side comparison with the original running in Ruffle and no full playthrough has been done, so true gameplay fidelity is unmeasured.
 
 ## Rubric
