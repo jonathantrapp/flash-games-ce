@@ -1,4 +1,14 @@
 #include "game.h"
+/* Integer Euclidean normalization; unlike the previous L1 normalization this
+ * preserves original projectile/charge speed on diagonal trajectories. */
+void combat_vector(int dx,int dy,int speed,int *vx,int *vy){
+ while(absi(dx)>1024||absi(dy)>1024){dx/=2;dy/=2;}
+ unsigned long value=(unsigned long)((long)dx*dx+(long)dy*dy),root=0,bit=1UL<<30;
+ if(!value){*vx=*vy=0;return;}
+ while(bit>value)bit>>=2;
+ while(bit){if(value>=root+bit){value-=root+bit;root=(root>>1)+bit;}else root>>=1;bit>>=2;}
+ *vx=(int)((long)dx*speed*16/((long)root*FPS));*vy=(int)((long)dy*speed*16/((long)root*FPS));
+}
 void fire_shot(int type,int side,int x,int y,int vx,int vy,int damage){for(int i=0;i<MAX_SHOTS;i++)if(!g.shot[i].active){g.shot[i]=(Shot){x*16,y*16,vx,vy,damage,type==56?9:type==54?12:type==53?60:180,type,side,1,0,vx<0?-1:1};return;}}
 void projectile_update(void){
  for(int i=0;i<MAX_SHOTS;i++){Shot *s=&g.shot[i];if(!s->active)continue;if(--s->ttl<=0){s->active=0;continue;}

@@ -1,8 +1,13 @@
 /* Pedro Kicks Back CE: input, fixed-step simulation and the main loop. */
 #include "game.h"
 #include <sys/timers.h>
+#include "intro.h"
 
 #define STEP_TICKS (32768 / FPS)
+
+/* Native timing counters: frames/s, steps/s, simulation ms, draw ms, mode.
+ * Optional profile overlay is a diagnostic build, not the shipped HUD. */
+volatile uint32_t pedro_profile[5];
 
 #define KEY_DOWN(k) (kb_Data[(k) >> 8] & ((k) & 0xFF))
 static uint16_t read_keys(void) {
@@ -26,6 +31,8 @@ static uint16_t read_keys(void) {
 void game_step(void) {
     g.ticks++;
     if (g.notice_timer) g.notice_timer--;
+    if (intro_is_active() && (g.tap & MENUKEY)) { g.mode=PAUSE;return; }
+    if (intro_update()) return;
     story_triggers();
     if (g.mode != PLAY) return;
     player_update();
@@ -57,25 +64,48 @@ int main(void) {
     g.mode = TITLE; g.level = 0; g.story_event = -1; g.arena = -1; g.carry = -1;
     timer_Set(1, 0); timer_Enable(1, TIMER_32K, TIMER_NOINT, TIMER_UP);
     uint32_t last = timer_GetSafe(1, TIMER_UP), accumulator = 0;
+    uint32_t epoch = last, frames = 0, simsteps = 0, simtime = 0, drawtime = 0;
+    uint16_t pending_taps = 0;
     uint16_t previous = 0;
     while (1) {
         uint16_t keys = read_keys();
         if (keys & EXITKEY) break;
-        g.keys = keys; g.tap = keys & ~previous; previous = keys;
+        pending_taps |= keys & ~previous;
+        g.keys = keys; g.tap = pending_taps; previous = keys;
         uint32_t now = timer_GetSafe(1, TIMER_UP); accumulator += now - last; last = now;
         g.frame++;
+        uint32_t simstart = timer_GetSafe(1, TIMER_UP);
         if (g.mode == PLAY) {
             int steps = 0;
             while (accumulator >= STEP_TICKS && steps < 4) {
-                game_step(); g.tap = 0; accumulator -= STEP_TICKS; steps++;
+                game_step(); g.tap = 0; pending_taps = 0; accumulator -= STEP_TICKS; steps++; simsteps++;
                 if (g.mode != PLAY) break;
             }
             if (steps == 4) accumulator = 0;
         } else if (g.mode == DIALOGUE) {
-            story_update(); accumulator = 0; if (g.mode == DIALOGUE) g.ticks++;
-        } else { frontend_update(); accumulator = 0; }
+            story_update(); pending_taps = 0; accumulator = 0; if (g.mode == DIALOGUE) g.ticks++;
+        } else { frontend_update(); pending_taps = 0; accumulator = 0; }
+        uint32_t drawstart = timer_GetSafe(1, TIMER_UP);
+        simtime += drawstart - simstart;
         if (g.mode == TITLE || g.mode == HELP || g.mode == MAP || g.mode == SKILLS || g.mode == ENDING) draw_frontend();
         else { draw_game(); if (g.mode != PLAY && g.mode != DIALOGUE) draw_frontend(); }
+        drawtime += timer_GetSafe(1, TIMER_UP) - drawstart;
+        frames++;
+        if (now - epoch >= 32768) {
+            uint32_t elapsed = now - epoch;
+            pedro_profile[0] = frames * 32768 / elapsed;
+            pedro_profile[1] = simsteps * 32768 / elapsed;
+            pedro_profile[2] = simtime * 1000 / elapsed;
+            pedro_profile[3] = drawtime * 1000 / elapsed;
+            pedro_profile[4] = g.mode;
+            epoch = now; frames = simsteps = simtime = drawtime = 0;
+        }
+#ifdef PEDRO_PROFILE
+        extern volatile uint32_t pedro_draw_profile[6];
+        {char timing[64]; snprintf(timing, sizeof timing, "FPS%lu STEP%lu SIM%lu DRAW%lu", pedro_profile[0], pedro_profile[1], pedro_profile[2], pedro_profile[3]);
+        gfx_SetColor(cBlack); gfx_FillRectangle(0, 32, 320, 20); gfx_SetTextFGColor(cWhite); print_fit(timing, 2, 33);
+        snprintf(timing, sizeof timing, "SK%lu MAP%lu ACT%lu DEC%lu HUD%lu",pedro_draw_profile[0]/33,pedro_draw_profile[1]/33,pedro_draw_profile[2]/33,pedro_draw_profile[3]/33,pedro_draw_profile[4]/33);print_fit(timing,2,43);}
+#endif
         update_diagnostics();
         gfx_SwapDraw();
     }

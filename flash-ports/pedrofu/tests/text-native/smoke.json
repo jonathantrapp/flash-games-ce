@@ -1,0 +1,40 @@
+{
+  "rom": "C:/Users/jonat/Downloads/ti-84ce.rom",
+  "transfer_files": [
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\libload.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\graphx.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\keypadc.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\tests\\text-native\\bin\\PDTEXT.8xp"
+  ],
+  "target": {
+    "name": "PDTEXT",
+    "isASM": true
+  },
+  "delay_after_step": 0,
+  "sequence": [
+    "action|launch",
+    "delay|4000",
+    "hashWait|done",
+    "hashWait|buffers"
+  ],
+  "hashes": {
+    "done": {
+      "description": "Native text diagnostic finished",
+      "start": "0xd072c6",
+      "size": 1,
+      "expected_CRCs": [
+        "A016D052"
+      ],
+      "timeout": 10000
+    },
+    "buffers": {
+      "description": "Actual GraphX font: dialogue/help/stress buffers and print coordinates remain valid",
+      "start": "0xd072c6",
+      "size": 8,
+      "expected_CRCs": [
+        "294F9C48"
+      ],
+      "timeout": 1000
+    }
+  }
+}

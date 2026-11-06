@@ -1,0 +1,265 @@
+{
+  "tests": [
+    {
+      "name": "Yak_Life",
+      "actual": 500,
+      "expected": 500,
+      "passed": true
+    },
+    {
+      "name": "Yak_Money",
+      "actual": 10,
+      "expected": 10,
+      "passed": true
+    },
+    {
+      "name": "Yak_Armor_Life",
+      "actual": 2000,
+      "expected": 2000,
+      "passed": true
+    },
+    {
+      "name": "Yak_Armor_Money",
+      "actual": 50,
+      "expected": 50,
+      "passed": true
+    },
+    {
+      "name": "Yak_Archer_Life",
+      "actual": 500,
+      "expected": 500,
+      "passed": true
+    },
+    {
+      "name": "Yak_Archer_Money",
+      "actual": 10,
+      "expected": 10,
+      "passed": true
+    },
+    {
+      "name": "FireMan_Life",
+      "actual": 500,
+      "expected": 500,
+      "passed": true
+    },
+    {
+      "name": "FireMan_Money",
+      "actual": 10,
+      "expected": 10,
+      "passed": true
+    },
+    {
+      "name": "Yak_Ninja_Life",
+      "actual": 2000,
+      "expected": 2000,
+      "passed": true
+    },
+    {
+      "name": "Yak_Ninja_Money",
+      "actual": 50,
+      "expected": 50,
+      "passed": true
+    },
+    {
+      "name": "Yak_Bruiser_Life",
+      "actual": 2000,
+      "expected": 2000,
+      "passed": true
+    },
+    {
+      "name": "Yak_Bruiser_Money",
+      "actual": 20,
+      "expected": 20,
+      "passed": true
+    },
+    {
+      "name": "Yak_Big_Life",
+      "actual": 20000,
+      "expected": 20000,
+      "passed": true
+    },
+    {
+      "name": "Yak_Big_Money",
+      "actual": 150,
+      "expected": 150,
+      "passed": true
+    },
+    {
+      "name": "Yak_Master_Life",
+      "actual": 15000,
+      "expected": 15000,
+      "passed": true
+    },
+    {
+      "name": "Yak_Master_Money",
+      "actual": 500,
+      "expected": 500,
+      "passed": true
+    },
+    {
+      "name": "Yak_Archer_Elite_Life",
+      "actual": 2000,
+      "expected": 2000,
+      "passed": true
+    },
+    {
+      "name": "Yak_Archer_Elite_Money",
+      "actual": 70,
+      "expected": 70,
+      "passed": true
+    },
+    {
+      "name": "Barrier_Orb_Life",
+      "actual": 2000,
+      "expected": 2000,
+      "passed": true
+    },
+    {
+      "name": "Barrier_Orb_Money",
+      "actual": 5,
+      "expected": 5,
+      "passed": true
+    },
+    {
+      "name": "Yakolyte_Life",
+      "actual": 3000,
+      "expected": 3000,
+      "passed": true
+    },
+    {
+      "name": "Yakolyte_Money",
+      "actual": 30,
+      "expected": 30,
+      "passed": true
+    },
+    {
+      "name": "Robot_Life",
+      "actual": 10000,
+      "expected": 10000,
+      "passed": true
+    },
+    {
+      "name": "Robot_Money",
+      "actual": 200,
+      "expected": 200,
+      "passed": true
+    },
+    {
+      "name": "Iron_Priest_Life",
+      "actual": 3000,
+      "expected": 3000,
+      "passed": true
+    },
+    {
+      "name": "Iron_Priest_Money",
+      "actual": 80,
+      "expected": 80,
+      "passed": true
+    },
+    {
+      "name": "nonfinal_master_starts_dialogue",
+      "actual": 1,
+      "expected": 1,
+      "passed": true
+    },
+    {
+      "name": "nonfinal_master_event",
+      "actual": 5,
+      "expected": 5,
+      "passed": true
+    },
+    {
+      "name": "barrier_survives_first_of_two_orbs",
+      "actual": 1,
+      "expected": 1,
+      "passed": true
+    },
+    {
+      "name": "barrier_drops_after_last_orb",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "tag_gate_waits_for_tagged_tent",
+      "actual": 56,
+      "expected": 56,
+      "passed": true
+    },
+    {
+      "name": "combo_chain_all_dead",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "combo_chain_each_killed_once",
+      "actual": 96,
+      "expected": 96,
+      "passed": true
+    },
+    {
+      "name": "regular_tent_finishes_four_spawns_after_player_leaves",
+      "actual": 4,
+      "expected": 4,
+      "passed": true
+    },
+    {
+      "name": "regular_tent_clears_tag_after_four_spawns",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "grass_tent_finishes_six_spawns_after_player_leaves",
+      "actual": 6,
+      "expected": 6,
+      "passed": true
+    },
+    {
+      "name": "grass_tent_clears_tag_after_six_spawns",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "stage_two_tents_awaken_together",
+      "actual": 2,
+      "expected": 2,
+      "passed": true
+    },
+    {
+      "name": "wrap_text_96byte_buffer_overwrite",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "print_fit_96byte_buffer_overwrite",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "negative_text_origin_rejected",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    }
+  ],
+  "observations": [
+    {
+      "name": "combo_recursion_depth",
+      "value": 1
+    }
+  ],
+  "returncode": 0,
+  "stderr": "",
+  "source_sha256": {
+    "enemies.c": "37eb9a4607e4bbc6716df3b2335c89106ece4872c984016fe9ae2f1750a4ffa6",
+    "render.c": "13fe1ce61ab5425de0982e860300806df265f27ba7557934616be50ee58225c5",
+    "world.c": "1b415d1f1127b91e6007534de6e62f584aed27fc471151411d10d35348c942cf",
+    "game.h": "9e8fe59efa514077eaa526f9282f30668e3e7a2b1630065e3aa11b38466c7269"
+  },
+  "limitations": "Host32-bit int is wider than ez80int24. Enemy code unchanged with hardware stubs. Text96-byte arrays replaced by guarded larger backing buffers only; synthetic narrow-glyph input establishes potential memory overwrite, not proof of user crash trigger."
+}

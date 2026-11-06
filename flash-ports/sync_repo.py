@@ -11,7 +11,9 @@ extensions = {'.py', '.c', '.h', '.as', '.md', '.json', '.png', '.bin'}
 count = 0
 for source in SRC.rglob('*'):
     rel = source.relative_to(SRC)
-    if not source.is_file() or excluded.intersection(rel.parts):
+    if not source.is_file() or excluded.intersection(rel.parts) or any(part.startswith(('obj_', 'bin_')) for part in rel.parts):
+        continue
+    if source.suffix == '.bin' and 'assets' not in rel.parts:
         continue
     if source.name != 'makefile' and source.suffix not in extensions:
         continue

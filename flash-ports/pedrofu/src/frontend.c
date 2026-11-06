@@ -8,9 +8,9 @@ static char text[64];
 
 static void panel(int x, int y, int w, int h) { gfx_SetColor(cPanel); gfx_FillRectangle(x, y, w, h); gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, h); }
 static void shadow(const char *s, int x, int y, int color) { gfx_SetTextFGColor(cBlack); print_fit(s, x + 1, y + 1); gfx_SetTextFGColor(color); print_fit(s, x, y); }
-static void centered(int y, const char *s, int color) { shadow(s, (320 - gfx_GetStringWidth(s)) / 2, y, color); }
+static void centered(int y, const char *s, int color) { int w = gfx_GetStringWidth(s); shadow(s, w >= 316 ? 2 : (320 - w) / 2, y, color); }
 static int available_levels(void) { int n = levels_passed(); return n > 14 ? 14 : n; }
-static void start_stage(int level) { if (load_level(level)) { g.mode = PLAY; g.previousmode = MAP; } }
+static void start_stage(int level) { if (load_level(level)) g.previousmode = MAP; }
 
 /* ---- skill screen geometry follows the original SkillState ---- */
 static int skill_x(int id) { int group = skillgrid[id][0], rank = skillgrid[id][1], col = skillgrid[id][2]; return 27 + group * 103 + col * 23 + (group > 1) + (rank > 0 && rank < 4) - (rank == 4); }

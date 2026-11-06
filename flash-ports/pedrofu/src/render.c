@@ -1,8 +1,29 @@
 /* World, actor and HUD drawing for Pedro Kicks Back CE. */
 #include "game.h"
+#include "sky_cache.h"
+#include "intro.h"
+#include "render_cache.h"
+#ifdef PEDRO_PROFILE
+#include <sys/timers.h>
+volatile uint32_t pedro_draw_profile[6];
+#define DRAW_START uint32_t phase_time=timer_GetSafe(1,TIMER_UP)
+#define DRAW_PHASE(i) do { uint32_t n=timer_GetSafe(1,TIMER_UP);pedro_draw_profile[i]=n-phase_time;phase_time=n; }while(0)
+#else
+#define DRAW_START
+#define DRAW_PHASE(i)
+#endif
 
 uint8_t cBlack, cWhite = 255, cYellow = 254, cGold = 252, cRed, cGreen, cCyan, cPanel;
 static int camx, camy;
+
+static void draw_sky(void) {
+    for (unsigned i=0;i<COUNT(cached_sky_rows);i++) {
+        gfx_SetColor(cached_sky_rows[i][0]);
+        gfx_FillRectangle_NoClip(0,cached_sky_rows[i][1],320,cached_sky_rows[i][2]);
+    }
+    gfx_RLETSprite_NoClip((gfx_rletsprite_t *)cached_sky_overlay0,0,0);
+    gfx_RLETSprite_NoClip((gfx_rletsprite_t *)cached_sky_overlay1,160,0);
+}
 
 static uint8_t nearest_color(const uint8_t *palette, int r, int g, int b) {
     int best = 1, best_distance = 0x7fffff;
@@ -25,19 +46,28 @@ void pick_colors(void) {
 
 /* GraphX does not clip text at the right edge (it wraps into the next scanline), so truncate to fit. */
 void print_fit(const char *s, int x, int y) {
+    if (!s || y < 0 || y > 232 || x > 315) return;
+    if (x < 0) x = 0;
     if (x + (int)gfx_GetStringWidth(s) <= 316) { gfx_PrintStringXY(s, x, y); return; }
-    char buffer[96]; int n = 0;
+    char buffer[96] = {0}; int n = 0;
     while (s[n] && n < 90) { buffer[n] = s[n]; buffer[n + 1] = 0; if (x + (int)gfx_GetStringWidth(buffer) > 316) { buffer[n] = 0; break; } n++; }
     gfx_PrintStringXY(buffer, x, y);
 }
 void center_text(int y, const char *s) { int w = gfx_GetStringWidth(s); print_fit(s, w >= 316 ? 2 : (320 - w) / 2, y); }
 void wrap_text(int x, int y, int width, const char *s, int step) {
     char line[96]; int n = 0;
-    while (*s) {
+    if (!s || width <= 0 || step <= 0) return;
+    while (*s && y <= 232) {
         if (*s == '\n') { line[n] = 0; print_fit(line, x, y); n = 0; y += step; s++; continue; }
         if (*s == ' ') { if (n && n < 90) line[n++] = ' '; s++; continue; }
         int len = 0; while (s[len] && s[len] != ' ' && s[len] != '\n') len++;
         if (len > 40) len = 40;
+        /* Check capacity before copying: a narrow-font line can contain many
+         * characters even when it still fits the requested pixel width. */
+        if (n + len >= (int)sizeof line) {
+            line[n] = 0; print_fit(line, x, y); y += step; n = 0;
+            if (y > 232) break;
+        }
         memcpy(line + n, s, len); line[n + len] = 0;
         if (n && (int)gfx_GetStringWidth(line) > width) {
             while (n && line[n - 1] == ' ') n--;
@@ -49,8 +79,7 @@ void wrap_text(int x, int y, int width, const char *s, int step) {
 }
 
 static void tile(int t, int x, int y) {
-    if (t <= 0 || t >= 296) return;
-    gfx_TransparentSprite((gfx_sprite_t *)(tiledata[t / 148] + (t % 148) * 258), x, y);
+    cached_tile(t,x,y);
 }
 static int pedro_frame(void) {
     static const uint8_t walk[5] = {1, 2, 3, 4, 0}, crawl[4] = {5, 23, 24, 23}, carrywalk[5] = {11, 12, 13, 14, 10}, kick[6] = {7, 6, 6, 6, 6, 7};
@@ -143,14 +172,18 @@ static void draw_hud(void) {
     }
 }
 void draw_game(void) {
+    DRAW_START;
     int tx = g.px / 16 + 4 - 160, ty = g.py / 16 + 8 - 120;
     if (g.ticks <= 1) { camx = tx; camy = ty; }
     camx += (clampi(tx, 0, (int)g.w * 16 - 320) - camx) / 3; camy += (clampi(ty, 0, (int)g.h * 16 - 218) - camy) / 3;
     camx = clampi(camx, 0, (int)g.w * 16 - 320 < 0 ? 0 : (int)g.w * 16 - 320); camy = clampi(camy, 0, (int)g.h * 16 - 218 < 0 ? 0 : (int)g.h * 16 - 218);
-    gfx_Sprite((gfx_sprite_t *)uidata[2][0], 0, 0); gfx_Sprite((gfx_sprite_t *)uidata[2][1], 160, 0);
+    if(intro_is_active())intro_camera(&camx,&camy);
+    draw_sky();
+    DRAW_PHASE(0);
     int x0 = camx / 16, y0 = camy / 16, x1 = (camx + 320) / 16 + 1, y1 = (camy + 218) / 16 + 1;
     if (x1 > (int)g.w) x1 = g.w; if (y1 > (int)g.h) y1 = g.h;
     for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) { int i = y * g.w + x; tile(g.back[i], x * 16 - camx, y * 16 - camy + 22); tile(g.solid[i], x * 16 - camx, y * 16 - camy + 22); }
+    DRAW_PHASE(1);
     for (int i = 0; i < g.props; i++) if (g.prop[i].active) prop_sprite(&g.prop[i]);
     for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) {
         int t = g.good[y * g.w + x], which = t == 12 ? 5 : t == 6 ? 0 : (t >= 7 && t <= 9) ? t - 6 : t == 36 ? 4 : t == 37 ? 6 : -1;
@@ -166,11 +199,15 @@ void draw_game(void) {
         if (e->freeze) { gfx_SetColor(cCyan); gfx_Rectangle(ex - camx, ey - camy + 22, a->w, a->h); }
         if (e->type == 42 || e->type == 40) { /* barrier orbs and the master need no extra overlay */ }
     }
+    DRAW_PHASE(2);
     if (g.carry >= 0 && g.carry < g.enemies) { const Enemy *e = &g.enemy[g.carry]; const ArtDef *a = &artdef[e->type]; sprite_at(e->type, e->fr, e->face, g.px / 16 - a->w / 2 + 4, g.py / 16 - a->h + 2); }
     for (int i = 0; i < MAX_SHOTS; i++) if (g.shot[i].active) shot_sprite(&g.shot[i]);
-    if (g.mode != DEFEAT && (!g.invul || (g.ticks & 2)) && g.action != PA_DIE) sprite_at(0, pedro_frame(), g.face, g.px / 16 - 6, g.py / 16 - 3);
+    if (intro_is_active())intro_draw(camx,camy-22);
+    else if (g.mode != DEFEAT && (!g.invul || (g.ticks & 2)) && g.action != PA_DIE) sprite_at(0, pedro_frame(), g.face, g.px / 16 - 6, g.py / 16 - 3);
     for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) tile(g.decor[y * g.w + x], x * 16 - camx, y * 16 - camy + 22);
+    DRAW_PHASE(3);
     gfx_SetColor(cBlack); gfx_FillRectangle(0, 0, 320, 22);
     draw_hud();
+    DRAW_PHASE(4);
     if (g.mode == DIALOGUE) story_draw();
 }
