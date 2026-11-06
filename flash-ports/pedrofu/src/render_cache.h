@@ -7,4 +7,6 @@ void cached_tile(int tile,int x,int y);
 void cached_sprite(const uint8_t *source,int x,int y);
 void cache_hud(void);
 bool cached_hud(uint8_t id,uint8_t frame,int x,int y);
+const uint8_t *cached_tile_opacity(void);
+void invalidate_scene_cache(void);
 #endif

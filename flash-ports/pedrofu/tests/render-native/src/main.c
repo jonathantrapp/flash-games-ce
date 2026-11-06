@@ -33,6 +33,7 @@ static uint8_t replacement;
 static struct {uint8_t before[64],pixels[7000],after[64];} hud_guard;
 #define hud_storage hud_guard.pixels
 static gfx_rletsprite_t *hud_lookup[UI_BADGI+1][3];
+const uint8_t *cached_tile_opacity(void){return tile_opaque;}
 
 void cache_hud(void) {
     unsigned used=0;

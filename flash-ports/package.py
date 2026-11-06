@@ -10,7 +10,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 HERE = ROOT / 'flash-ports'
 p = argparse.ArgumentParser(description=__doc__)
-p.add_argument('--name', default='FlashGamesCE-v5-preview')
+p.add_argument('--name', default='FlashGamesCE-v6-preview')
 a = p.parse_args()
 assert a.name and all(c.isalnum() or c in '-_' for c in a.name)
 OUT = ROOT / 'release' / a.name
@@ -31,10 +31,10 @@ inputs += [ROOT / 'local-tools/cemu/clibs/clibs' / (n + '.8xv')
 for source in inputs:
     shutil.copy2(source, OUT / source.name)
 for source, name in [(HERE / 'README.md', 'START-HERE.md'), (HERE / 'CREDITS.md', 'CREDITS.md'),
-                     (HERE / 'CONTINUATION-v5-2026-11-06.md', 'CHECKPOINT.md'),
+                     (HERE / 'CONTINUATION-v6-2026-11-06.md', 'CHECKPOINT.md'),
                      (HERE / 'scoutcamp/README.md', 'Scouts-Controls-and-Notes.md'),
                      (HERE / 'pedrofu/PORT-NOTES.md', 'Pedro-Controls-and-Notes.md'),
-                     (HERE / 'verification/CHECKPOINT-v5.md', 'Verification.md')]:
+                     (HERE / 'verification/CHECKPOINT-v6.md', 'Verification.md')]:
     shutil.copy2(source, OUT / name)
 manifest = {f.name: {'bytes': f.stat().st_size, 'sha256': hashlib.sha256(f.read_bytes()).hexdigest()}
             for f in sorted(OUT.iterdir()) if f.is_file() and f.suffix in ['.8xp', '.8xv']}

@@ -22,6 +22,9 @@ for source in SRC.rglob('*'):
     shutil.copy2(source, dest)
     count += 1
 shots = {'scout-title.png': 'scoutcamp/new_menu',
+         'pedro-v6-stationary.png': 'pedrofu/v6_final_production_pair_10s',
+         'pedro-v6-moving.png': 'pedrofu/v6_final_production_motion_9s',
+         'pedro-v6-tutorial.png': 'pedrofu/v6_arrow_tutorial',
          'pedro-v5-kick.png': 'pedrofu/v5_arrow_tutorial',
          'pedro-v5-arrows.png': 'pedrofu/v5_arrow_continuation',
          'pedro-v5-performance.png': 'pedrofu/v5_actor_trial',
@@ -91,4 +94,27 @@ for game in ['pedrofu','scoutcamp']:
 source=SRC/'pedrofu/tests/render-native/smoke.log'
 dest=DST/'flash-ports/pedrofu/tests/render-native/smoke.log'
 dest.write_text(source.read_text().rstrip()+'\n')
+for name in ['CHECKPOINT-v6.md','STAGE-SMOKE-v6_final-pedrofu.md']:
+    shutil.copy2(SRC/'verification'/name,DST/'flash-ports/verification'/name)
+tags=['v6_baseline_pair','v6_baseline_motion','v6_final_pair','v6_final_motion',
+      'v6_final_production_pair','v6_final_production_motion']
+for tag in tags:
+    source=SRC/'verification/pedrofu'/(tag+'-benchmark.json')
+    dest=DST/'flash-ports/verification/pedrofu'/source.name
+    dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,dest)
+scenarios=[f'v6_final_stage{i:02d}' for i in range(1,16)]+[
+ 'v6_transitions','v6_arrow_tutorial','v6_exit','v6_input_stress']
+for tag in tags:
+    scenarios += [tag+'_'+str(n)+'s' for n in ([3,9] if 'motion' in tag else [4,10])]
+for scenario in scenarios:
+    for name in ['smoke.log','run-metadata.json']:
+        source=SRC/'verification/pedrofu'/scenario/name
+        if source.exists():
+            dest=DST/'flash-ports/verification/pedrofu'/scenario/name
+            dest.parent.mkdir(parents=True,exist_ok=True)
+            if name=='smoke.log':dest.write_text(source.read_text().rstrip()+'\n')
+            else:shutil.copy2(source,dest)
+source=SRC/'pedrofu/tests/scene-native/smoke.log'
+dest=DST/'flash-ports/pedrofu/tests/scene-native/smoke.log'
+dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
 print('Synced', count, 'project files and checkpoint evidence to', DST)

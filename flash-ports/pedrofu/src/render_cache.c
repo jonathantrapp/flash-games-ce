@@ -28,6 +28,7 @@ static uint8_t replacement;
  * Each slot reserves GraphX's documented worst-case output size. */
 static uint8_t hud_storage[7000];
 static gfx_rletsprite_t *hud_lookup[UI_BADGI+1][3];
+const uint8_t *cached_tile_opacity(void){return tile_opaque;}
 
 void cache_hud(void) {
     unsigned used=0;

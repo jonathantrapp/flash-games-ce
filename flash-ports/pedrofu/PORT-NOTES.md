@@ -33,7 +33,7 @@
 ## Not done, or not verified
 
 - The original burning-blimp flight, explosions, parachute descent and canopy collapse are now integrated before the opening conversation. Native captures and the checkpoint test cover that transition. Fire scaling, additive alpha and camera effects are approximated.
-- Performance remains a blocker: v4's terrain/HUD caching reached 12 FPS in the sampled stage-one scene; v5's larger actor slots reach 13 FPS there. This is one instrumented scene, not a minimum or a physical-calculator result. The RAM-clear report is not proven fixed. The user reports arrow input after the kick instruction, launched through arTIfiCE on revision 8 / OS 5.8.2.29; local OS 5.3 arrow-input runs reach the instruction and continue to the Yak conversation without reproducing the reset.
+- v6 rendering exceeds 30 FPS in the tested stationary-camera scene and reaches about 22 FPS in the movement sequence. Exact sky rows, cached notice pixels and per-framebuffer repair regions preserve tested native pixels. Earlier v5's 13 FPS included a costly diagnostic overlay; its comparable overlay-free baseline measured 17.3 FPS stationary / 16.7 moving. See [v6 verification](../verification/CHECKPOINT-v6.md). Scrolling still falls short of sustained 30 FPS, and physical performance remains unverified. The RAM-clear report after arrow input at the kick instruction, launched through arTIfiCE on revision 8 / OS 5.8.2.29, remains unresolved.
 - No music or sound (the calculator has none); screen shake and some flash effects are omitted.
 - Skill descriptions now use original text/formulas; integer formatting can differ by 0.01 from Flash floating-point rounding. Hover/history and some options/tooltip presentation remain different.
 - Move timing, hitboxes, enemy AI and boss phases are translated from the AS3 but have not been compared frame by frame with the original running in Ruffle. Stages are verified to load and run in the emulator, not to be completable.
@@ -47,7 +47,7 @@
 1. `build_assets.py`: stage maps (`PDLV01..15`) and base tiles.
 2. `build_full_assets.py`: original sprite sheets, UI art, palette, skill metadata (`src/resources.h`, `src/ui_resources.h`, `src/skill_meta.h`).
 3. `build_intro_assets.py`: blimp, explosion and burning-uppercut frames using the existing palette.
-4. `build_render_cache.py`: exact original sky pixels in a row-fill/RLET representation.
+4. `build_row_sky.py`: exact original sky rows in the production resident row stream. `build_render_cache.py` retains the historical row-fill/RLET representation used by the v5 comparison fixture.
 5. `bundle_assets.py`: packs the small resources into 19 signed banks of at most 32 KB (`PDB00..`) and writes `src/bundle.h`.
 6. `build_skill_descriptions.py`: generates original live skill descriptions and checks every numeric intermediate against signed24-bit limits.
 

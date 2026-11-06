@@ -18,6 +18,6 @@
   ],
   "returncode": 0,
   "failed": false,
-  "cache_sha256": "25e5b599e904f6f72678ede5348b1e20082c67c7e577a2b868a29fa84febfd7d",
+  "cache_sha256": "bc520508221b08b3e198be7c0c9720129a5dc19d302bb38cfdd5856be09ccb5e",
   "scope": "Native actual renderer compared with original GraphX transparent sprite draws: all296 tiles under15 stage cache selections,4 screen-edge montages and8 HUD/clip montages, 10 actor/cache-eviction montages in both facings and at screen edges; separate 64-byte guards around every actor slot and tile/HUD storage."
 }

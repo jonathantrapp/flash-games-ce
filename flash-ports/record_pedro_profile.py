@@ -22,5 +22,10 @@ result=dict(frames_per_second=fps,steps_per_second=steps,simulation_ms_per_epoch
  profile_binary_sha256=hashlib.sha256((folder/'PEDROCE.8xp').read_bytes()).hexdigest(),
  production_binary_sha256=hashlib.sha256((HERE/'pedrofu/bin/PEDROCE.8xp').read_bytes()).hexdigest(),
  scope='Last one-second diagnostic epoch plus latest draw phases; emulator OS5.3/48MHz, not physical hardware or a scene-wide minimum.')
+if re.search(r'\s_pedro_totals\s*$',maptext,re.M):
+ result['display_wait_ms_per_epoch']=counters('pedro_profile',6)[5]
+ result['cumulative_frames_steps_wait_draw_sim_ticks']=list(counters('pedro_totals',5))
+ result['overlay']='Absent unless explicitly built with PEDRO_OVERLAY; last draw phases exclude explicit display wait.'
+if re.search(r'\s_pedro_render_stats\s*$',maptext,re.M):result['full_reused_overflow_frames']=list(counters('pedro_render_stats',3))
 (out/'performance.json').write_text(json.dumps(result,indent=2)+'\n')
 print(json.dumps(result,indent=2))

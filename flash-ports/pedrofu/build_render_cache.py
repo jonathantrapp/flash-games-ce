@@ -92,7 +92,7 @@ for half in range(2):
         decoded.extend(row)
     assert p == len(rlet)
     assert bytes(decoded) == b''.join(r[half*160:(half+1)*160] for r in rows)
-    lines += [f'static const uint8_t cached_sky_overlay{half}[] = {{']
+    lines += [f'static uint8_t cached_sky_overlay{half}[] = {{']
     lines += [','.join(map(str,rlet[i:i+48]))+',' for i in range(0,len(rlet),48)]
     lines += ['};']
 lines += ['']

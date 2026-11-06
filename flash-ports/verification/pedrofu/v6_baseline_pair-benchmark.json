@@ -1,0 +1,24 @@
+{
+  "program_sha256": "8d91f76ae74962e19acd48e8d847a83b6cd9eca8a6213b2c3ccd8c816cbc0422",
+  "short": [
+    132,
+    175,
+    7328,
+    241946,
+    34453
+  ],
+  "long": [
+    236,
+    356,
+    7580,
+    410411,
+    57793
+  ],
+  "interval_seconds": 6,
+  "fps": 17.333333333333332,
+  "steps_per_second": 30.166666666666668,
+  "wait_ms_per_frame": 0.07394643930288461,
+  "draw_ms_per_frame": 49.43407498873197,
+  "simulation_ms_per_frame": 6.848848783052885,
+  "scope": "Stage-one diagnostic entry, idle, CEmu OS5.3 at48MHz. Differences between matched 10s/4s runs; no overlay. Frame boundaries give sampling error. Not a whole-game minimum, original comparison or physical-calculator result."
+}

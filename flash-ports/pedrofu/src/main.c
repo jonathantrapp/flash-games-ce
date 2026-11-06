@@ -9,7 +9,9 @@
 
 /* Native timing counters: frames/s, steps/s, simulation ms, draw ms, mode.
  * Optional profile overlay is a diagnostic build, not the shipped HUD. */
-volatile uint32_t pedro_profile[5];
+volatile uint32_t pedro_profile[6];
+/* Cumulative counters permit paired-interval measurements without an overlay. */
+volatile uint32_t pedro_totals[5]; /* frames, steps, wait ticks, draw ticks, sim ticks */
 
 #define KEY_DOWN(k) (kb_Data[(k) >> 8] & ((k) & 0xFF))
 static uint16_t read_keys(void) {
@@ -67,7 +69,7 @@ int main(void) {
     g.mode = TITLE; g.level = 0; g.story_event = -1; g.arena = -1; g.carry = -1;
     timer_Set(1, 0); timer_Enable(1, TIMER_32K, TIMER_NOINT, TIMER_UP);
     uint32_t last = timer_GetSafe(1, TIMER_UP), accumulator = 0;
-    uint32_t epoch = last, frames = 0, simsteps = 0, simtime = 0, drawtime = 0;
+    uint32_t epoch = last, frames = 0, simsteps = 0, simtime = 0, drawtime = 0, waittime = 0;
     uint16_t pending_taps = 0;
     uint16_t previous = 0;
     while (1) {
@@ -88,12 +90,20 @@ int main(void) {
         } else if (g.mode == DIALOGUE) {
             story_update(); pending_taps = 0; accumulator = 0; if (g.mode == DIALOGUE) g.ticks++;
         } else { frontend_update(); pending_taps = 0; accumulator = 0; }
+        uint32_t waitstart = timer_GetSafe(1, TIMER_UP);
+        simtime += waitstart - simstart;pedro_totals[4]+=waitstart-simstart;
+        gfx_Wait();
         uint32_t drawstart = timer_GetSafe(1, TIMER_UP);
-        simtime += drawstart - simstart;
-        if (g.mode == TITLE || g.mode == HELP || g.mode == MAP || g.mode == SKILLS || g.mode == ENDING) draw_frontend();
+        waittime += drawstart-waitstart;pedro_totals[2]+=drawstart-waitstart;
+#ifdef PEDRO_PROFILE
+        extern volatile uint32_t pedro_draw_profile[6];
+        pedro_draw_profile[5]=drawstart-waitstart;
+#endif
+        if (g.mode == TITLE || g.mode == HELP || g.mode == MAP || g.mode == SKILLS || g.mode == ENDING) {invalidate_scene_cache();draw_frontend();}
         else { draw_game(); if (g.mode != PLAY && g.mode != DIALOGUE) draw_frontend(); }
-        drawtime += timer_GetSafe(1, TIMER_UP) - drawstart;
-        frames++;
+        uint32_t drawn=timer_GetSafe(1, TIMER_UP)-drawstart;
+        drawtime += drawn;pedro_totals[3]+=drawn;
+        frames++;pedro_totals[0]++;pedro_totals[1]=g.ticks;
         if (now - epoch >= 32768) {
             uint32_t elapsed = now - epoch;
             pedro_profile[0] = frames * 32768 / elapsed;
@@ -101,9 +111,10 @@ int main(void) {
             pedro_profile[2] = simtime * 1000 / elapsed;
             pedro_profile[3] = drawtime * 1000 / elapsed;
             pedro_profile[4] = g.mode;
-            epoch = now; frames = simsteps = simtime = drawtime = 0;
+            pedro_profile[5] = waittime * 1000 / elapsed;
+            epoch = now; frames = simsteps = simtime = drawtime = waittime = 0;
         }
-#ifdef PEDRO_PROFILE
+#ifdef PEDRO_OVERLAY
         extern volatile uint32_t pedro_draw_profile[6];
         {char timing[64]; snprintf(timing, sizeof timing, "FPS%lu STEP%lu SIM%lu DRAW%lu", pedro_profile[0], pedro_profile[1], pedro_profile[2], pedro_profile[3]);
         gfx_SetColor(cBlack); gfx_FillRectangle(0, 32, 320, 20); gfx_SetTextFGColor(cWhite); print_fit(timing, 2, 33);

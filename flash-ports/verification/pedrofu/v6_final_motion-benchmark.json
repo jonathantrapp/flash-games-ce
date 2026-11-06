@@ -1,0 +1,25 @@
+{
+  "program_sha256": "0e100b33c6cdc62fc554af77928ae630cd1c5a53fdf2f4ec862951bf96384d74",
+  "short": [
+    239,
+    303,
+    8367,
+    353056,
+    54525
+  ],
+  "long": [
+    401,
+    536,
+    9933,
+    565048,
+    88179
+  ],
+  "interval_seconds": 7.8,
+  "motion": true,
+  "fps": 20.76923076923077,
+  "steps_per_second": 29.871794871794872,
+  "wait_ms_per_frame": 0.2950032552083333,
+  "draw_ms_per_frame": 39.93507667824074,
+  "simulation_ms_per_frame": 6.339744285300926,
+  "scope": "Stage-one diagnostic entry, CEmu OS5.3 at48MHz, no overlay. Idle: matched 10s/4s intervals. Motion: 9 versus3 right/left cycles while holding jump after4s moving right; each cycle1.3s including release gaps. Frame boundaries give sampling error. Not a whole-game minimum, original comparison or physical-calculator result."
+}

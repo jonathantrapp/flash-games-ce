@@ -1,5 +1,7 @@
 # Pedro regression checks
 
+v6 adds `build_row_sky.py`'s full original-sky reconstruction check, `check_native_scene_render.py` (600 complete framebuffer comparisons against frozen v5, notice/scene canaries, terrain/pickup/scenery changes and overflow), and `benchmark_frames.py` (paired overlay-free frame/step counters, with normal-opening production entry available). See [CHECKPOINT-v6.md](../../verification/CHECKPOINT-v6.md). The `experiments/sky_copy.s` prototype requires its historical row-pointer table and is deliberately excluded from the production build after an OS MEMORY launch error.
+
 These tests use the actual native C sources with host hardware stubs or a standalone native GraphX diagnostic. They do not substitute for physical-calculator testing.
 
 | Test | Scope |

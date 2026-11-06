@@ -1,0 +1,25 @@
+{
+  "expected": [
+    1,
+    600,
+    0,
+    0,
+    0
+  ],
+  "observed": [
+    1,
+    600,
+    114,
+    0,
+    28
+  ],
+  "full_reused_overflow": [
+    454,
+    146,
+    12
+  ],
+  "failed": true,
+  "renderer_normalized_sha256": "e508d739df83e440b40cffc2b20a6d5189a30c305f4ce0860e73587bd3e21778",
+  "reference_sha256": "43779d982d6d64202678e5af8e6747bcb873f1eb6f977fae1fd0e58b4615d97a",
+  "scope": "Compare the actual complete renderer with frozen v5 across synthetic states.\n\nActual GraphX/fonts/assets in CEmu. This tests native pixel preservation, not\nFlash fidelity, gameplay completion or physical hardware. Intro is stubbed off.\n"
+}

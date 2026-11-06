@@ -2,7 +2,7 @@
 
 TI-84 Plus CE ports of **Scouts vs Aliens** and **Pedro Kicks Back**.
 
-The latest deliverable is the **6 November v5 development preview**. [Download the calculator package](dist/FlashGamesCE-v5-preview.zip), read [what changed and what remains](flash-ports/CONTINUATION-v5-2026-11-06.md), and see [verification details](flash-ports/verification/CHECKPOINT-v5.md). All 32 stage-entry checks passed again; these are not campaign playthroughs. Pedro's sampled emulator scene improved from 12 to 13 FPS and remains too slow. Scouts now queues keypad input, with repeated-tap checks down to 40 ms press/release intervals; its requested 4× setting measured 44.8 simulation ticks/sec against a target of 80 in the tested setup. The physical Pedro RAM-clear report and full original-versus-port campaigns remain unresolved. [Developer handoff](flash-ports/HANDOFF.md).
+The latest deliverable is the **6 November v6 performance preview**. [Download the calculator package](dist/FlashGamesCE-v6-preview.zip), read [what changed and what remains](flash-ports/CONTINUATION-v6-2026-11-06.md), and see [verification details](flash-ports/verification/CHECKPOINT-v6.md). Pedro's packaged binary measured **40 FPS stationary and 21.8 FPS during the tested movement sequence** in OS 5.3 CEmu, with approximately 30 simulation steps/sec. These are scene measurements, not physical or whole-game minima. All 600 native scene comparisons and 15 final Pedro stage-entry checks passed. Original artwork remains unchanged; the physical RAM-clear report and full campaigns remain unresolved. Scouts is the unchanged v5 program. [Developer handoff](flash-ports/HANDOFF.md).
 
 The original games and artwork are by Hamumu Software (2012). This repository tracks calculator port development and the supplied games' recovered reference material.
 
@@ -14,7 +14,13 @@ Per-game notes, controls and known gaps: [flash-ports/scoutcamp](flash-ports/sco
 
 Native calculator-emulator (CEmu) captures
 
-Latest v5 production captures:
+Latest v6 production captures (timing comes from separate counters, with no overlay):
+
+| Pedro stationary camera | Pedro movement/jump sequence |
+| --- | --- |
+| ![Stationary scene](docs/screenshots/pedro-v6-stationary.png) | ![Movement scene](docs/screenshots/pedro-v6-moving.png) |
+
+Earlier v5 production captures:
 
 | Pedro kick instruction | Pedro arrow continuation | Scouts first-wave rapid input |
 | --- | --- | --- |

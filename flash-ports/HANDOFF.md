@@ -1,4 +1,18 @@
-# Developer handoff, v5 preview, 6 November 2026
+# Developer handoff, v6 performance preview, 6 November 2026
+
+## Latest performance continuation
+
+Read `CONTINUATION-v6-2026-11-06.md` and `verification/CHECKPOINT-v6.md` first. Pedro production: 60,826 bytes, SHA-256 `be1a601f9859941f0492af6a033349355c5c953ffc64ad0c82aba4b51a7e5f35`. Scouts/data banks are unchanged from v5.
+
+Pedro now uses exact resident sky rows (`build_row_sky.py`), notice-panel pixel caching and per-framebuffer damage restoration. Scrolling, changed terrain/scenery, frontend/stage changes and bounded overflow trigger full redraws. All 600 final full-frame comparisons against frozen v5 pass, including 96-enemy repair pressure and 25-to-24 scenery changes. Tile/HUD/actor cache comparisons/canaries also pass. Intro is stubbed in the pixel fixture; production opening/input captures are separate.
+
+Important timing correction: old 13 FPS included the timing-text overlay. The comparable v5 renderer without that overlay measured 17.33 FPS stationary / 16.67 moving. The v6 profiling candidate measured 37.50 / 20.77. Final production counters are in `v6_final_production_pair-benchmark.json` and `v6_final_production_motion-benchmark.json`; these use normal opening entry and identify the packaged hash. Simulation remains approximately 30 Hz. Don't claim whole-game 30 FPS or physical-calculator performance.
+
+Resident end `0xD3C65C`; BSS end `0xD13011`, 4,039 allocator bytes remain. Keep the `0xD40000` guard. The assembly/row-pointer experiment produced an OS MEMORY error before gameplay and is excluded under `tests/experiments`; no useful performance measurement came from it. An early retained-rendering mismatch came from mail icons extending below the HUD and was fixed before the final 600-frame pass.
+
+Next performance target is scrolling: roughly 22 FPS remains below 30. Preserve fixed sky, foreground layering, original art and simulation; don't obtain higher numbers by stripping graphics or measuring an overlay-heavy baseline. Hardware rev8/OS5.8.2.29/arTIfiCE RAM clear and full original-versus-port campaigns remain open. Root NeuroFlappy work must remain untouched; push only the separate checkout using the configured contributor identity.
+
+Package default: `FlashGamesCE-v6-preview.zip`. Per-stage final results: `STAGE-SMOKE-v6_final-pedrofu.md`. Separate production captures cover opening/arrow input, pause→skills/details→map, stress and observed exit; their metadata distinguishes the pre-sentinel candidate where applicable. Preserve ROM/raw RAM locally.
 
 ## Latest continuation from db136ad
 
