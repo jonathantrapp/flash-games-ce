@@ -3,6 +3,7 @@
 #include <string.h>
 #include <fileioc.h>
 #include "art.h"
+#include "input.h"
 void scout_unpack(void *dst,const uint8_t *src,const uint8_t *end);
 const uint8_t *artBanks[ART_BANKS];
 char art_error[40];
@@ -49,6 +50,7 @@ void art_cache_level(const uint8_t*back,const uint8_t*solid,const uint8_t*decor,
     for(int i=0;i<cells;i++){if(back[i]<128)counts[back[i]]++;if(solid[i]<128)counts[solid[i]]++;if(decor[i]<128)counts[decor[i]]++;}
     counts[0]=0;
     for(int slot=0;slot<16;slot++) {
+        input_poll();
         int best=0;for(int i=1;i<128;i++)if(counts[i]>counts[best])best=i;
         if(!counts[best])break;counts[best]=0;
         gfx_ConvertToRLETSprite(art_sprite(theme,best),(gfx_rletsprite_t*)tileCache[slot]);cachedTiles[best]=tileCache[slot];
@@ -66,13 +68,16 @@ void art_background(int left) {
         }
         for(unsigned i=0;i<artSkies[sky].groups;i++){
             const uint8_t*row=artSkies[sky].rows[i];gfx_SetColor(row[0]);gfx_FillRectangle_NoClip(0,row[1],320,row[2]);
+            input_poll();
         }
         gfx_RLETSprite_NoClip((gfx_rletsprite_t*)skyCache,0,0);
+        input_poll();
         const uint8_t*right=artSkies[sky].leftSize+artSkies[sky].rightSize<=sizeof skyCache?skyCache+artSkies[sky].leftSize:(const uint8_t*)art_sprite(artSkies[sky].right,0);
         gfx_RLETSprite_NoClip((gfx_rletsprite_t*)right,160,0);
         return;
     }
     gfx_Sprite_NoClip(art_sprite(left,0),0,0);gfx_Sprite_NoClip(art_sprite(left,1),0,120);
+    input_poll();
     gfx_Sprite_NoClip(art_sprite(left+1,0),160,0);gfx_Sprite_NoClip(art_sprite(left+1,1),160,120);
 }
 

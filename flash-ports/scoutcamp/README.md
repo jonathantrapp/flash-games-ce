@@ -4,6 +4,8 @@ Native calculator rebuild of the supplied `scoutcamp_unlocked.swf` (the in-game 
 
 `bin/SCOUTCE.8xp` is the program; all 33 banks `SCA00.8xv` through `SCA32.8xv` hold the artwork, maps and original skill descriptions and must be sent with it. Runtime libraries and install steps are in the parent README.
 
+The v5 input queue retains keypad transitions sampled during rendering and between simulation steps. Cursor repeat uses a 200 ms timer. Tests passed nine repeated plus taps at 220/150, 80/80 and 40/40 ms press/release intervals, with no queue overflows; they don't guarantee every short tap under arbitrary battle load. The tested stage-one setup measured 19.83 simulation ticks/sec at 1× and 44.83 at the requested 4× setting (targets: 20 and 80). See [v5 verification](../verification/CHECKPOINT-v5.md); physical timing and full campaigns remain unverified.
+
 ## Play
 
 Choose Play Game on the title screen, then choose an unlocked stage with the arrows on the original campaign map. Enter starts the stage; Enter again dismisses its briefing. Stages unlock in order as you win. Aliens walk from their portals to the camp, grab one of the five meals and carry it back; kill a thief to drop its meal where it dies, and nearby aliens can pick it up again. Lose all five meals and the stage is lost. Win by clearing every wave.

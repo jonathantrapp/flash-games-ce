@@ -1,0 +1,19 @@
+{
+  "frames_per_second": 13,
+  "steps_per_second": 30,
+  "simulation_ms_per_epoch": 120,
+  "draw_ms_per_epoch": 654,
+  "mode": 1,
+  "last_draw_phase_timer_ticks": [
+    624,
+    396,
+    204,
+    80,
+    330,
+    0
+  ],
+  "timer_hz": 32768,
+  "profile_binary_sha256": "df2e9fd3d861785720221592cbc21e2ec22c5ea00667245e4a0e1bd334a9a4c0",
+  "production_binary_sha256": "d1e5b5c667a54655fa5b32afd276cad8e4790be990a883f541e7daf318c0d958",
+  "scope": "Last one-second diagnostic epoch plus latest draw phases; emulator OS5.3/48MHz, not physical hardware or a scene-wide minimum."
+}

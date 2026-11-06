@@ -1,4 +1,17 @@
-# Developer handoff — v4 preview, 6 November 2026
+# Developer handoff, v5 preview, 6 November 2026
+
+## Latest continuation from db136ad
+
+Read `CONTINUATION-v5-2026-11-06.md` and `verification/CHECKPOINT-v5.md`. The v4 material below remains historical.
+
+- Production Pedro: 58,689 bytes, SHA-256 `d1e5b5c667a54655fa5b32afd276cad8e4790be990a883f541e7daf318c0d958`. Six 1,600-byte actor-cache slots retain exact art and improve the sampled scene from 12 to 13 FPS / 30 steps/sec. Native terrain/HUD/actor framebuffer and canary checks pass. Resident end `0xD365D8`, BSS end `0xD12903`.
+- Production Scouts: 46,974 bytes, SHA-256 `9a64c9ef1f85b452c2e40396aaf6b3378ae737dc8fbdec2f0e0be94f4c3faa74`. `input.c` queues sampled transitions through rendering and simulation checkpoints, throttled to roughly 125 Hz. Cursor repeat is 200 ms. Three tap intervals and freeze/restore pass; first-wave 40/80 ms tap scenarios also pass. Measured 1×/4× settings advance 19.83/44.83 ticks/sec in the paired stage-one setup (targets 20/80), so sustained 4× remains unresolved.
+- All 15 Pedro and 17 Scouts entries pass again; see `STAGE-SMOKE-v5-pedrofu-scoutcamp.md`. Scouts entries 1–3 were repeated after the final throttle change and have matching run metadata. These are not playthroughs.
+- Hardware clarification: user launched through **arTIfiCE**, then used **arrow keys after the kick instruction**. Revision 8 / OS 5.8.2.29 / ROM 5.6.1.6. `v5_arrow_tutorial` visibly reaches the kick tip; `v5_arrow_continuation` advances to Yak dialogue without a local OS 5.3 reset. Hardware RAM clear is still unresolved; no matching OS 5.8 ROM is available locally.
+- The original-game browser comparison stopped: browser control disabled in Work settings, and native Computer Use could not verify Brave's URL. Do not claim original-versus-port campaigns were completed. Full campaigns, boss/arena phases and save/archive-pressure reload remain priorities after performance/hardware reproduction.
+- Assets/banks stay at v4 content. Package default now creates `FlashGamesCE-v5-preview.zip`. Sources, selected logs/metadata and screenshots sync through `sync_repo.py`; never upload ROM or raw RAM. The native pixel fixture now stays open after reporting and checks its result-screen swap before capture.
+
+## Historical v4 handoff
 
 Workspace: `E:\AI Stuff\Calc Stuff`. Start with `CONTINUATION-2026-11-06.md`, `verification/CHECKPOINT-v4.md` and each game's notes. Both programs are development previews; never reuse historical checklist percentages as gameplay fidelity.
 

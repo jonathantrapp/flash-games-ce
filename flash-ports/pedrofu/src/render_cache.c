@@ -7,8 +7,11 @@
 /* GraphX's documented worst case is (width+1)*height*3/2+2 bytes,
  * including transparency alternating at every pixel. */
 #define TILE_BYTES 410
-#define ACTOR_SLOTS 8
-#define ACTOR_BYTES 1024
+/* Six larger slots also fit the original 23x38 tree and 25x30 hit-spark
+ * sprites. Keep total storage bounded (9,600 bytes versus the old 8,192),
+ * rather than repeatedly drawing those frames straight from archive. */
+#define ACTOR_SLOTS 6
+#define ACTOR_BYTES 1600
 static uint8_t tile_storage[TILE_SLOTS][TILE_BYTES];
 static const gfx_rletsprite_t *tile_lookup[296];
 /* Opaque terrain needs no per-run transparency decoder. Reuse each cache

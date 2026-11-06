@@ -1,6 +1,7 @@
 """Run the compiled ports in the workspace's windowless CEmu with a local ROM."""
 import argparse
 import json
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -22,6 +23,9 @@ name = {'scoutcamp': 'SCOUTCE', 'pedrofu': 'PEDROCE'}[a.game]
 out = ROOT / 'flash-ports' / 'verification' / a.game / a.scenario
 out.mkdir(parents=True, exist_ok=True)
 program = ROOT / 'flash-ports' / a.game / a.bin_dir / (name + '.8xp')
+(out/'run-metadata.json').write_text(json.dumps(dict(program_sha256=hashlib.sha256(program.read_bytes()).hexdigest(),
+    program_bytes=program.stat().st_size,map_sha256=hashlib.sha256(program.with_suffix('.map').read_bytes()).hexdigest(),
+    scope='Windowless CEmu, local supplied ROM; no physical hardware or launcher equivalence claim.'),indent=2)+'\n')
 lib = ROOT / 'local-tools/cemu/clibs/clibs'
 files = [lib / (n + '.8xv') for n in ['libload', 'graphx', 'keypadc', 'fileioc']] + [f.resolve() for f in a.extra] + [program]
 files += sorted(program.parent.glob('*.8xv'))

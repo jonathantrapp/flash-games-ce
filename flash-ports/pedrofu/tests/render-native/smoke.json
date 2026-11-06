@@ -36,15 +36,25 @@
   "sequence": [
     "action|launch",
     "delay|60000",
-    "hashWait|pixels"
+    "hashWait|pixels",
+    "hashWait|visible"
   ],
   "hashes": {
     "pixels": {
       "description": "All stage tile selections and clipped HUD match reference pixels; canaries intact",
-      "start": "0xd0babc",
+      "start": "0xd0c336",
       "size": 10,
       "expected_CRCs": [
         "17BF1D0C"
+      ],
+      "timeout": 5000
+    },
+    "visible": {
+      "description": "Result screen has completed its framebuffer swap",
+      "start": "0xd0c344",
+      "size": 2,
+      "expected_CRCs": [
+        "E2C3EFA5"
       ],
       "timeout": 5000
     }

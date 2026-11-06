@@ -2,7 +2,7 @@
 
 These are native C rebuilds of the two supplied SWFs, written from the AS3 recovered with JPEXS. Both are works in progress: see [PARITY-AUDIT.md](PARITY-AUDIT.md) for what is verified and what is not, and each game's notes for controls and known gaps.
 
-The current deliverable is a **v4 development preview**, not a completed faithful port. Read [CONTINUATION-2026-11-06.md](CONTINUATION-2026-11-06.md) before installing. Pedro's frame rate improved in the emulator but remains inadequate; the exact physical-calculator crash remains unverified.
+The current deliverable is a **v5 development preview**, not a completed faithful port. Read [CONTINUATION-v5-2026-11-06.md](CONTINUATION-v5-2026-11-06.md) before installing. Pedro's sampled scene reaches 13 FPS and remains too slow; the physical RAM-clear report remains unresolved. Scouts' queued-input tests pass, but its requested 4× setting measured about 2.24× nominal simulation speed in the tested scene.
 
 | Supplied file | Original game | Calculator program |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ The original games, artwork and characters were created by Hamumu Software (2012
 
 ## Install
 
-1. Extract `FlashGamesCE-v4-preview.zip` on your computer. (To assemble it yourself from compiled programs, run `python flash-ports/package.py` from the workspace root.)
+1. Extract `FlashGamesCE-v5-preview.zip` on your computer. (To assemble it yourself from compiled programs, run `python flash-ports/package.py` from the workspace root.)
 2. Connect the TI-84 Plus CE using USB and open TI Connect CE's Calculator Explorer.
 3. Send the `.8xp` and `.8xv` files from the extracted package. Keep the `.8xv` files in archive. Each game's asset AppVars must accompany its program.
 4. Launch `SCOUTCE` or `PEDROCE` through Cesium using your existing native-game setup.

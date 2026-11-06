@@ -9,6 +9,7 @@ import subprocess
 import sys
 import argparse
 import hashlib
+import concurrent.futures
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -21,21 +22,26 @@ GAMES = {
 }
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('games',nargs='*',choices=list(GAMES));p.add_argument('--tag',default='continuation')
+p.add_argument('--jobs',type=int,default=1)
 a=p.parse_args();games=a.games or list(GAMES)
 assert a.tag and all(c.isalnum() or c in '-_' for c in a.tag)
 rows = []
+tasks=[]
 for game in games:
     count, steps, checks = GAMES[game]
     for k in range(count):
-        scenario = a.tag+'_stage%02d' % (k + 1)
-        command = [sys.executable, str(HERE / 'run_scenario.py'), game, scenario, steps(k),'--tap','500']
-        for c in checks(k):
-            command += ['--check', c]
-        result = subprocess.run(command, capture_output=True, text=True)
-        text = result.stdout + result.stderr
-        passed = result.returncode == 0 and 'Autotest passed' in text
-        rows.append((game, k + 1, 'pass' if passed else 'FAIL'))
-        print(game, scenario, rows[-1][2], flush=True)
+        tasks.append((game,k,steps(k),checks(k)))
+def run(task):
+    game,k,keys,checks=task;scenario=a.tag+'_stage%02d'%(k+1)
+    command=[sys.executable,str(HERE/'run_scenario.py'),game,scenario,keys,'--tap','500']
+    for c in checks:command+=['--check',c]
+    result=subprocess.run(command,capture_output=True,text=True)
+    passed=result.returncode==0 and 'Autotest passed' in result.stdout+result.stderr
+    row=(game,k+1,'pass' if passed else 'FAIL')
+    print(game,scenario,row[2],flush=True)
+    return row
+with concurrent.futures.ThreadPoolExecutor(max_workers=max(1,a.jobs)) as pool:
+    rows=list(pool.map(run,tasks))
 lines = ['# Stage launch smoke results', '', 'Each stage was opened in windowless CEmu through the QA stage-select path and played for a few seconds.',
          'This checks launch and an expected gameplay/dialogue/result state only, not completability. NMI resets fail even if diagnostic bytes match.', '',
          'Binary SHA-256: '+', '.join(game+' '+hashlib.sha256((HERE/game/'bin'/({'scoutcamp':'SCOUTCE','pedrofu':'PEDROCE'}[game]+'.8xp')).read_bytes()).hexdigest() for game in games),

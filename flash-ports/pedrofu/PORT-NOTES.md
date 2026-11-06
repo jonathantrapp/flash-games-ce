@@ -33,7 +33,7 @@
 ## Not done, or not verified
 
 - The original burning-blimp flight, explosions, parachute descent and canopy collapse are now integrated before the opening conversation. Native captures and the checkpoint test cover that transition. Fire scaling, additive alpha and camera effects are approximated.
-- Performance remains a blocker: opaque terrain draws and a separate clipped HUD cache raised the same stage-1 emulator scenario from about 9 to 12 FPS. This is one instrumented scene, not a minimum or a physical-calculator result. The RAM-clear report is not proven fixed.
+- Performance remains a blocker: v4's terrain/HUD caching reached 12 FPS in the sampled stage-one scene; v5's larger actor slots reach 13 FPS there. This is one instrumented scene, not a minimum or a physical-calculator result. The RAM-clear report is not proven fixed. The user reports arrow input after the kick instruction, launched through arTIfiCE on revision 8 / OS 5.8.2.29; local OS 5.3 arrow-input runs reach the instruction and continue to the Yak conversation without reproducing the reset.
 - No music or sound (the calculator has none); screen shake and some flash effects are omitted.
 - Skill descriptions now use original text/formulas; integer formatting can differ by 0.01 from Flash floating-point rounding. Hover/history and some options/tooltip presentation remain different.
 - Move timing, hitboxes, enemy AI and boss phases are translated from the AS3 but have not been compared frame by frame with the original running in Ruffle. Stages are verified to load and run in the emulator, not to be completable.

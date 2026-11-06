@@ -6,7 +6,18 @@
     0,
     0
   ],
+  "observed": [
+    1,
+    19,
+    8,
+    0,
+    0,
+    130,
+    10,
+    1
+  ],
   "returncode": 0,
-  "cache_sha256": "ee8f2b7049c22ae78ea1dc2ebff5685426101c4950e600207f2bbf0f72eaff73",
-  "scope": "Native actual renderer compared with original GraphX transparent sprite draws: all296 tiles under15 stage cache selections,4 screen-edge montages and8 HUD/clip montages, guarded tile/HUD buffers."
+  "failed": false,
+  "cache_sha256": "25e5b599e904f6f72678ede5348b1e20082c67c7e577a2b868a29fa84febfd7d",
+  "scope": "Native actual renderer compared with original GraphX transparent sprite draws: all296 tiles under15 stage cache selections,4 screen-edge montages and8 HUD/clip montages, 10 actor/cache-eviction montages in both facings and at screen edges; separate 64-byte guards around every actor slot and tile/HUD storage."
 }

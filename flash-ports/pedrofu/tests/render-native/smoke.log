@@ -1,0 +1,11 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\pedrofu\tests\render-native\smoke.json loaded and verified. 2 unique tests found.
+Launching command action | launch
+Launching command delay | 60000
+Launching command hashWait | pixels
+	[Test passed!] Hash #pixels had a matching CRC.
+Launching command hashWait | visible
+	[Test passed!] Hash #visible had a matching CRC.
+[CPU] PC=c31d9 SP=d1a7d3
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 2 tests attempted, 2 passed, and 0 failed.

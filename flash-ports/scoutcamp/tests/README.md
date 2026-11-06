@@ -16,6 +16,8 @@ Native scenarios under `../../verification/scoutcamp/`: `ui_map_final`, `ui_skil
 
 ## Focus and speed continuation
 
+v5: `check_input_timing.py` drives the production program at three hold/release intervals and compares paired 1s/7s simulation intervals. `input-timing-results.json` identifies the tested binary and actual rates; `input-timing-poll1-results.json` retains the slower rejected near-1-kHz polling variant. The below v4 `check_speed_controls.py` result remains historical. New `v5_combat_rapid40` and `v5_combat_rapid80` scenarios verify the requested speed and active first wave after repeated taps, without a campaign-completion claim.
+
 The actual-native fixture `qa_engine/main.c` now has37 cases. Build from the game directory with `make NAME=SCENG SRCDIR=tests/qa_engine OBJDIR=obj_engine_raw BINDIR=bin_engine_raw COMPRESSED=NO`, then run `python tests/run_native_test.py SCENG bin_engine_raw engine_diag 01000025`. Targeting cases cover focused priority, fallback when blocked/ineligible, Snow/ice/shock/cripple filters, the separate FindBelow behavior, selection distance, death and escape cleanup.
 
 `check_speed_controls.py` drives real keypad inputs in CEmu and reads exported tick counters. It checks freeze, restored requested settings, progression and bounds. It records observed timing; it does not certify the nominal4x setting runs at4x wall-clock speed. The initial exact-rate assertion failed and is documented in its result scope. CEmu accepts `+`/`-` key names, not `add`/`sub`.

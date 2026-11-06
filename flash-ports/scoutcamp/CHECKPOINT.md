@@ -1,5 +1,7 @@
 # Scouts checkpoint
 
+Latest: v5 production `SCOUTCE.8xp`, 46,974 bytes, SHA-256 `9a64c9ef1f85b452c2e40396aaf6b3378ae737dc8fbdec2f0e0be94f4c3faa74`. Queued keypad transitions, approximately 125 Hz polling target, and timer-based cursor repeat replace frame-only sampling. New measured rate: 19.83 ticks/sec at 1×; 44.83 at requested 4× (target 80). New tap/freeze and stage-entry evidence lives in [CHECKPOINT-v5.md](../verification/CHECKPOINT-v5.md). The remaining text below records v4 and earlier evidence; its hashes, memory addresses and timing limitations are historical.
+
 Production program after the UI/focus/speed continuation: `bin/SCOUTCE.8xp`, 47,039 bytes, SHA-256 `8c6bf764ae0679215e4fb017d4474c4c9c10aa37a59b605fab6372c9c85a50fd`. Resources: all 33 `SCA00` through `SCA32` AppVars, bundle signature `91bdb3a8` (version SCA3). Replace all old banks together.
 
 The linked code section is 64,426 bytes. The decompressed resident program ends at `0xD2F175`; fixed BSS ends at `0xD13612`, leaving 2,502 bytes in the configured allocator region. Hot graphics buffers are bounded static arrays. The linker rejects builds whose resident code/data overlaps the LCD framebuffers at `0xD40000`.

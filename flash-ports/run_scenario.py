@@ -20,6 +20,7 @@ p.add_argument('steps', help='space separated key script')
 p.add_argument('--check', action='append', default=[])
 p.add_argument('--rom', type=Path, default=DEFAULT_ROM)
 p.add_argument('--tap', type=int, default=220)
+p.add_argument('--gap', type=int, default=150, help='released-key interval in milliseconds')
 p.add_argument('--bin-dir', default='bin')
 p.add_argument('--extra', action='append', default=[], help='extra AppVar to transfer, such as a prepared save')
 a = p.parse_args()
@@ -48,14 +49,14 @@ for step in a.steps.split():
     elif step.startswith('down:'):
         sequence.append('hold|' + step[5:])
     elif step.startswith('up:'):
-        sequence += ['release|' + step[3:], 'delay|150']
+        sequence += ['release|' + step[3:], f'delay|{a.gap}']
     elif step.startswith('hold:'):
         _, key, ms = step.split(':')
-        sequence += [f'hold|{key}', f'delay|{ms}', f'release|{key}', 'delay|150']
+        sequence += [f'hold|{key}', f'delay|{ms}', f'release|{key}', f'delay|{a.gap}']
     else:
         key, _, count = step.partition('*')
         for _ in range(int(count or 1)):
-            sequence += [f'hold|{key}', f'delay|{a.tap}', f'release|{key}', 'delay|150']
+            sequence += [f'hold|{key}', f'delay|{a.tap}', f'release|{key}', f'delay|{a.gap}']
 command = [sys.executable, str(ROOT / 'flash-ports/smoke.py'), a.game, a.scenario, '--rom', str(a.rom),
            '--sequence', json.dumps(sequence)]
 for check in a.check:

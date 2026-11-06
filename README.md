@@ -2,7 +2,7 @@
 
 TI-84 Plus CE ports of **Scouts vs Aliens** and **Pedro Kicks Back**.
 
-The latest deliverable is the **6 November v4 development preview**, not a finished port. [Download the calculator package](dist/FlashGamesCE-v4-preview.zip), read [what changed and what remains](flash-ports/CONTINUATION-2026-11-06.md), and see [verification details](flash-ports/verification/CHECKPOINT-v4.md). All32 stage-entry checks passed; these are not campaign playthroughs. Pedro's measured emulator scene improved from about9 to12 FPS, but performance remains inadequate and the physical RAM-clear report is not proven fixed. No gameplay-fidelity percentage is claimed. [Developer handoff](flash-ports/HANDOFF.md).
+The latest deliverable is the **6 November v5 development preview**. [Download the calculator package](dist/FlashGamesCE-v5-preview.zip), read [what changed and what remains](flash-ports/CONTINUATION-v5-2026-11-06.md), and see [verification details](flash-ports/verification/CHECKPOINT-v5.md). All 32 stage-entry checks passed again; these are not campaign playthroughs. Pedro's sampled emulator scene improved from 12 to 13 FPS and remains too slow. Scouts now queues keypad input, with repeated-tap checks down to 40 ms press/release intervals; its requested 4× setting measured 44.8 simulation ticks/sec against a target of 80 in the tested setup. The physical Pedro RAM-clear report and full original-versus-port campaigns remain unresolved. [Developer handoff](flash-ports/HANDOFF.md).
 
 The original games and artwork are by Hamumu Software (2012). This repository tracks calculator port development and the supplied games' recovered reference material.
 
@@ -13,6 +13,14 @@ Per-game notes, controls and known gaps: [flash-ports/scoutcamp](flash-ports/sco
 ## Development screenshots
 
 Native calculator-emulator (CEmu) captures
+
+Latest v5 production captures:
+
+| Pedro kick instruction | Pedro arrow continuation | Scouts first-wave rapid input |
+| --- | --- | --- |
+| ![Kick instruction reached](docs/screenshots/pedro-v5-kick.png) | ![Continued to Yak dialogue](docs/screenshots/pedro-v5-arrows.png) | ![First wave after rapid speed taps](docs/screenshots/scout-v5-rapid.png) |
+
+The Pedro continuation capture shows the first Yak conversation, not a completed stage or a hardware crash fix.
 
 Latest v4 captures (Pedro's skill screen is from the native UI test harness):
 

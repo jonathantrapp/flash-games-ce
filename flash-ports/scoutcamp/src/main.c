@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "art.h"
+#include "input.h"
 #include "engine.h"
 #include "combat.h"
 #include "tips.h"
@@ -19,10 +20,9 @@
 
 enum { MODE_MENU = 0, MODE_PLAY = 1, MODE_MAP = 2, MODE_LOST = 3, MODE_WON = 4, MODE_HELP = 5, MODE_SKILLS = 6, MODE_OPTIONS = 7, MODE_ENDING = 8 };
 #define STEP_TICKS (32768 / HZ)
-#define KEY_DOWN(k) (kb_Data[(k) >> 8] & ((k) & 0xFF))
-#define KEY_PRESS(k) (KEY_DOWN(k) && !(prev[(k) >> 8] & ((k) & 0xFF)))
+#define KEY_DOWN(k) (input_held[(k) >> 8] & ((k) & 0xFF))
+#define KEY_PRESS(k) (input_pressed[(k) >> 8] & ((k) & 0xFF))
 
-static uint8_t prev[8];
 #ifdef QA_PERF
 volatile uint16_t scout_perf[4],scout_render_ms[5];
 static uint32_t renderStamp;
@@ -302,16 +302,19 @@ static void renderGame(void) {
     renderStamp=timer_GetSafe(1,TIMER_UP);
 #endif
     art_background(skyFor(level));
+    input_poll();
 #ifdef QA_PERF
     renderMark(0);
 #endif
     int theme=level==16?2:level>11?3:level>7?2:level>3?1:0;
     for (int layer = 0; layer < 3; layer++)
-        for (int y = camy / 16; y < map->height && y * 16 - camy < 240; y++)
+        for (int y = camy / 16; y < map->height && y * 16 - camy < 240; y++) {
             for (int x = camx / 16; x < map->width && x * 16 - camx < 320; x++) {
                 int tile = layers[layer][y * map->width + x];
                 if (tile && tile < 128) art_draw(ART_TILES0+theme, tile, x * 16 - camx, y * 16 - camy);
             }
+            input_poll();
+        }
 #ifdef QA_PERF
     renderMark(1);
 #endif
@@ -322,10 +325,12 @@ static void renderGame(void) {
         if (f->active) art_draw(ART_FOOD, i, f->x_pixel - 8 - camx, f->y_pixel - 16 - camy);
     }
     for (int i = 0; i < MAXTOWER; i++) {
+        if(!(i&7))input_poll();
         const Tower *t = &towers[i];
         if (t->active) drawTowerArt(t, t->cell % map->width * 16 - camx, t->cell / map->width * 16 - camy);
     }
     for (int i = 0; i < MAXEN; i++) {
+        if(!(i&7))input_poll();
         const Enemy *e = &enemies[i]; if (!e->active) continue;
         int id = monsterArt[e->type]; const Art *art = &artTable[id];
         static const uint8_t offsetY[10]={0,0,6,8,0,0,0,0,31,3};
@@ -361,6 +366,7 @@ static void renderGame(void) {
     renderMark(2);
 #endif
     for (int i = 0; i < MAXBULLET; i++) {
+        if(!(i&7))input_poll();
         const Bullet *b = &bullets[i]; if (!b->active) continue;
         int bx = b->x_pixel - camx, by = b->y_pixel - camy;
         int id=bulletArt[b->type];const Art*art=&artTable[id];
@@ -369,6 +375,7 @@ static void renderGame(void) {
         art_draw(id,frame,bx-art->width/2,by-art->height/2);
     }
     for (int i = 0; i < MAXTOWER; i++) {
+        if(!(i&7))input_poll();
         const Tower *t = &towers[i];
         if (!t->active || t->born) continue;
         int x = t->cell % map->width * 16 + 8 - camx, y = t->cell / map->width * 16 + 8 - camy;
@@ -482,7 +489,7 @@ static void handleSkills(void) {
     if (statusTicks) statusTicks--;
 }
 static void handlePlay(void) {
-    static int repeat;
+    static uint32_t nextMove;
     if (showTip) {
         if (KEY_PRESS(kb_KeyEnter) || KEY_PRESS(kb_KeyAlpha) || KEY_PRESS(kb_Key2nd)) { showTip = false; paused = false; }
         if (KEY_PRESS(kb_KeyMode)) mode = MODE_MAP;
@@ -495,20 +502,21 @@ static void handlePlay(void) {
     if(KEY_PRESS(kb_Key0)){if(speedThirds){previousSpeedThirds=speedThirds;speedThirds=0;}else speedThirds=previousSpeedThirds;}
     if(KEY_PRESS(kb_KeyStat))say(focusAt(cx*16+8,cy*16+8)>=0?"Focus fire selected":"No alien near the cursor");
     if(KEY_PRESS(kb_KeyVars)){focusEnemy=-1;say("Focus fire cleared");}
-    bool move = kb_Data[7] & (kb_Left | kb_Right | kb_Up | kb_Down);
+    bool move = input_held[7] & (kb_Left | kb_Right | kb_Up | kb_Down);
     if (move) {
-        if (!repeat || repeat >= 4) {
-            if (kb_Data[7] & kb_Left) cx--;
-            if (kb_Data[7] & kb_Right) cx++;
-            if (kb_Data[7] & kb_Up) cy--;
-            if (kb_Data[7] & kb_Down) cy++;
+        uint32_t now=timer_GetSafe(1,TIMER_UP);
+        if (input_pressed[7] || !nextMove || (int32_t)(now-nextMove)>=0) {
+            if (input_held[7] & kb_Left) cx--;
+            if (input_held[7] & kb_Right) cx++;
+            if (input_held[7] & kb_Up) cy--;
+            if (input_held[7] & kb_Down) cy++;
             if (cx < 1) cx = 1;
             if (cx > map->width - 2) cx = map->width - 2;
             if (cy < 1) cy = 1;
             if (cy > map->height - 2) cy = map->height - 2;
-            repeat = 1;
-        } else repeat++;
-    } else repeat = 0;
+            nextMove=now+32768/5; /* 200 ms, independent of draw/simulation rate */
+        }
+    } else nextMove = 0;
     if (KEY_DOWN(kb_Key1)) selection = 0;
     if (KEY_DOWN(kb_Key2)) selection = 1;
     if (KEY_DOWN(kb_Key3)) selection = 2;
@@ -530,6 +538,17 @@ static void handleResult(void) {
     }
 }
 
+static void handleInput(void) {
+    if (mode == MODE_MENU) handleMenu();
+    else if (mode == MODE_MAP) handleMap();
+    else if (mode == MODE_OPTIONS) handleOptions();
+    else if (mode == MODE_ENDING) { if(KEY_PRESS(kb_KeyEnter)||KEY_PRESS(kb_KeyMode))mode=MODE_MENU; }
+    else if (mode == MODE_HELP) { if(KEY_PRESS(kb_KeyEnter)||KEY_PRESS(kb_KeyMode)||KEY_PRESS(kb_KeyAlpha))mode=helpReturn; }
+    else if (mode == MODE_SKILLS) handleSkills();
+    else if (mode == MODE_PLAY) handlePlay();
+    else handleResult();
+}
+
 int main(void) {
     boot_Set48MHzMode();
     if (!art_open()) { os_ClrHome(); os_PutStrFull(art_error);os_NewLine();os_PutStrFull("Send all SCA resource files"); while (!os_GetCSC()) { } return 1; }
@@ -549,33 +568,33 @@ int main(void) {
     uint32_t perfStart=last,drawTotal=0,simTotal=0;unsigned frameCount=0;
 #endif
     while (1) {
-        kb_Scan();
-        if (kb_Data[6] & kb_Clear) break;
+        input_poll();
         uint32_t now = timer_GetSafe(1, TIMER_UP); accumulator += (now-last)*(mode==MODE_PLAY?speedThirds:3); last = now;
         menuTicks=(now>>15)*HZ+((now&32767)*HZ>>15);
         if(mode!=MODE_ENDING)endingReady=false;
-        if (mode == MODE_MENU) handleMenu();
-        else if (mode == MODE_MAP) handleMap();
-        else if (mode == MODE_OPTIONS) handleOptions();
-        else if (mode == MODE_ENDING) {initEnding();int steps=0;while(accumulator>=STEP_TICKS*3&&steps<6){stepEnding();accumulator-=STEP_TICKS*3;steps++;}if(KEY_PRESS(kb_KeyEnter)||KEY_PRESS(kb_KeyMode))mode=MODE_MENU;}
-        else if (mode == MODE_HELP) { if (KEY_PRESS(kb_KeyEnter) || KEY_PRESS(kb_KeyMode) || KEY_PRESS(kb_KeyAlpha)) mode = helpReturn; }
-        else if (mode == MODE_SKILLS) handleSkills();
+        bool exitRequested=false;
+        if(input_next()) {
+            do {if(KEY_DOWN(kb_KeyClear)){exitRequested=true;break;}handleInput();} while(input_next());
+        } else { if(KEY_DOWN(kb_KeyClear))exitRequested=true;else handleInput(); }
+        if(exitRequested)break;
+        if (mode == MODE_ENDING) {initEnding();int steps=0;while(accumulator>=STEP_TICKS*3&&steps<6){stepEnding();accumulator-=STEP_TICKS*3;steps++;}}
         else if (mode == MODE_PLAY) {
-            handlePlay();
             if (mode == MODE_PLAY && !paused) {
                 if(!speedThirds)accumulator=0;
 #ifdef QA_PERF
                 uint32_t simStart=timer_GetSafe(1,TIMER_UP);
 #endif
                 int steps = 0;
-                while (accumulator >= STEP_TICKS*3 && steps < 12) { update(); accumulator -= STEP_TICKS*3; steps++; if (mode != MODE_PLAY) break; }
+                while (accumulator >= STEP_TICKS*3 && steps < 12) { update(); accumulator -= STEP_TICKS*3; steps++; input_poll(); if (mode != MODE_PLAY || input_pending()) break; }
                 if (steps == 12 && accumulator > 32768*3) accumulator = 32768*3;
 #ifdef QA_PERF
                 simTotal+=timer_GetSafe(1,TIMER_UP)-simStart;
 #endif
             } else accumulator = 0;
-        } else handleResult();
+        }
         if ((mode != MODE_PLAY && mode != MODE_ENDING) || (mode==MODE_PLAY&&paused)) accumulator = 0;
+        /* Consume queued controls before starting another expensive redraw. */
+        if(input_pending())continue;
 #ifdef QA_PERF
         uint32_t drawStart=timer_GetSafe(1,TIMER_UP);
 #endif
@@ -596,7 +615,6 @@ int main(void) {
         snprintf(textbuf,sizeof textbuf,"SK%u MP%u EN%u FX%u HU%u",scout_render_ms[0],scout_render_ms[1],scout_render_ms[2],scout_render_ms[3],scout_render_ms[4]);label(textbuf,2,193,cYellow);
 #endif
         updateDiagnostics();
-        for (int k = 0; k < 8; k++) prev[k] = kb_Data[k];
         gfx_SwapDraw();
     }
     save(); gfx_End();
