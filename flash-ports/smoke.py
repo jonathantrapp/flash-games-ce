@@ -14,7 +14,7 @@ p.add_argument('game', choices=['scoutcamp', 'pedrofu'])
 p.add_argument('scenario')
 p.add_argument('--rom', type=Path, required=True)
 p.add_argument('--sequence', default='[]', help='JSON list of CEmu sequence commands')
-p.add_argument('--check', action='append', default=[], help='symbol:value:bytecount')
+p.add_argument('--check', action='append', default=[], help='symbol:value[,alternative...]:bytecount')
 p.add_argument('--bin-dir', default='bin', help='build output folder inside the game directory (default bin)')
 p.add_argument('--extra', action='append', default=[], type=Path, help='additional .8xv/.8xp to transfer (for example a prepared save)')
 a = p.parse_args()
@@ -37,14 +37,17 @@ for spec in a.check:
     address = re.search(r'^\s*(0x[\da-fA-F]+)\s+_' + re.escape(symbol) + r'\s*$', maptext, re.M)
     if not address:
         raise SystemExit('Missing map symbol: ' + symbol)
-    crc = 0xffffffff
-    for byte in int(value, 0).to_bytes(int(size), 'little'):
-        crc ^= byte
-        for _ in range(8):
-            crc = (crc >> 1) ^ (0x82f63b78 if crc & 1 else 0)
+    expected=[]
+    for alternative in value.split(','):
+        crc = 0xffffffff
+        for byte in int(alternative, 0).to_bytes(int(size), 'little'):
+            crc ^= byte
+            for _ in range(8):
+                crc = (crc >> 1) ^ (0x82f63b78 if crc & 1 else 0)
+        expected.append(f'{crc ^ 0xffffffff:08X}')
     key = parts[0] + '_' + str(offset)
     config['hashes'][key] = dict(description=spec, start=hex(int(address[1], 16)+offset), size=int(size),
-                                    expected_CRCs=[f'{crc ^ 0xffffffff:08X}'], timeout=2000)
+                                    expected_CRCs=expected, timeout=2000)
     config['sequence'].append('hashWait|' + key)
 path = out / 'smoke.json'
 path.write_text(json.dumps(config, indent=2))

@@ -16,9 +16,12 @@ uint8_t skills[48];
 static uint8_t layers[4][2500],mode,level,selection,escaped,wave,unlocked=1,stageWon[17];
 static int money,cx,cy,camx,camy,tick,statusTicks,skillCursor,playerLevel=1,skillPoints,xp;
 static bool paused,sendFast;
+/* Original slider: 0..60 px in 5px steps, divided by 15 => 0..4x. */
+static uint8_t speedThirds=3,previousSpeedThirds=3;
+static int16_t focusEnemy=-1;
 static const Map *map;
 static char status[80],textbuf[100];
-volatile uint8_t scout_diag[12];
+volatile uint8_t scout_diag[16];
 typedef struct {
     COORD(x);COORD(y);int vx,vy,hp,maxhp,traveled;
     uint16_t born,slow,freeze,poison,shock,shockDamage,disabled,crippled,boost,flat,fling,special,babyLevel;
@@ -95,7 +98,7 @@ static void damageEnemy(Enemy*e,int damage,bool crit) {
     if(crit&&random100()<skills[SK_CRITICAL]*2)damage*=2;
     e->hp-=damage;
     if(e->hp>0)return;
-    e->hp=0;dropFood(e);e->active=0;
+    e->hp=0;dropFood(e);e->active=0;if(e-enemies==focusEnemy)focusEnemy=-1;
     money+=monster_Money(e->type,e->monsterLevel)*(100+skills[SK_CASHFLOW]*4)/100;
     if(money>9999)money=9999;earnXP(e->monsterLevel);
     /* A death may kill another crippled alien. Queue the chain to bound stack use. */
@@ -129,7 +132,7 @@ static void physicsEnemy(Enemy*e,int substep){
     int h=monsterHeight[e->type],px=ex(e),feet=e->y_pixel,py=feet-h/2;
     int tilex=px/16,tiley=py/16;
     if(tilex==map->camp%map->width&&tiley==map->camp/map->width)e->advancing=0;
-    if(tilex==e->home%map->width&&tiley==e->home/map->width){e->advancing=1;if(e->escaping){if(e->carry>=0){foods[e->carry].active=0;escaped++;}e->active=0;return;}}
+    if(tilex==e->home%map->width&&tiley==e->home/map->width){e->advancing=1;if(e->escaping){if(e->carry>=0){foods[e->carry].active=0;escaped++;}e->active=0;if(e-enemies==focusEnemy)focusEnemy=-1;return;}}
     int speed=e->speed;
     if(e->action==1)speed=35*FP;else if(e->boost&&e->type!=1&&e->type!=5)speed=40*FP;
     if(e->slow)speed=speed*e->slowRate/100;

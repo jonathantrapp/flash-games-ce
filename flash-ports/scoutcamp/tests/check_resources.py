@@ -1,14 +1,15 @@
 """Validate the exact versioned resources consumed by the native renderer."""
 from pathlib import Path
-import struct,re,json
+import struct,re,json,argparse
 ROOT=Path(__file__).resolve().parents[1]
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--bin-dir',default='bin');args=parser.parse_args()
 h=(ROOT/'src/art.h').read_text()
 def block(name):return re.search(r'\b'+name+r'\[\](?:\[\d+\])?=\{(.*?)\};',h,re.S)[1]
 def rows(name):return [tuple(map(int,m.split(','))) for m in re.findall(r'\{([^}]+)\}',block(name))]
 sizes=list(map(int,block('artBankSizes').split(',')));signature=bytes(map(int,block('artSignature').split(',')))
 banks=[]
 for i,n in enumerate(sizes):
- name='SCA%02d'%i;f=(ROOT/'bin'/(name+'.8xv')).read_bytes()
+ name='SCA%02d'%i;f=(ROOT/args.bin_dir/(name+'.8xv')).read_bytes()
  assert f[:11]==b'**TI83F*\x1a\x0a\0'
  section=struct.unpack_from('<H',f,53)[0]
  assert section+57==len(f)
@@ -47,5 +48,13 @@ for sky,(left,right,lsize,rsize,rowid,count) in zip(['SKY_SUNSETIMAGE','SKY_DESE
   assert p==len(stream)
 mapbank=int(re.search(r'#define ART_MAP_BANK (\d+)',h)[1]);mapoffset=int(re.search(r'#define ART_MAP_OFFSET (\d+)',h)[1]);mapsize=int(re.search(r'#define ART_MAP_SIZE (\d+)',h)[1])
 assert banks[mapbank][mapoffset:mapoffset+mapsize]==(ROOT/'build-art/maps.bin').read_bytes()
-print(json.dumps({'banks':len(banks),'frames':len(frames),'assets':len(art),'signature':signature.hex(),'sky_pixels_compared':153600,'map_bytes':mapsize,'status':'PASS'}))
+skillbank=int(re.search(r'#define ART_SKILL_BANK (\d+)',h)[1]);skilloffset=int(re.search(r'#define ART_SKILL_OFFSET (\d+)',h)[1]);skillsize=int(re.search(r'#define ART_SKILL_SIZE (\d+)',h)[1])
+skilltext=banks[skillbank][skilloffset:skilloffset+skillsize]
+assert skilltext==(ROOT/'build-art/skill-text.bin').read_bytes()
+index=(ROOT/'src/skill_text_index.h').read_text();offsets=list(map(int,re.findall(r'\d+',index.split('=')[1])))
+assert len(offsets)==240 and len(set(offsets))==240
+for offset in offsets:
+ assert 0<=offset<len(skilltext) and (offset==0 or skilltext[offset-1]==0)
+ text=skilltext[offset:skilltext.index(0,offset)].decode('ascii');assert 0<len(text)<200
+print(json.dumps({'banks':len(banks),'frames':len(frames),'assets':len(art),'signature':signature.hex(),'sky_pixels_compared':153600,'map_bytes':mapsize,'skill_descriptions':len(offsets),'status':'PASS'}))
 

@@ -1,0 +1,16 @@
+{
+  "checks": 18090,
+  "failures": [],
+  "accepted_flash_roundoff_cases": 210,
+  "maximum_description_bytes": 183,
+  "guarded_capacities": [
+    0,
+    1,
+    2,
+    64,
+    384
+  ],
+  "source_sha256": "a344333909e9f74dd6c89cd3da3eda38377ae068ea5b3cd2a03ac6318c32c7ba",
+  "generated_sha256": "4a7478f2bba7eaf13a8d994c98d9c3a4c1068617e9095966e589086adfba5394",
+  "scope": "All45 original descriptions, ranks0..5,67 modifier profiles; original text with CE key labels; numeric Flash roundoff tolerance0.01; actual native generated C, not UI rendering."
+}

@@ -3,6 +3,7 @@
 #include <sys/timers.h>
 #include <sys/power.h>
 #include "intro.h"
+#include "render_cache.h"
 
 #define STEP_TICKS (32768 / FPS)
 
@@ -62,7 +63,7 @@ int main(void) {
     boot_Set48MHzMode();
     ti_CloseAll(); gfx_Begin(); gfx_SetDrawBuffer(); gfx_SetTransparentColor(0); gfx_SetTextTransparentColor(0); gfx_SetTextBGColor(0);
     if (!load_resources()) { missing_resources(); gfx_End(); ti_CloseAll(); return 0; }
-    pick_colors(); profile_load();
+    cache_hud(); pick_colors(); profile_load();
     g.mode = TITLE; g.level = 0; g.story_event = -1; g.arena = -1; g.carry = -1;
     timer_Set(1, 0); timer_Enable(1, TIMER_32K, TIMER_NOINT, TIMER_UP);
     uint32_t last = timer_GetSafe(1, TIMER_UP), accumulator = 0;

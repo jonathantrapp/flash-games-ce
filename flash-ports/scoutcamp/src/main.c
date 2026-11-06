@@ -14,8 +14,10 @@
 #include "engine.h"
 #include "combat.h"
 #include "tips.h"
+#include "menu_data.h"
+#include "skill_text_index.h"
 
-enum { MODE_MENU = 0, MODE_PLAY = 1, MODE_LOST = 3, MODE_WON = 4, MODE_HELP = 5, MODE_SKILLS = 6 };
+enum { MODE_MENU = 0, MODE_PLAY = 1, MODE_MAP = 2, MODE_LOST = 3, MODE_WON = 4, MODE_HELP = 5, MODE_SKILLS = 6, MODE_OPTIONS = 7, MODE_ENDING = 8 };
 #define STEP_TICKS (32768 / HZ)
 #define KEY_DOWN(k) (kb_Data[(k) >> 8] & ((k) & 0xFF))
 #define KEY_PRESS(k) (KEY_DOWN(k) && !(prev[(k) >> 8] & ((k) & 0xFF)))
@@ -27,6 +29,15 @@ static uint32_t renderStamp;
 static void renderMark(int id){uint32_t n=timer_GetSafe(1,TIMER_UP);scout_render_ms[id]=(n-renderStamp)*1000/32768;renderStamp=n;}
 #endif
 static bool showTip;
+static bool skillDetails;
+static uint8_t titleChoice,optionChoice,resetStage,soundVolume=100,musicVolume=100;
+static uint8_t skillReturn=MODE_MAP,helpReturn=MODE_MAP;
+static uint32_t menuTicks;
+static uint32_t mapEntered;
+static uint8_t previousDrawMode=255;
+typedef struct {int x,y,vy;uint8_t frame;} EndingFood;
+static EndingFood endingFood[20];
+static bool endingReady;
 static uint8_t cBlack, cWhite, cYellow, cRed, cGreen, cCyan, cPanel;
 static uint8_t flipBuffer[64 * 56 + 2], scaleBuffer[64 * 56 + 2];
 
@@ -71,7 +82,7 @@ static void printFit(const char *s, int x, int y) {
 }
 static void label(const char *s, int x, int y, int color) { gfx_SetTextFGColor(color); printFit(s, x, y); }
 static void shadowLabel(const char *s, int x, int y, int color) { label(s, x + 1, y + 1, cBlack); label(s, x, y, color); }
-static void centered(const char *s, int y, int color) { shadowLabel(s, (320 - gfx_GetStringWidth(s)) / 2, y, color); }
+static void centered(const char *s, int y, int color) { int w=gfx_GetStringWidth(s);shadowLabel(s,w>=316?2:(320-w)/2,y,color); }
 static void panel(int x, int y, int w, int h) { gfx_SetColor(cPanel); gfx_FillRectangle(x, y, w, h); gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, h); }
 static void wrapText(const char *s, int x, int y, int width, int step, int color) {
     char line[96]; int n = 0; gfx_SetTextFGColor(color);
@@ -107,17 +118,72 @@ static void xpBar(int x, int y, int w) {
 /* ---------- menus ---------- */
 static void renderMenu(void) {
     art_background(ART_TITLESTATE_TITLEIMAGE_LEFT);
-    panel(12, 146, 296, 92);
-    snprintf(textbuf, sizeof textbuf, "<  Stage %u / 17  >", level + 1);
-    centered(textbuf, 150, cWhite);
-    centered(stageTitles[level], 161, cYellow);
-    if (level >= unlocked) centered("LOCKED - win the previous stage", 172, cRed);
-    else centered(stageWon[level] ? "CAMP SAVED" : "THE CAMP NEEDS YOU", 172, stageWon[level] ? cGreen : cWhite);
-    snprintf(textbuf, sizeof textbuf, "Level %d  Skill points %d", playerLevel, skillPoints);
-    label(textbuf, 22, 184, cWhite); xpBar(210, 185, 88);
-    label("ENTER play   STAT skills   ALPHA help", 22, 196, cWhite);
-    label("LEFT/RIGHT stage            CLEAR quit", 22, 207, cCyan);
-    centered("Original game: Hamumu Software, 2012", 224, cYellow);
+    for(int i=0;i<2;i++){
+        art_draw(ART_BUTTON,titleChoice==i,89,174+i*30);
+        centered(i?"Options":"Play Game",184+i*30,cWhite);
+    }
+    centered("UP/DOWN choose   ENTER select",148,cWhite);
+    centered("Hamumu Software, 2012",230,cWhite);
+}
+static void renderMap(void) {
+    art_background(ART_MENUS_MAPSTATE_MAPIMAGE_LEFT);
+    int top=KEY_DOWN(kb_KeyVars)?17:unlocked;
+    for(int i=0;i<top;i++){
+        for(unsigned d=mapDotStarts[i];d<mapDotStarts[i+1];d++){
+            int size=5;
+            if(i==top-1)size=(int)(menuTicks-mapEntered)-(d-mapDotStarts[i])*5;
+            if(size<=0)continue;
+            if(size>=5)art_draw(ART_MAP_X,3,mapDots[d][0]-9,mapDots[d][1]-9);
+            else{gfx_sprite_t *dst=(gfx_sprite_t *)scaleBuffer;dst->width=19*size/5;dst->height=18*size/5;gfx_ScaleSprite(art_sprite(ART_MAP_X,3),dst);gfx_TransparentSprite(dst,mapDots[d][0]-dst->width/2,mapDots[d][1]-dst->height/2);}
+        }
+        int size=i==top-1?(int)(menuTicks-mapEntered)-(mapDotStarts[i+1]-mapDotStarts[i])*5:5;
+        if(size>=5)art_draw(ART_MAP_X,i==level?1:0,mapNodes[i][0]-9,mapNodes[i][1]-9);
+        else if(size>0){gfx_sprite_t *dst=(gfx_sprite_t *)scaleBuffer;dst->width=19*size/5;dst->height=18*size/5;gfx_ScaleSprite(art_sprite(ART_MAP_X,i==level?1:0),dst);gfx_TransparentSprite(dst,mapNodes[i][0]-dst->width/2,mapNodes[i][1]-dst->height/2);}
+    }
+    art_draw(ART_MAP_BUTTON,2,198,1);art_draw(ART_MAP_BUTTON,4,253,1);
+    label("SKILLS",201,6,cWhite);label("TITLE",260,6,cWhite);
+    panel(124,186,192,52);
+    snprintf(textbuf,sizeof textbuf,"%u. %s",level+1,stageTitles[level]);label(textbuf,129,190,cYellow);
+    snprintf(textbuf,sizeof textbuf,"Level %d  Points %d",playerLevel,skillPoints);label(textbuf,129,201,cWhite);
+    label("Arrows stage  ENTER play",129,213,cWhite);
+    label("STAT skills  MODE title",129,226,cCyan);
+}
+static void renderOptions(void) {
+    static const char *const resetText[]={"Reset Progress","Really reset?","Are you sure!?","You'll lose everything!","One more click...","Really, one more resets!","PROGRESS IS CLEARED!"};
+    art_background(ART_SKY_SUNSETIMAGE_LEFT);centered("OPTIONS",4,cWhite);
+    for(int i=0;i<4;i++){
+        art_draw(ART_BUTTON,optionChoice==i,89,40+i*34);
+        if(i<2)snprintf(textbuf,sizeof textbuf,"%s: %u%%",i?"Music":"Sound",i?musicVolume:soundVolume);
+        else snprintf(textbuf,sizeof textbuf,"%s",i==2?resetText[resetStage]:"Exit");
+        centered(textbuf,50+i*34,cWhite);
+    }
+    centered("Calculator audio is not implemented",184,cWhite);
+    centered("UP/DOWN choose  ENTER select",205,cCyan);
+    centered("MODE returns to the title",220,cCyan);
+}
+static void initEnding(void) {
+    if(endingReady)return;
+    for(int i=0;i<20;i++)endingFood[i]=(EndingFood){(-40+i*30)*FP,(180+rand()%40-20)*FP,(rand()%60-30)*FP/HZ,rand()%5};
+    endingReady=true;
+}
+static void stepEnding(void) {
+    for(int i=0;i<20;i++){
+        EndingFood *f=&endingFood[i];
+        if(f->x< -20*FP){f->x+=600*FP;f->y=(180+rand()%40-20)*FP;f->vy=(rand()%60-30)*FP/HZ;}
+        else if(f->y<160*FP)f->vy+=20*FP/(HZ*HZ);
+        else if(f->y>200*FP)f->vy-=20*FP/(HZ*HZ);
+        f->x-=40*FP/HZ;f->y+=f->vy;
+    }
+}
+static void renderEnding(void) {
+    static const uint8_t fire[]={0,1,0,2,3,4,5,6,7,6,5,4,3,2};
+    art_background(ART_SKY_SUNSETIMAGE_LEFT);centered("YOU WIN!",4,cWhite);
+    wrapText(endingText,10,40,300,10,cWhite);
+    initEnding();
+    for(int i=0;i<20;i++)art_draw(ART_FOOD,endingFood[i].frame,endingFood[i].x/FP,endingFood[i].y/FP);
+    art_draw(ART_TOWER_SOAPBOX,fire[(menuTicks*18/HZ)%14],10,216);
+    drawArt(ART_TOWER_SOAPBOX,fire[(menuTicks*18/HZ)%14],297,216,true);
+    art_draw(ART_BUTTON,0,89,210);centered("Yay!",220,cWhite);
 }
 static void renderHelp(void) {
     gfx_FillScreen(cPanel);
@@ -130,11 +196,11 @@ static void renderHelp(void) {
         "MATH / APPS: branch a base tower into",
         "  its two specializations (needs skill)",
         "DEL: sell for half of all money spent",
-        "+: send the next wave early (bonus)",
+        "+/-: speed 0-4x; 0 freezes/resumes",
         "ALPHA: pause   MODE: back to stages",
-        "STAT: skills (on the stage menu)",
+        "STAT: focus alien; VARS clears focus",
         "CLEAR: save and exit",
-        "Kill thieves to drop the food they carry;",
+        "GRAPH sends the next wave early.",
         "dropped food can be grabbed again."};
     for (int i = 0; i < 13; i++) label(lines[i], 10, 22 + i * 14, cWhite);
     centered("Original game: Hamumu Software, 2012", 208, cYellow);
@@ -193,7 +259,16 @@ static void renderSkills(void) {
     else snprintf(textbuf, sizeof textbuf, "Available - ENTER spends a point");
     centered(textbuf, 180, cWhite);
     label("Arrows move   ENTER learn   DEL reset all", 36, 192, cCyan);
-    label("MODE back", 130, 210, cCyan);
+    label("ALPHA details   MODE back", 80, 210, cCyan);
+    if(skillDetails){
+        const char *blob=(const char *)(artBanks[ART_SKILL_BANK]+ART_SKILL_OFFSET);
+        int rank=skills[c->icon];panel(8,52,304,136);
+        snprintf(textbuf,sizeof textbuf,"%s (%d/5)",c->name,rank);centered(textbuf,57,cYellow);
+        label("CURRENT",16,71,cCyan);
+        wrapText(rank?blob+skillTextOffsets[c->icon][rank-1]:"Not learned yet.",16,82,286,10,cWhite);
+        label("NEXT RANK",16,125,cYellow);
+        wrapText(rank<5?blob+skillTextOffsets[c->icon][rank]:"Maximum rank reached.",16,136,286,10,cWhite);
+    }
     if (statusTicks) shadowLabel(status, (320 - gfx_GetStringWidth(status)) / 2, 224, cWhite);
 }
 
@@ -281,6 +356,7 @@ static void renderGame(void) {
         if (e->crippled || e->disabled) { gfx_SetColor(cRed); gfx_FillRectangle(pip, y - 6, 3, 2); }
         if (e->immune) { gfx_SetColor(cWhite); gfx_Rectangle(x - 1, y - 1, art->width + 2, art->height + 2); }
     }
+    if(focusEnemy>=0&&enemies[focusEnemy].active){const Enemy *e=&enemies[focusEnemy];art_draw(ART_BOX,4,ex(e)-12-camx,e->y_pixel-monsterHeight[e->type]-24-camy);}
 #ifdef QA_PERF
     renderMark(2);
 #endif
@@ -311,8 +387,9 @@ static void renderGame(void) {
     art_draw(ART_CURSOR, (valid(cx, cy) || ti >= 0) ? 1 : 0, x, y);
     art_draw(ART_HUD, 0, 195, 0);
     snprintf(textbuf, sizeof textbuf, "$%d", money); label(textbuf, 267, 23, cWhite);
-    snprintf(textbuf, sizeof textbuf, "W%u/%u", wave, waveCounts[level]); label(textbuf, 204, 5, cWhite);
-    if (wave < waveCounts[level] && waveDue[wave] > 0) { snprintf(textbuf, sizeof textbuf, "%ds", (waveDue[wave] + HZ - 1) / (sendFast ? HZ * HZ : HZ)); label(textbuf, 204, 23, cYellow); }
+    art_draw(ART_SPEED_SLIDER,0,210+speedThirds*5,2);
+    snprintf(textbuf, sizeof textbuf, "W%u/%u", wave, waveCounts[level]); label(textbuf, 3, 25, cWhite);
+    if (wave < waveCounts[level] && waveDue[wave] > 0) { snprintf(textbuf, sizeof textbuf, "%ds", (waveDue[wave] + HZ - 1) / (sendFast ? HZ * HZ : HZ)); label(textbuf, 64, 25, cYellow); }
     snprintf(textbuf, sizeof textbuf, "FOOD %d", foodLeft()); shadowLabel(textbuf, 3, 3, foodLeft() < 3 ? cRed : cWhite);
     snprintf(textbuf, sizeof textbuf, "LV %d", playerLevel); shadowLabel(textbuf, 3, 13, cWhite); xpBar(33, 14, 50);
     gfx_SetColor(cPanel); gfx_FillRectangle(0, 217, 320, 23);
@@ -328,7 +405,8 @@ static void renderGame(void) {
     if (ti >= 0 && towers[ti].type <= SHOCK) {
         snprintf(textbuf, sizeof textbuf, "MATH %s  APPS %s", towerNames[branchTypes[towers[ti].type][0]], towerNames[branchTypes[towers[ti].type][1]]);
         label(textbuf, 3, 229, cCyan);
-    } else label("+ wave  DEL sell  ALPHA pause  MODE menu", 3, 229, cCyan);
+    } else label("GRAPH wave  +/- speed  STAT focus", 3, 229, cCyan);
+    if(!speedThirds&&!paused&&!showTip){panel(81,84,158,26);centered("TIME FROZEN",90,cYellow);}
 #ifdef QA_PERF
     renderMark(4);
 #endif
@@ -351,20 +429,46 @@ static void renderGame(void) {
 
 static void beginStage(bool bypass) {
     if (level >= unlocked && !bypass) { say("Locked - win the previous stage first"); return; }
-    startLevel(); showTip = true; paused = true; statusTicks = 0;
+    startLevel();showTip = true; paused = true; statusTicks = 0;
+#ifdef QA_FOCUS /* fixed fixture for verifying the keyboard selection path */
+    Enemy *fixture=spawnEnemy(0,1,map->routes[0].cells[0]);
+    if(fixture){fixture->born=0;fixture->freeze=1200;fixture->x=(cx*16+8)*FP;fixture->y=(cy*16+8+monsterHeight[0]/2)*FP;}
+#endif
 }
 static void updateDiagnostics(void) {
     int count = 0;
     for (int i = 0; i < MAXTOWER; i++) count += towers[i].active;
     scout_diag[0] = mode; scout_diag[1] = level; scout_diag[2] = wave; scout_diag[3] = count; scout_diag[4] = alive(); scout_diag[5] = escaped;
     scout_diag[6] = paused; scout_diag[7] = stageWon[level]; scout_diag[8] = skillPoints; scout_diag[9] = playerLevel; scout_diag[10] = foodLeft(); scout_diag[11] = showTip;
+    scout_diag[12]=speedThirds;scout_diag[13]=focusEnemy+1;scout_diag[14]=tick;scout_diag[15]=tick>>8;
 }
 static void handleMenu(void) {
-    if (KEY_PRESS(kb_KeyLeft)) level = (level + 16) % 17;
-    if (KEY_PRESS(kb_KeyRight)) level = (level + 1) % 17;
+    if(KEY_PRESS(kb_KeyUp)||KEY_PRESS(kb_KeyDown))titleChoice^=1;
+    if(KEY_PRESS(kb_KeyEnter)){mode=titleChoice?MODE_OPTIONS:MODE_MAP;resetStage=0;}
+    if(KEY_PRESS(kb_KeyAlpha)){mode=MODE_HELP;helpReturn=MODE_MENU;}
+}
+static void handleMap(void) {
+    int count=KEY_DOWN(kb_KeyVars)?17:unlocked;
+    if(level>=count)level=count-1;
+    if (KEY_PRESS(kb_KeyLeft)||KEY_PRESS(kb_KeyUp)) level = (level + count-1) % count;
+    if (KEY_PRESS(kb_KeyRight)||KEY_PRESS(kb_KeyDown)) level = (level + 1) % count;
     if (KEY_PRESS(kb_KeyEnter)) beginStage(KEY_DOWN(kb_KeyVars));
-    if (KEY_PRESS(kb_KeyAlpha)) mode = MODE_HELP;
-    if (KEY_PRESS(kb_KeyStat)) mode = MODE_SKILLS;
+    if (KEY_PRESS(kb_KeyAlpha)){mode=MODE_HELP;helpReturn=MODE_MAP;}
+    if (KEY_PRESS(kb_KeyStat)){mode=MODE_SKILLS;skillReturn=MODE_MAP;}
+    if (KEY_PRESS(kb_KeyMode))mode=MODE_MENU;
+}
+static void handleOptions(void) {
+    if(KEY_PRESS(kb_KeyUp))optionChoice=(optionChoice+3)%4;
+    if(KEY_PRESS(kb_KeyDown))optionChoice=(optionChoice+1)%4;
+    if(KEY_PRESS(kb_KeyMode))mode=MODE_MENU;
+    if(KEY_PRESS(kb_KeyEnter)){
+        if(optionChoice<2){uint8_t *v=optionChoice?&musicVolume:&soundVolume;*v=*v==100?0:*v+25;}
+        else if(optionChoice==3)mode=MODE_MENU;
+        else if(resetStage<6){
+            resetStage++;
+            if(resetStage==6){memset(skills,0,sizeof skills);skills[SK_ROCKTOWER]=1;memset(stageWon,0,sizeof stageWon);playerLevel=1;skillPoints=xp=level=0;unlocked=1;save();}
+        }
+    }
 }
 static void handleSkills(void) {
     if (KEY_PRESS(kb_KeyLeft)) moveSkill(-1, 0);
@@ -373,18 +477,24 @@ static void handleSkills(void) {
     if (KEY_PRESS(kb_KeyDown)) moveSkill(0, 1);
     if (KEY_PRESS(kb_KeyEnter)) buySkill();
     if (KEY_PRESS(kb_KeyDel)) resetSkills();
-    if (KEY_PRESS(kb_KeyMode)) { mode = MODE_MENU; save(); }
+    if(KEY_PRESS(kb_KeyAlpha))skillDetails=!skillDetails;
+    if (KEY_PRESS(kb_KeyMode)) { mode = skillReturn; save(); }
     if (statusTicks) statusTicks--;
 }
 static void handlePlay(void) {
     static int repeat;
     if (showTip) {
         if (KEY_PRESS(kb_KeyEnter) || KEY_PRESS(kb_KeyAlpha) || KEY_PRESS(kb_Key2nd)) { showTip = false; paused = false; }
-        if (KEY_PRESS(kb_KeyMode)) mode = MODE_MENU;
+        if (KEY_PRESS(kb_KeyMode)) mode = MODE_MAP;
         return;
     }
-    if (KEY_PRESS(kb_KeyMode)) { mode = MODE_MENU; return; }
+    if (KEY_PRESS(kb_KeyMode)) { mode = MODE_MAP; return; }
     if (KEY_PRESS(kb_KeyAlpha)) paused = !paused;
+    if(KEY_PRESS(kb_KeySub)&&speedThirds)speedThirds--;
+    if(KEY_PRESS(kb_KeyAdd)&&speedThirds<12)speedThirds++;
+    if(KEY_PRESS(kb_Key0)){if(speedThirds){previousSpeedThirds=speedThirds;speedThirds=0;}else speedThirds=previousSpeedThirds;}
+    if(KEY_PRESS(kb_KeyStat))say(focusAt(cx*16+8,cy*16+8)>=0?"Focus fire selected":"No alien near the cursor");
+    if(KEY_PRESS(kb_KeyVars)){focusEnemy=-1;say("Focus fire cleared");}
     bool move = kb_Data[7] & (kb_Left | kb_Right | kb_Up | kb_Down);
     if (move) {
         if (!repeat || repeat >= 4) {
@@ -403,17 +513,18 @@ static void handlePlay(void) {
     if (KEY_DOWN(kb_Key2)) selection = 1;
     if (KEY_DOWN(kb_Key3)) selection = 2;
     if (KEY_DOWN(kb_Key4)) selection = 3;
-    if (KEY_PRESS(kb_Key2nd)) build();
-    if (KEY_PRESS(kb_KeyEnter)) upgrade();
+    if (KEY_PRESS(kb_Key2nd)){focusEnemy=-1;build();}
+    if (KEY_PRESS(kb_KeyEnter)){focusEnemy=-1;upgrade();}
     if (KEY_PRESS(kb_KeyDel)) sellTower();
     if (KEY_PRESS(kb_KeyMath)) convertTower(0);
     if (KEY_PRESS(kb_KeyApps)) convertTower(1);
-    if (KEY_PRESS(kb_KeyAdd)) { if (wave < waveCounts[level]) { sendWave(); say("Wave sent early"); } }
+    if (KEY_PRESS(kb_KeyGraph)) { if (wave < waveCounts[level]) { sendWave(); say("Wave sent early"); } }
 }
 static void handleResult(void) {
-    if (KEY_PRESS(kb_KeyMode)) mode = MODE_MENU;
-    else if (KEY_PRESS(kb_KeyStat)) mode = MODE_SKILLS;
+    if (KEY_PRESS(kb_KeyMode)) mode = MODE_MAP;
+    else if (KEY_PRESS(kb_KeyStat)){mode=MODE_SKILLS;skillReturn=MODE_MAP;}
     else if (KEY_PRESS(kb_KeyEnter)) {
+        if(mode==MODE_WON&&level==16){mode=MODE_ENDING;return;}
         if (mode == MODE_WON && level < 16) level++;
         beginStage(true);
     }
@@ -431,35 +542,49 @@ int main(void) {
     timer_Set(1, 0); timer_Enable(1, TIMER_32K, TIMER_NOINT, TIMER_UP);
     uint32_t last = timer_GetSafe(1, TIMER_UP), accumulator = 0;
     mode = MODE_MENU;
+#ifdef QA_ENDING /* diagnostic entry, never enabled for production */
+    mode = MODE_ENDING;
+#endif
 #ifdef QA_PERF
     uint32_t perfStart=last,drawTotal=0,simTotal=0;unsigned frameCount=0;
 #endif
     while (1) {
         kb_Scan();
         if (kb_Data[6] & kb_Clear) break;
-        uint32_t now = timer_GetSafe(1, TIMER_UP); accumulator += now - last; last = now;
+        uint32_t now = timer_GetSafe(1, TIMER_UP); accumulator += (now-last)*(mode==MODE_PLAY?speedThirds:3); last = now;
+        menuTicks=(now>>15)*HZ+((now&32767)*HZ>>15);
+        if(mode!=MODE_ENDING)endingReady=false;
         if (mode == MODE_MENU) handleMenu();
-        else if (mode == MODE_HELP) { if (KEY_PRESS(kb_KeyEnter) || KEY_PRESS(kb_KeyMode) || KEY_PRESS(kb_KeyAlpha)) mode = MODE_MENU; }
+        else if (mode == MODE_MAP) handleMap();
+        else if (mode == MODE_OPTIONS) handleOptions();
+        else if (mode == MODE_ENDING) {initEnding();int steps=0;while(accumulator>=STEP_TICKS*3&&steps<6){stepEnding();accumulator-=STEP_TICKS*3;steps++;}if(KEY_PRESS(kb_KeyEnter)||KEY_PRESS(kb_KeyMode))mode=MODE_MENU;}
+        else if (mode == MODE_HELP) { if (KEY_PRESS(kb_KeyEnter) || KEY_PRESS(kb_KeyMode) || KEY_PRESS(kb_KeyAlpha)) mode = helpReturn; }
         else if (mode == MODE_SKILLS) handleSkills();
         else if (mode == MODE_PLAY) {
             handlePlay();
             if (mode == MODE_PLAY && !paused) {
+                if(!speedThirds)accumulator=0;
 #ifdef QA_PERF
                 uint32_t simStart=timer_GetSafe(1,TIMER_UP);
 #endif
                 int steps = 0;
-                while (accumulator >= STEP_TICKS && steps < 6) { update(); accumulator -= STEP_TICKS; steps++; if (mode != MODE_PLAY) break; }
-                if (steps == 6 && accumulator > 32768) accumulator = 32768;
+                while (accumulator >= STEP_TICKS*3 && steps < 12) { update(); accumulator -= STEP_TICKS*3; steps++; if (mode != MODE_PLAY) break; }
+                if (steps == 12 && accumulator > 32768*3) accumulator = 32768*3;
 #ifdef QA_PERF
                 simTotal+=timer_GetSafe(1,TIMER_UP)-simStart;
 #endif
             } else accumulator = 0;
         } else handleResult();
-        if (mode != MODE_PLAY || paused) accumulator = 0;
+        if ((mode != MODE_PLAY && mode != MODE_ENDING) || (mode==MODE_PLAY&&paused)) accumulator = 0;
 #ifdef QA_PERF
         uint32_t drawStart=timer_GetSafe(1,TIMER_UP);
 #endif
+        if(mode==MODE_MAP&&previousDrawMode!=MODE_MAP)mapEntered=menuTicks;
+        previousDrawMode=mode;
         if (mode == MODE_MENU) renderMenu();
+        else if (mode == MODE_MAP) renderMap();
+        else if (mode == MODE_OPTIONS) renderOptions();
+        else if (mode == MODE_ENDING) renderEnding();
         else if (mode == MODE_HELP) renderHelp();
         else if (mode == MODE_SKILLS) renderSkills();
         else renderGame();

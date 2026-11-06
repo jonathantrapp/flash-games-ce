@@ -24,7 +24,7 @@ bool load_resources(void){
  return tiledata[0]&&tiledata[1]&&artdata[0]&&artdata[2]&&uidata[0][0]&&uidata[0][1]&&uidata[1][0]&&uidata[1][1]&&uidata[2][0]&&uidata[2][1]&&uiimg[UI_HEART]&&uiimg[UI_SKI]&&uiimg[UI_SKB];
 }
 void draw_sprite(int id,int fr,int facing,int x,int y){if(id<0||id>=60||!artdata[id])return;const ArtDef *a=&artdef[id];if(!a->frames||x>=320||y>=240||x+a->w<=0||y+a->h<=0)return;if(fr<0)fr=0;else if(fr>=a->frames)fr%=a->frames;cached_sprite(artdata[id]+((facing<0?a->frames:0)+fr)*a->stride,x,y);}
-void draw_ui(int id,int fr,int x,int y){if(id<0||id>=UI_COUNT||!uiimg[id])return;const UiDef *u=&uidef[id];if(fr<0)fr=0;if(fr>=u->frames)fr=u->frames-1;gfx_TransparentSprite((gfx_sprite_t *)(uiimg[id]+fr*u->stride),x,y);}
+void draw_ui(int id,int fr,int x,int y){if(id<0||id>=UI_COUNT||!uiimg[id])return;const UiDef *u=&uidef[id];if(fr<0)fr=0;if(fr>=u->frames)fr=u->frames-1;if(!cached_hud(id,fr,x,y))gfx_TransparentSprite((gfx_sprite_t *)(uiimg[id]+fr*u->stride),x,y);}
 int levels_passed(void){int n=0;while(n<15&&progress.passed[n])n++;return n;}
 int tile_at(int x,int y){if(x<0||x>=(int)g.w*16)return 1;if(y<0)return 1;if(y>=(int)g.h*16)return 0;return g.solid[(y/16)*g.w+x/16];}
 static int slope(int t){switch(t){case 14:case 86:case 121:case 123:case 171:return 1;case 18:case 90:case 122:case 125:case 170:return 2;default:return 0;}}

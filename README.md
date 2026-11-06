@@ -2,7 +2,7 @@
 
 TI-84 Plus CE ports of **Scouts vs Aliens** and **Pedro Kicks Back**.
 
-The latest deliverable is the **6 November v3 development checkpoint**, not a finished port. [Download the calculator package](dist/FlashGamesCE-v3-checkpoint.zip), read [what was completed and what remains](flash-ports/CHECKPOINT-2026-11-06.md), and see [verification details](flash-ports/verification/CHECKPOINT-v3.md). Pedro's frame rate remains inadequate and the physical-calculator RAM-clear report is not proven fixed. No gameplay-fidelity percentage is claimed.
+The latest deliverable is the **6 November v4 development preview**, not a finished port. [Download the calculator package](dist/FlashGamesCE-v4-preview.zip), read [what changed and what remains](flash-ports/CONTINUATION-2026-11-06.md), and see [verification details](flash-ports/verification/CHECKPOINT-v4.md). All32 stage-entry checks passed; these are not campaign playthroughs. Pedro's measured emulator scene improved from about9 to12 FPS, but performance remains inadequate and the physical RAM-clear report is not proven fixed. No gameplay-fidelity percentage is claimed. [Developer handoff](flash-ports/HANDOFF.md).
 
 The original games and artwork are by Hamumu Software (2012). This repository tracks calculator port development and the supplied games' recovered reference material.
 
@@ -14,7 +14,13 @@ Per-game notes, controls and known gaps: [flash-ports/scoutcamp](flash-ports/sco
 
 Native calculator-emulator (CEmu) captures
 
-Latest production checkpoint:
+Latest v4 captures (Pedro's skill screen is from the native UI test harness):
+
+| Scouts campaign map | Pedro skill details | Scouts speed controls |
+| --- | --- | --- |
+| ![Campaign map](docs/screenshots/scout-v4-map.png) | ![Original descriptions](docs/screenshots/pedro-v4-skills.png) | ![Speed controls](docs/screenshots/scout-v4-speed.png) |
+
+Earlier v3 production checkpoint:
 
 | Pedro opening | Pedro aerial-kick tutorial | Scouts |
 | --- | --- | --- |

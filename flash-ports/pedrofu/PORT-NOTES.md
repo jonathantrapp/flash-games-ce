@@ -13,6 +13,7 @@
 - Enemy classes with their own state machines: Yak, Bruiser, Armor, Archer and Elite Archer, Ninja, Yakolyte, Iron Priest, Torgo/Robot, Master Yak, Barrier Orbs and the Barrier object. Projectiles include arrows, ninja stars, homing shots, rock spikes, ground fire and pike slashes.
 - Stage scripts: tents that spawn Yaks, the five-round mail arenas on stages 11 and 14 (timed bonuses and rewards), tag gates, the Master Yak finale with respawning orbs, and the original conversations (28 pages across 12 events) with their gameplay side effects.
 - Title, stage map, skill screen (original layout and artwork), help, pause, defeat, victory and ending screens.
+- Original descriptions for all 45 skills, calculated with live bonuses, with current/next-rank previews. ALPHA opens details; Left/Right changes preview, Up/Down scrolls, ALPHA or MODE closes. ENTER learns and DEL refunds as on the grid.
 
 ## Controls
 
@@ -32,9 +33,9 @@
 ## Not done, or not verified
 
 - The original burning-blimp flight, explosions, parachute descent and canopy collapse are now integrated before the opening conversation. Native captures and the checkpoint test cover that transition. Fire scaling, additive alpha and camera effects are approximated.
-- Performance is still a blocker: the latest measured Pedro stage-1 diagnostic runs are around 9 FPS in the local emulator. No claim is made that the physical-calculator frame rate or RAM-clear report is fixed.
+- Performance remains a blocker: opaque terrain draws and a separate clipped HUD cache raised the same stage-1 emulator scenario from about 9 to 12 FPS. This is one instrumented scene, not a minimum or a physical-calculator result. The RAM-clear report is not proven fixed.
 - No music or sound (the calculator has none); screen shake and some flash effects are omitted.
-- Skill descriptions are not shown. The original builds them from live formulas; the screen shows rank and prerequisites only.
+- Skill descriptions now use original text/formulas; integer formatting can differ by 0.01 from Flash floating-point rounding. Hover/history and some options/tooltip presentation remain different.
 - Move timing, hitboxes, enemy AI and boss phases are translated from the AS3 but have not been compared frame by frame with the original running in Ruffle. Stages are verified to load and run in the emulator, not to be completable.
 - Not yet tested on a physical calculator.
 - Numerical rules (XP, level-ups, damage multipliers, prerequisites, maxima, Fury Overload) are checked against the original formulas by `tests/check_profile.py` (see `verification/RESULTS.md`).
@@ -48,7 +49,10 @@
 3. `build_intro_assets.py`: blimp, explosion and burning-uppercut frames using the existing palette.
 4. `build_render_cache.py`: exact original sky pixels in a row-fill/RLET representation.
 5. `bundle_assets.py`: packs the small resources into 19 signed banks of at most 32 KB (`PDB00..`) and writes `src/bundle.h`.
+6. `build_skill_descriptions.py`: generates original live skill descriptions and checks every numeric intermediate against signed24-bit limits.
 
 Transfer `PEDROCE.8xp` with every `PD*.8xv` file and the CE runtime libraries. In-play saves stay in RAM; clean exit archives `PDPROG2` after drawing has stopped, so resource pointers are no longer used if flash garbage collection occurs.
+
+The default compact build is required. `ram_guard.ld` rejects resident programs that overlap GraphX's LCD buffers; an experimental whole-program `-O1` build exceeded this bound. Other speed experiments that reset the emulator are excluded from releases. RAM HUD caching reserves bounded worst-case GraphX conversion sizes and keeps cropped meters clipped.
 
 Original behaviour was read from `original/scripts/xplor/` (`MapStore.as`, `Pedro.as`, `Monster/*.as`, `Profile.as`, `Menus/*.as`, `Arena.as`, `Conversation.as`).

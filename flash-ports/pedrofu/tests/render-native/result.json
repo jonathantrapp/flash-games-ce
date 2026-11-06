@@ -1,0 +1,12 @@
+{
+  "expected": [
+    1,
+    19,
+    8,
+    0,
+    0
+  ],
+  "returncode": 0,
+  "cache_sha256": "ee8f2b7049c22ae78ea1dc2ebff5685426101c4950e600207f2bbf0f72eaff73",
+  "scope": "Native actual renderer compared with original GraphX transparent sprite draws: all296 tiles under15 stage cache selections,4 screen-edge montages and8 HUD/clip montages, guarded tile/HUD buffers."
+}

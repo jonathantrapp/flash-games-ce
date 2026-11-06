@@ -1,10 +1,59 @@
 /* Title, stage map, skill, pause, result and ending screens. */
 #include "game.h"
+#include "skill_descriptions.h"
 
 static const int map_x[15] = {42, 93, 139, 174, 209, 247, 286, 280, 234, 189, 142, 95, 58, 42, 62};
 static const int map_y[15] = {100, 110, 100, 87, 75, 103, 136, 175, 186, 198, 192, 198, 190, 169, 147};
 static int menu_selection, skill_cursor;
 static char text[64];
+static bool skill_details, skill_next;
+static uint8_t skill_scroll, skill_detail_total;
+static void panel(int x,int y,int w,int h);
+static void centered(int y,const char *s,int color);
+
+/* Word-wrap the complete description before selecting visible lines. Text
+ * routines cannot safely clip at the bottom of a panel, so only visible lines
+ * are submitted to GraphX. The original tooltip is adapted to a key-operated
+ * overlay, with current/next rank previews and scrolling for long text. */
+static void draw_skill_details(void) {
+    char description[384], line[96];
+    int rank=progress.skills[skill_cursor];
+    if(!rank)skill_next=true;if(rank>=5)skill_next=false;
+    int preview=rank+(skill_next&&rank<5);
+    if(preview<1)preview=1;
+    skill_description(skill_cursor,preview,description,sizeof description);
+    panel(4,26,312,188);
+    centered(33,skillnames[skill_cursor],cYellow);
+    snprintf(text,sizeof text,"%s rank %d / 5",skill_next?"Next":"Current",preview);
+    centered(46,text,cCyan);
+    const char *p=description;unsigned index=0;
+    gfx_SetTextFGColor(cWhite);
+    while(*p&&index<32){
+        unsigned n=0,last_space=0;
+        while(p[n]&&p[n]!='\n'&&n<90){
+            line[n]=p[n];line[n+1]=0;
+            if(gfx_GetStringWidth(line)>288)break;
+            if(p[n]==' ')last_space=n;
+            n++;
+        }
+        if(p[n]&&p[n]!='\n'&&last_space)n=last_space;
+        if(!n)n=1;
+        memcpy(line,p,n);line[n]=0;
+        while(n&&line[n-1]==' ')line[--n]=0;
+        if(index>=skill_scroll&&index<skill_scroll+12)
+            print_fit(line,15,61+(index-skill_scroll)*10);
+        /* Advance by the untrimmed text length, not the displayed line length. */
+        p+=n;while(*p==' ')p++;if(*p=='\n')p++;
+        index++;
+    }
+    skill_detail_total=index;
+    int need=skill_need(skill_cursor);
+    if(need>0)snprintf(text,sizeof text,"Needs %d points in earlier ranks",need);
+    else snprintf(text,sizeof text,"ENTER learns   DEL refunds");
+    centered(192,text,cYellow);
+    centered(203,"Left/Right: current/next rank",cCyan);
+    centered(218,"Up/Down scroll   ALPHA/MODE closes",cCyan);
+}
 
 static void panel(int x, int y, int w, int h) { gfx_SetColor(cPanel); gfx_FillRectangle(x, y, w, h); gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, h); }
 static void shadow(const char *s, int x, int y, int color) { gfx_SetTextFGColor(cBlack); print_fit(s, x + 1, y + 1); gfx_SetTextFGColor(color); print_fit(s, x, y); }
@@ -50,8 +99,9 @@ static void draw_skills(void) {
         if (need > 0) snprintf(text, sizeof text, "Needs %d more points in earlier ranks", need); else snprintf(text, sizeof text, "ENTER learns   DEL unlearns one rank");
         centered(187, text, cWhite);
     }
-    centered(218, "Arrows move   MODE back", cCyan);
+    if(!skill_details)centered(218, "Arrows move   ALPHA details   MODE back", cCyan);
     if (g.notice_timer && g.notice) centered(230, g.notice, cWhite);
+    if(skill_details)draw_skill_details();
 }
 
 /* ---- frontend update ---- */
@@ -71,14 +121,26 @@ void frontend_update(void) {
         if (tap & (LEFT | UP)) menu_selection = menu_selection ? menu_selection - 1 : top;
         if (tap & (RIGHT | DOWN)) menu_selection = menu_selection < top ? menu_selection + 1 : 0;
         if (tap & ACCEPT) start_stage(menu_selection);
-        if (tap & SKILLKEY) { g.mode = SKILLS; g.previousmode = MAP; }
+        if (tap & SKILLKEY) { g.mode = SKILLS; g.previousmode = MAP; skill_details=false; }
         if (tap & MENUKEY) g.mode = TITLE;
         break; }
     case SKILLS:
-        if (tap & LEFT) move_skill(-1, 0);
-        if (tap & RIGHT) move_skill(1, 0);
-        if (tap & UP) move_skill(0, -1);
-        if (tap & DOWN) move_skill(0, 1);
+        if(skill_details){
+            if(tap&(HITKEY|MENUKEY)){skill_details=false;break;}
+            if((tap&UP)&&skill_scroll)skill_scroll--;
+            if((tap&DOWN)&&skill_scroll+12<skill_detail_total)skill_scroll++;
+            if((tap&LEFT)&&progress.skills[skill_cursor]){skill_next=false;skill_scroll=0;}
+            if((tap&RIGHT)&&progress.skills[skill_cursor]<5){skill_next=true;skill_scroll=0;}
+        }else{
+            if (tap & LEFT) move_skill(-1, 0);
+            if (tap & RIGHT) move_skill(1, 0);
+            if (tap & UP) move_skill(0, -1);
+            if (tap & DOWN) move_skill(0, 1);
+            if(tap&HITKEY){
+                if(progress.have[skill_cursor]){skill_details=true;skill_next=!progress.skills[skill_cursor];skill_scroll=0;}
+                else notice("Find this Ancient Technique first");
+            }
+        }
         if (tap & ACCEPT) { if (skill_adjust(skill_cursor, 1)) notice("Skill learned"); else notice(progress.have[skill_cursor] ? (progress.points ? "Spend points in earlier ranks first" : "No skill points - gain levels") : "Not discovered yet"); }
         if (tap & (FURYKEY | MINUSKEY)) { if (skill_adjust(skill_cursor, -1)) notice("Rank refunded"); }
         if (tap & MENUKEY) g.mode = g.previousmode == PAUSE ? PAUSE : MAP;
@@ -87,7 +149,7 @@ void frontend_update(void) {
     case PAUSE:
         if (tap & ACCEPT) g.mode = PLAY;
         if (tap & MENUKEY) { g.mode = MAP; menu_selection = g.level; }
-        if (tap & SKILLKEY) { g.mode = SKILLS; g.previousmode = PAUSE; }
+        if (tap & SKILLKEY) { g.mode = SKILLS; g.previousmode = PAUSE; skill_details=false; }
         break;
     case DEFEAT:
         if (tap & ACCEPT) start_stage(g.level);
@@ -96,7 +158,7 @@ void frontend_update(void) {
     case VICTORY:
         if (tap & ACCEPT) { int next = g.level + 1; if (next > 14) next = 14; menu_selection = next; start_stage(next); }
         if (tap & MENUKEY) { g.mode = MAP; menu_selection = available_levels(); }
-        if (tap & SKILLKEY) { g.mode = SKILLS; g.previousmode = MAP; }
+        if (tap & SKILLKEY) { g.mode = SKILLS; g.previousmode = MAP; skill_details=false; }
         break;
     case ENDING:
         if (tap & (ACCEPT | MENUKEY)) g.mode = TITLE;

@@ -1,0 +1,16 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\scoutcamp\ui_map_final\smoke.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | vars
+Launching command delay | 2500
+Launching command hashWait | scout_diag_0
+	[Test passed!] Hash #scout_diag_0 had a matching CRC.
+[CPU] PC=d1e856 SP=d1a768
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.
+

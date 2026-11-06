@@ -2,18 +2,18 @@
 
 These are native C rebuilds of the two supplied SWFs, written from the AS3 recovered with JPEXS. Both are works in progress: see [PARITY-AUDIT.md](PARITY-AUDIT.md) for what is verified and what is not, and each game's notes for controls and known gaps.
 
-The current deliverable is a **v3 development checkpoint**, not a completed faithful port. Read [CHECKPOINT-2026-11-06.md](CHECKPOINT-2026-11-06.md) before installing. Pedro's frame-rate problem and the exact physical-calculator crash remain unresolved/unverified.
+The current deliverable is a **v4 development preview**, not a completed faithful port. Read [CONTINUATION-2026-11-06.md](CONTINUATION-2026-11-06.md) before installing. Pedro's frame rate improved in the emulator but remains inadequate; the exact physical-calculator crash remains unverified.
 
 | Supplied file | Original game | Calculator program |
 | --- | --- | --- |
-| scoutcamp_unlocked.swf | Scouts vs Aliens | SCOUTCE (+ 32 `SCAxx` banks) |
+| scoutcamp_unlocked.swf | Scouts vs Aliens | SCOUTCE (+ 33 `SCAxx` banks) |
 | pedrofu_unlocked.swf | Pedro Kicks Back | PEDROCE (+ 19 `PDBxx` banks, `PDCOLOR`, `PDTILE0/1`, six `PDUxx` images) |
 
 The original games, artwork and characters were created by Hamumu Software (2012); see [CREDITS.md](CREDITS.md). This is an unofficial fan project. This folder contains the calculator implementation and local recovery work. The Flash files themselves cannot run on the calculator.
 
 ## Install
 
-1. Extract `FlashGamesCE-v3-checkpoint.zip` on your computer. (To assemble it yourself from compiled programs, run `python flash-ports/package.py --name FlashGamesCE-v3-checkpoint` from the workspace root.)
+1. Extract `FlashGamesCE-v4-preview.zip` on your computer. (To assemble it yourself from compiled programs, run `python flash-ports/package.py` from the workspace root.)
 2. Connect the TI-84 Plus CE using USB and open TI Connect CE's Calculator Explorer.
 3. Send the `.8xp` and `.8xv` files from the extracted package. Keep the `.8xv` files in archive. Each game's asset AppVars must accompany its program.
 4. Launch `SCOUTCE` or `PEDROCE` through Cesium using your existing native-game setup.

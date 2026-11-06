@@ -1,0 +1,65 @@
+{
+  "checks": 8,
+  "failures": [],
+  "one_x_ticks": 24,
+  "fast_setting_ticks": 67,
+  "snapshots": {
+    "freeze_short": {
+      "mode": 1,
+      "speed_thirds": 0,
+      "previous_speed_thirds": 3,
+      "tick": 8
+    },
+    "freeze_long": {
+      "mode": 1,
+      "speed_thirds": 0,
+      "previous_speed_thirds": 3,
+      "tick": 8
+    },
+    "resume_1x": {
+      "mode": 1,
+      "speed_thirds": 0,
+      "previous_speed_thirds": 3,
+      "tick": 32
+    },
+    "resume_1x_setting": {
+      "mode": 1,
+      "speed_thirds": 3,
+      "previous_speed_thirds": 3,
+      "tick": 21
+    },
+    "freeze_4x": {
+      "mode": 1,
+      "speed_thirds": 0,
+      "previous_speed_thirds": 11,
+      "tick": 160
+    },
+    "resume_4x": {
+      "mode": 1,
+      "speed_thirds": 0,
+      "previous_speed_thirds": 11,
+      "tick": 227
+    },
+    "resume_4x_setting": {
+      "mode": 1,
+      "speed_thirds": 11,
+      "previous_speed_thirds": 11,
+      "tick": 203
+    },
+    "upper_bound": {
+      "mode": 1,
+      "speed_thirds": 12,
+      "previous_speed_thirds": 3,
+      "tick": 268
+    },
+    "lower_bound": {
+      "mode": 1,
+      "speed_thirds": 0,
+      "previous_speed_thirds": 3,
+      "tick": 16
+    }
+  },
+  "reused_captures": true,
+  "program_sha256": "8c6bf764ae0679215e4fb017d4474c4c9c10aa37a59b605fab6372c9c85a50fd",
+  "scope": "Actual keypad input in CEmu: frozen tick stability, restoration of the stored speed setting, progress and bounds0..4x. Initial exact4x rate expectation did not pass (109expected/67observed); repeated220ms taps also missed one increment, yielding11thirds rather than12. Exact4x rate and reliable rapid-input sampling remain unverified. No physical speed claim."
+}

@@ -1,5 +1,7 @@
 # Original-game parity audit
 
+This is the historical November 5 audit/checklist. Later changes and their evidence are recorded in the [v4 continuation](CONTINUATION-2026-11-06.md); unchecked or incomplete items below may have since changed. No gameplay-fidelity percentage is inferred from either report.
+
 This is a source-bound scope and acceptance checklist, not a claim of completed parity. The supplied games are Hamumu Software's **Scouts vs Aliens** and **Pedro Kicks Back** (2012). JPEXS recovered their AS3 into `*/original/scripts/xplor`. A checked acceptance item requires implementation inspection and a relevant native test. New native implementations were still in progress when this checklist was written.
 
 The earlier native releases recovered maps and basic gameplay, but did not meet close reproduction of original mechanics. A percentage cannot be inferred from number of maps, successful launch, or similar screenshots.

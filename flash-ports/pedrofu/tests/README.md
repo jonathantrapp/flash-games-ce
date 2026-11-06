@@ -12,6 +12,9 @@ These tests use the actual native C sources with host hardware stubs or a standa
 | `check_bank_validation.py` | Executes actual `open_banks()` with complete, missing, truncated and empty AppVars. |
 | `check_native_text.py` | Builds standalone `PDTEXT` and runs it in CEmu. Tests actual GraphX font widths and extracted text functions against28 original dialogue pages, current help and narrow-glyph stress. Memory hashes verify guard buffers and print coordinates. |
 | `check_native_rlet.py` | Builds standalone `PDRLET`; checks real GraphX encode/decode round trips and 410/1024-byte canaries for all 296 original tiles, selected actor frames in both facings, and alternating-transparency fixtures. |
+| `check_native_render_cache.py` | Compares the actual optimized terrain/HUD draws with reference GraphX draws across all15 stage cache selections, screen edges and meter clipping; checks guarded buffers. |
+| `check_skill_descriptions.py` | Compares all45 original skill descriptions with live modifiers and checks bounded output. Generator interval analysis checks24-bit intermediate bounds. |
+| `check_native_skill_ui.py` | Exercises real frontend/profile code and GraphX fonts: previews, learn/refund, navigation, scrolling and print bounds. |
 
 The host tests use the workspace's portable Zig compiler. The native diagnostic uses CEdev, the local CEmu console runner and the user's local ROM; none of these tools or ROM are part of a game release. Hardware/file stubs generated under `stubs/` are test-only. Compiler output and caches are ignored.
 

@@ -1,8 +1,11 @@
 """Pack full-resolution original SWF art as archive-readable CE AppVars."""
-import sys,pathlib,struct,re,hashlib,json
+import sys,pathlib,struct,re,hashlib,json,argparse
 sys.path.insert(0,'../../local-tools/plot-libs')
 from PIL import Image
 root=pathlib.Path(__file__).parent
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--bin-dir',default='bin')
+output=root/parser.parse_args().bin_dir
 files={f.name.split('_',1)[1][:-4]:f for f in (root/'assets/images').glob('*_xplor*.png')}
 images=[Image.open(f).convert('RGBA') for f in files.values()]
 canvas=Image.new('RGB',(1024,1024),(0,0,0));x=y=0
@@ -58,6 +61,7 @@ for f in sorted((root/'original/scripts/xplor/Bullet').glob('*.as')):
 for name,key,fw,fh in [('MAP_X','Menus.MapState_XImage',19,18),('MAP_BUTTON','Menus.MapState_ButtonImage',53,18),('SKILL_TRAY','Menus.SkillState_TrayImage',16,5),('SKILL_POINT','Menus.SkillState_PointImage',2,3),('WAVE_MONSTER','WaveBlock_WaveMonsterImage',14,16)]:
  add(name,Image.open(files['xplor.'+key]),fw,fh)
 from collections import Counter
+add('SPEED_SLIDER',Image.open(files['xplor.Hud_HudSpeedImage']),7,9)
 skyRows=[];skyOverlays=[]
 for prefix in ['Sky_SunsetImage','Sky_DesertImage']:
  raw=bytearray(76800)
@@ -90,6 +94,10 @@ for prefix in ['Sky_SunsetImage','Sky_DesertImage']:
 mapData=(root/'build-art/maps.bin').read_bytes()
 if len(banks[-1])+len(mapData)>32000:banks.append(bytearray())
 mapBank,mapOffset=len(banks)-1,len(banks[-1]);banks[-1]+=mapData
+skillText=(root/'build-art/skill-text.bin').read_bytes()
+assert len(skillText)<32000 and skillText[-1]==0
+if len(banks[-1])+len(skillText)>32000:banks.append(bytearray())
+skillBank,skillOffset=len(banks)-1,len(banks[-1]);banks[-1]+=skillText
 signature=hashlib.sha256(b''.join(banks)+str(entries).encode()+str(frameRefs).encode()+bytes(str(pal),'ascii')).digest()[:4]
 header='#ifndef SCOUT_ART_H\n#define SCOUT_ART_H\n#include <stdbool.h>\n#include <stdint.h>\n#include <graphx.h>\ntypedef struct {uint16_t first;uint8_t width,height,frames;} Art;\ntypedef struct {uint8_t bank;uint16_t offset;} ArtFrame;\nenum {\n'+',\n'.join('ART_'+e[0].upper() for e in entries)+'\n,ART_COUNT};\n'
 header+='static const Art artTable[]={\n'+',\n'.join('{%d,%d,%d,%d}'%e[1:] for e in entries)+'};\n'
@@ -97,16 +105,17 @@ header+='static const ArtFrame artFrames[]={\n'+',\n'.join('{%d,%d}'%f for f in 
 for i,groups in enumerate(skyRows):header+='static const uint8_t artSkyRows%d[][3]={'%i+','.join('{%d,%d,%d}'%tuple(g) for g in groups)+'};\n'
 header+='static const struct {uint8_t left,right;uint16_t leftSize,rightSize;const uint8_t (*rows)[3];uint8_t groups;} artSkies[]={'+','.join('{%d,%d,%d,%d,artSkyRows%d,%d}'%(v[0],v[1],v[2],v[3],i,len(skyRows[i])) for i,v in enumerate(skyOverlays))+'};\n'
 header+='#define ART_MAP_BANK '+str(mapBank)+'\n#define ART_MAP_OFFSET '+str(mapOffset)+'\n#define ART_MAP_SIZE '+str(len(mapData))+'\n'
+header+='#define ART_SKILL_BANK '+str(skillBank)+'\n#define ART_SKILL_OFFSET '+str(skillOffset)+'\n#define ART_SKILL_SIZE '+str(len(skillText))+'\n'
 header+='static const uint16_t artPalette[]={'+','.join(map(str,pal))+'};\n'
 header+='static const uint16_t artBankSizes[]={'+','.join(str(len(b)) for b in banks)+'};\n'
 header+='static const uint8_t artSignature[]={'+','.join(map(str,signature))+'};\n'
 header+='#define ART_BANKS '+str(len(banks))+'\nextern const uint8_t *artBanks[ART_BANKS];\nextern char art_error[40];\nbool art_open(void);\ngfx_sprite_t *art_sprite(int id,int frame);\nvoid art_draw(int id,int frame,int x,int y);\nvoid art_background(int left);\nconst uint8_t *art_map_data(void);\nvoid art_cache_level(const uint8_t *back,const uint8_t *solid,const uint8_t *decor,int cells,int theme);\n#endif\n'
 (root/'src/art.h').write_text(header)
-(root/'bin').mkdir(exist_ok=True);(root/'build-art').mkdir(exist_ok=True)
+output.mkdir(exist_ok=True);(root/'build-art').mkdir(exist_ok=True)
 for i,data in enumerate(banks):
  name='SCA%02d'%i
  payload=b'SCA3'+signature+struct.pack('<HH',i,len(data))+data
  (root/'build-art'/(name+'.bin')).write_bytes(payload)
- write_appvar(root/'bin'/(name+'.8xv'),name,payload)
+ write_appvar(output/(name+'.8xv'),name,payload)
 (root/'build-art/manifest.json').write_text(json.dumps(dict(signature=signature.hex(),banks=len(banks),frames=len(frameRefs),bytes=sum(map(len,banks))),indent=2))
 print('%d full-resolution art entries, %d versioned resource banks, max32000 payload bytes, %d bytes'%(len(entries),len(banks),sum(map(len,banks))))

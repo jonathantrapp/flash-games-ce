@@ -1,0 +1,58 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\scoutcamp\ui_reset_final\smoke.json loaded and verified. 3 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | down
+Launching command delay | 500
+Launching command release | down
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | down
+Launching command delay | 500
+Launching command release | down
+Launching command delay | 150
+Launching command hold | down
+Launching command delay | 500
+Launching command release | down
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hashWait | scout_diag_0
+	[Test passed!] Hash #scout_diag_0 had a matching CRC.
+Launching command hashWait | scout_diag_8
+	[Test passed!] Hash #scout_diag_8 had a matching CRC.
+Launching command hashWait | scout_diag_9
+	[Test passed!] Hash #scout_diag_9 had a matching CRC.
+[CPU] PC=d309fe SP=d1a6c3
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 3 tests attempted, 3 passed, and 0 failed.
+

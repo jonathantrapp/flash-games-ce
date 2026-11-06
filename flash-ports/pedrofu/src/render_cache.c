@@ -11,9 +11,45 @@
 #define ACTOR_BYTES 1024
 static uint8_t tile_storage[TILE_SLOTS][TILE_BYTES];
 static const gfx_rletsprite_t *tile_lookup[296];
+/* Opaque terrain needs no per-run transparency decoder. Reuse each cache
+ * slot for its original sprite when all 256 pixels are opaque. */
+static uint8_t tile_opaque[296];
+#ifndef PEDRO_TILE_OPAQUE
+#define PEDRO_TILE_OPAQUE 1
+#endif
 static uint8_t actor_storage[ACTOR_SLOTS][ACTOR_BYTES];
 static const uint8_t *actor_keys[ACTOR_SLOTS];
 static uint8_t replacement;
+/* Separate from the actor LRU: drawing hearts/mail must not evict Pedro's
+ * current animation frame on every frame. Keep the complete small HUD set.
+ * Each slot reserves GraphX's documented worst-case output size. */
+static uint8_t hud_storage[7000];
+static gfx_rletsprite_t *hud_lookup[UI_BADGI+1][3];
+
+void cache_hud(void) {
+    unsigned used=0;
+    memset(hud_lookup,0,sizeof hud_lookup);
+    for(uint8_t id=0;id<=UI_BADGI;id++){
+        const UiDef *u=&uidef[id];
+        unsigned bytes=((unsigned)u->w+1)*u->h*3/2+2;
+        if(!uiimg[id])continue;
+        for(uint8_t fr=0;fr<u->frames&&fr<3;fr++){
+            const uint8_t *s=uiimg[id]+fr*u->stride;
+            if(s[0]!=u->w||s[1]!=u->h||bytes>sizeof hud_storage-used)continue;
+            gfx_rletsprite_t *out=(gfx_rletsprite_t *)(hud_storage+used);
+            gfx_ConvertToRLETSprite((gfx_sprite_t *)s,out);
+            hud_lookup[id][fr]=out;used+=bytes;
+        }
+    }
+}
+
+bool cached_hud(uint8_t id,uint8_t frame,int x,int y) {
+    if(id>UI_BADGI||frame>=3||!hud_lookup[id][frame])return false;
+    /* Always respect the current clip region: Fury/XP/boss meters crop their
+     * foreground sprites to the current amount, even inside the LCD bounds. */
+    gfx_RLETSprite(hud_lookup[id][frame],x,y);
+    return true;
+}
 
 static void draw_rlet(const gfx_rletsprite_t *s,int x,int y) {
     if(x>=320||y>=240||x+s->width<=0||y+s->height<=0)return;
@@ -24,6 +60,7 @@ static void draw_rlet(const gfx_rletsprite_t *s,int x,int y) {
 void cache_stage_tiles(const uint8_t *back,const uint8_t *solid,const uint8_t *decor,unsigned cells) {
     uint16_t counts[296]={0};
     memset(tile_lookup,0,sizeof tile_lookup);
+    memset(tile_opaque,0,sizeof tile_opaque);
     memset(actor_keys,0,sizeof actor_keys);replacement=0;
     for(unsigned i=0;i<cells;i++){counts[back[i]]++;counts[solid[i]]++;counts[decor[i]]++;}
     counts[0]=0;
@@ -33,14 +70,23 @@ void cache_stage_tiles(const uint8_t *back,const uint8_t *solid,const uint8_t *d
         if(!best||!counts[best])break;
         counts[best]=0;
         gfx_sprite_t *source=(gfx_sprite_t *)(tiledata[best/148]+(best%148)*258);
-        gfx_ConvertToRLETSprite(source,(gfx_rletsprite_t *)tile_storage[slot]);
+        bool opaque=PEDRO_TILE_OPAQUE!=0;
+        for(unsigned i=0;opaque&&i<256;i++)if(!source->data[i])opaque=false;
+        if(opaque){memcpy(tile_storage[slot],source,258);tile_opaque[best]=1;}
+        else gfx_ConvertToRLETSprite(source,(gfx_rletsprite_t *)tile_storage[slot]);
         tile_lookup[best]=(gfx_rletsprite_t *)tile_storage[slot];
     }
 }
 
 void cached_tile(int t,int x,int y) {
     if(t<=0||t>=296)return;
-    if(tile_lookup[t])draw_rlet(tile_lookup[t],x,y);
+    if(tile_lookup[t]&&tile_opaque[t]){
+        const gfx_sprite_t *s=(const gfx_sprite_t *)tile_lookup[t];
+        if(x>=320||y>=240||x+16<=0||y+16<=0)return;
+        if(x>=0&&y>=0&&x+16<=320&&y+16<=240)gfx_Sprite_NoClip(s,x,y);
+        else gfx_Sprite(s,x,y);
+    }
+    else if(tile_lookup[t])draw_rlet(tile_lookup[t],x,y);
     else cached_sprite(tiledata[t/148]+(t%148)*258,x,y);
 }
 

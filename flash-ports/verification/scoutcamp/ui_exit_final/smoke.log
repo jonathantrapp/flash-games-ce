@@ -1,0 +1,25 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\scoutcamp\ui_exit_final\smoke.json loaded and verified. 0 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | clear
+Launching command delay | 500
+Launching command release | clear
+Launching command delay | 150
+Launching command delay | 800
+[CPU] PC=17b5 SP=d1a80e
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 0 tests attempted, 0 passed, and 0 failed.
+
