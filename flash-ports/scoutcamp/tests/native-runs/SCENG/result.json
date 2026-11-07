@@ -1,0 +1,10 @@
+{
+  "program_sha256": "207120aa5abcc56f07ed3ac6cc3c1cc4d93830f04bcb74878583b2c597a03ef2",
+  "program_bytes": 25786,
+  "map_sha256": "5995d6015698e971ce6521b0b80dbafd18e02d72dbf1871831e1c53c47b8b839",
+  "symbol": "engine_diag",
+  "expected_hex": "0100002c",
+  "failed": false,
+  "scope": "Native CEmu fixture; no physical or campaign claim",
+  "fixture_trace_at_d3f000": "0xfaceffff"
+}

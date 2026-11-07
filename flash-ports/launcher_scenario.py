@@ -105,6 +105,7 @@ if not a.no_game and a.check:
 meta = dict(launcher='direct Asm(prgm) control' if a.direct else 'Cabri Jr + ARTIFICE from user backup' + (' + Cesium' if a.cesium else ''),
             libraries='calculator backup' if a.user_libs else 'package/toolchain',
             steps=a.steps, scope='CEmu OS 5.3 ROM; launcher path only, not OS 5.8.2.29 hardware.')
+meta['extra_files']=[dict(name=Path(f).name,bytes=Path(f).stat().st_size,sha256=hashlib.sha256(Path(f).read_bytes()).hexdigest()) for f in a.extra]
 if not a.no_game:
     meta.update(program_sha256=hashlib.sha256(program.read_bytes()).hexdigest(), program_bytes=program.stat().st_size)
 (out / 'run-metadata.json').write_text(json.dumps(meta, indent=2) + '\n')

@@ -1,0 +1,15 @@
+{
+  "launcher": "direct Asm(prgm) control",
+  "libraries": "package/toolchain",
+  "steps": "GAME enter wait:500 stat enter*2 right*2 enter mode right*2 enter wait:500 enter wait:300 alpha hold:left:80 hold:left:80 2nd hold:left:80 2nd hold:left:80 3 2nd 1 +*9 alpha wait:15000 alpha hold:left:80 2nd alpha wait:15000 alpha hold:left:80 2nd alpha wait:30000 alpha enter*2 alpha wait:300000",
+  "scope": "CEmu OS 5.3 ROM; launcher path only, not OS 5.8.2.29 hardware.",
+  "extra_files": [
+    {
+      "name": "SCTSV02.8xv",
+      "bytes": 152,
+      "sha256": "47c6fd83cc2a928199c9acd7c80a63ba571c39fc1935ca816fbec21171ec653c"
+    }
+  ],
+  "program_sha256": "9ae1dad156c59bc03cd4e453affb6a85d68bcb2a2205525907522aa125248aae",
+  "program_bytes": 43502
+}

@@ -1,4 +1,4 @@
-"""Compare actual Scouts rendering with the frozen pre-optimization renderer.
+"""Compare Scouts with the small formatter against frozen rendering/nanoprintf.
 
 Native GraphX, all 17 maps, both framebuffer addresses, camera edges, actors,
 status pips, towers, HUD/briefing/results and nonzero cache canaries.
@@ -8,7 +8,7 @@ from pathlib import Path
 import argparse,hashlib,json,re,struct,subprocess
 p=argparse.ArgumentParser();p.add_argument("--stop",type=int,default=0);args=p.parse_args()
 HERE=Path(__file__).resolve().parent;GAME=HERE.parent;ROOT=GAME.parents[1]
-snapshot={n:hashlib.sha256((GAME/'src'/n).read_bytes()).hexdigest() for n in ['art.c','main.c','engine.h','combat.h']}
+snapshot={n:hashlib.sha256((GAME/'src'/n).read_bytes()).hexdigest() for n in ['art.c','main.c','engine.h','combat.h','small_format.c','../../pedrofu/src/small_format.c']}
 OUT=HERE/'render-native';(OUT/'src').mkdir(parents=True,exist_ok=True)
 names=['artBanks','art_error','art_open','art_sprite','art_draw','art_cache_level','art_background','art_map_data']
 (OUT/'src/ref_art.c').write_text(r'''#include <stdbool.h>
@@ -30,9 +30,12 @@ void ref_art_background(int left){
 reference=(HERE/'reference/render_v7.c').read_text()
 for n in ['drawTowerArt','drawArt','renderGame','art_draw','art_background','art_sprite']:
  reference=re.sub(r'\b'+n+r'\b','ref_'+n,reference)
-source=r'''#define main scout_game_main
+source=r'''#define snprintf scout_snprintf
+#define main scout_game_main
 #include "../../../src/main.c"
 #undef main
+#undef snprintf
+int snprintf(char *restrict,size_t,const char *restrict,...);
 bool ref_art_open(void);
 void ref_art_cache_level(const uint8_t*,const uint8_t*,const uint8_t*,int,int);
 void ref_art_draw(int,int,int,int);
@@ -43,7 +46,7 @@ unsigned art_guards(void);
 void art_guard_init(void);
 volatile uint16_t render_diag[5];
 volatile uint24_t debug_stop __attribute__((section(".data")))=DEBUG_STOP;
-#define PHASE(n) do{render_diag[0]=(n);if(debug_stop==(n))while(1){kb_Scan();}}while(0)
+#define PHASE(n) do{*(volatile uint32_t*)0xd3f000=0xfeed0000u+(n);render_diag[0]=(n);if(debug_stop==(n))while(1){kb_Scan();}}while(0)
 volatile uint32_t render_ticks[2];
 int main(void){
  PHASE(90);boot_Set48MHzMode();gfx_Begin();gfx_SetDrawBuffer();gfx_SetTransparentColor(0);
@@ -80,7 +83,8 @@ art=(GAME/'src/art.c').read_text().replace('#include "art.h"','#include "../../.
 art=art.replace('static uint8_t hudCache[2+41*(125+64)]={1};','static struct {uint8_t before[64],pixels[2+41*(125+64)],after[64];} hudGuard={{1}};\n#define hudCache hudGuard.pixels')
 art=art.replace('static uint8_t skyCache[13000], tileCache[16][410];','static uint8_t skyCache[13000];\nstatic struct {uint8_t before[64],pixels[16][410],after[64];} tileGuard;\n#define tileCache tileGuard.pixels')
 art+='\nvoid art_guard_init(void){memset(hudGuard.before,0xa5,64);memset(hudGuard.after,0xa5,64);memset(tileGuard.before,0xa5,64);memset(tileGuard.after,0xa5,64); }\nunsigned art_guards(void){unsigned n=0;for(unsigned i=0;i<64;i++)n+=hudGuard.before[i]!=0xa5||hudGuard.after[i]!=0xa5||tileGuard.before[i]!=0xa5||tileGuard.after[i]!=0xa5;return n;}\n'
-(OUT/'src/art.c').write_text(art)
+(OUT/'src/art.c').write_text('#define snprintf scout_snprintf\n'+art)
+(OUT/'src/new_format.c').write_text('#define snprintf scout_snprintf\n#include \"../../../src/small_format.c\"\n')
 (OUT/'src/input.c').write_text('#include "../../../src/input.c"\n')
 (OUT/'makefile').write_text('NAME = SCREND\nDESCRIPTION = "Native scene pixels"\nCOMPRESSED = NO\nARCHIVED = NO\nLTO = NO\nCFLAGS = -Wall -Wextra -Oz -std=c11 -I../../src\nEXTRA_LDFLAGS += -T ../../ram_guard.ld\nCEDEV_TOOLCHAIN = ../../../../local-tools/cedev/CEdev\ninclude ../../../../local-tools/cedev/CEdev/meta/makefile.mk\n')
 subprocess.run([str(ROOT/'local-tools/cedev/CEdev/bin/make.exe')],cwd=OUT,check=True)
@@ -103,5 +107,5 @@ r=subprocess.run([str(ROOT/'build/cemu-cli/cemu-autotester.exe'),'-d',str(OUT/'s
 (OUT/'smoke.log').write_text(r.stdout+r.stderr);print(r.stdout+r.stderr)
 ram=(OUT/'native-ram.bin').read_bytes();values=list(struct.unpack_from('<5H',ram,addr('render_diag')-0xd00000));ticks=list(struct.unpack_from('<2I',ram,addr('render_ticks')-0xd00000))
 failed=bool(r.returncode or 'NMI' in r.stdout+r.stderr or (values[0]!=args.stop if args.stop else values!=expected))
-result=dict(debug_only=bool(args.stop),stop=args.stop,program_sha256=hashlib.sha256((OUT/'bin/SCREND.8xp').read_bytes()).hexdigest(),expected=([args.stop] if args.stop else expected),timing_scope="Synthetic raw-sprite oracle versus candidate; not a production FPS comparison",observed=values,failed=failed,render_ticks=ticks,mean_render_ms=[n*1000/32768/272 for n in ticks],source_sha256=snapshot,scope=__doc__)
+result=dict(free_ram_phase=hex(struct.unpack_from('<I',ram,0x3f000)[0]),debug_only=bool(args.stop),stop=args.stop,program_sha256=hashlib.sha256((OUT/'bin/SCREND.8xp').read_bytes()).hexdigest(),expected=([args.stop] if args.stop else expected),timing_scope="Synthetic raw-sprite oracle versus candidate; not a production FPS comparison",observed=values,failed=failed,render_ticks=ticks,mean_render_ms=[n*1000/32768/272 for n in ticks],source_sha256=snapshot,scope=__doc__)
 (OUT/('result-stop%d.json'%args.stop if args.stop else 'result.json')).write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2));raise SystemExit(failed)

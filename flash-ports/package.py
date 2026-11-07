@@ -10,11 +10,11 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 HERE = ROOT / 'flash-ports'
 p = argparse.ArgumentParser(description=__doc__)
-p.add_argument('--name', default='FlashGamesCE-v8-preview')
+p.add_argument('--name', default='FlashGamesCE-v9-preview')
 p.add_argument('--scout-bin',default='bin')
 p.add_argument('--pedro-bin',default='bin')
-p.add_argument('--checkpoint',default='CONTINUATION-v8-2026-11-07.md')
-p.add_argument('--verification',default='CHECKPOINT-v8.md')
+p.add_argument('--checkpoint',default='CONTINUATION-v9-2026-11-07.md')
+p.add_argument('--verification',default='CHECKPOINT-v9.md')
 a = p.parse_args()
 assert a.name and all(c.isalnum() or c in '-_' for c in a.name)
 OUT = ROOT / 'release' / a.name

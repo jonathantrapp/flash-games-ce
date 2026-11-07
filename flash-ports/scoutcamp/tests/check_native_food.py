@@ -35,7 +35,7 @@ static Food initial_food[5],old_food[5];
 volatile uint32_t food_diag[5];
 volatile uint32_t food_time[2];
 volatile uint24_t debug_stop __attribute__((section(".data")))=DEBUG_STOP;
-#define PHASE(n) do{food_diag[0]=(n);if(debug_stop==(n))while(1){kb_Scan();}}while(0)
+#define PHASE(n) do{*(volatile uint32_t*)0xd3f000=0xf00d0000u+(n);food_diag[0]=(n);if(debug_stop==(n))while(1){kb_Scan();}}while(0)
 int main(void){
  PHASE(90);
  boot_Set48MHzMode();gfx_Begin();gfx_SetDrawBuffer();
@@ -93,6 +93,6 @@ lib=ROOT/'local-tools/cemu/clibs/clibs';files=[lib/(n+'.8xv')for n in ['libload'
 c=dict(rom='C:/Users/jonat/Downloads/ti-84ce.rom',transfer_files=list(map(str,files)),target=dict(name='SCFOOD',isASM=True),delay_after_step=0,sequence=['action|launch','delay|1000','hashWait|food'],hashes=dict(food=dict(description='Native food comparisons' if not args.stop else 'Debug phase only',start=hex(address('food_diag')),size=len(test_bytes),expected_CRCs=[f'{v^0xffffffff:08X}'],timeout=1000 if args.stop else 240000)))
 (OUT/'smoke.json').write_text(json.dumps(c,indent=2));r=subprocess.run([str(ROOT/'build/cemu-cli/cemu-autotester.exe'),'-d',str(OUT/'smoke.json')],cwd=OUT,capture_output=True,text=True,timeout=900,creationflags=0x08000040);(OUT/'smoke.log').write_text(r.stdout+r.stderr);print(r.stdout+r.stderr)
 ram=(OUT/'native-ram.bin').read_bytes();values=list(struct.unpack_from('<5I',ram,address('food_diag')-0xd00000));times=list(struct.unpack_from('<2I',ram,address('food_time')-0xd00000));failed=bool(r.returncode or 'NMI' in r.stdout+r.stderr or values[:len(expected)]!=expected)
-result=dict(expected=expected,observed=values,failed=failed,reference_candidate_timer_ticks=times,source_sha256=engine_sha,reference_sha256=hashlib.sha256((HERE/'reference/stepFood_v7.c').read_bytes()).hexdigest(),program_sha256=hashlib.sha256((OUT/'bin/SCFOOD.8xp').read_bytes()).hexdigest(),scope=__doc__)
+result=dict(free_ram_phase=hex(struct.unpack_from('<I',ram,0x3f000)[0]),expected=expected,observed=values,failed=failed,reference_candidate_timer_ticks=times,source_sha256=engine_sha,reference_sha256=hashlib.sha256((HERE/'reference/stepFood_v7.c').read_bytes()).hexdigest(),program_sha256=hashlib.sha256((OUT/'bin/SCFOOD.8xp').read_bytes()).hexdigest(),scope=__doc__)
 result['debug_stop']=args.stop
 (OUT/('result-stop'+str(args.stop)+'.json' if args.stop else 'result.json')).write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2));raise SystemExit(failed)

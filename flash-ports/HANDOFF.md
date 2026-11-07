@@ -1,4 +1,20 @@
-# Developer handoff, v8 Scouts route/rendering preview, 7 November 2026
+# Developer handoff, v9 memory and campaign preview, 7 November 2026
+
+Read `CONTINUATION-v9-2026-11-07.md` and `verification/CHECKPOINT-v9.md` first. v8 was published as `e26212d`. The selected Scouts program is 43,502 bytes, SHA-256 `9ae1dad156c59bc03cd4e453affb6a85d68bcb2a2205525907522aa125248aae`; Pedro remains exactly v7, 51,070 bytes, SHA-256 `c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9`.
+
+Scouts now shares Pedro's bounded formatter and caches each enemy's exact horizontal quotient, refreshing before movement when velocity changes. Two derived fields follow all gameplay fields. Reference/native checks preserve the preceding state and verify the cache separately. Retain all frozen references, native fixtures, nonzero render canaries and `ram_guard.ld`. The checkpoint identifies passing tests and layout-sensitive fixture failures that do not count as acceptance evidence.
+
+All current native checks, input/speed controls and 17 stage entries pass. Selected production timing without overlays is 10.83 FPS/80.5 sampled ticks in quiet stage1 and 1.50 FPS/16.17 ticks with 29–34 enemies in stage16. Frame-boundary quantization and differing populations prevent a precise overspeed or controlled crowded percentage claim. Running bytes including relocated libraries are97,536, with54,844 free crowded and21,982 with a32KB filler after arTIfiCE win/save/relaunch. No graphics or rules were reduced.
+
+Actual play has cleared the first three stages. Stage2 followed a real stage1 win on v8; an unchanged VAT-exported earned save continued stage3 on both v8 and v9. v9 also passes normal loss/retry and the32KB RAM-pressure saved-unlock round trip. Saves and raw RAM stay local. Entries are not campaign wins. Stage4's initial cursor is out of bounds (55 on a53-wide map); one LEFT clamps it, but startLevel still needs a bound fix. Archive-GC remains pending: the normal OS command completes, but the combined native proof workflow has not passed. A separate standing-floor shortcut failed byte comparisons and must not be promoted.
+
+Both selected programs, maps, banks and build metadata are in each game's default `bin/`; the exact Scout candidate is also preserved in `bin_v9combined`. Do not rebuild over selected files: TI container timestamps alter full-file hashes. `package.py` defaults to v9. Sync only through `sync_repo.py` into `build/flash-games-ce-repo`, review, then commit/push there. Preserve root NeuroFlappy and Horsey. Exclude experimental/native/diagnostic binaries, saves, RAM, ROMs, fillers and private emulator images from releases.
+
+The user asks to end at a playable GitHub release while preserving30% of the five-hour limit. Prioritize publishing this validated preview and a clear handoff over further experiments. Physical-crash investigation is deferred; no download or physical transfer is authorized. Cesium and OS5.8 remain untested. Emulator batches stay idle priority.
+
+## Historical v8 handoff
+
+### v8 Scouts route/rendering preview, 7 November 2026
 
 Read `CONTINUATION-v8-2026-11-07.md` and `verification/CHECKPOINT-v8.md` first. The published v7 commit is `eef8843`; v8 adds the work described below. Pedro remains the exact v7 binary (51,070 bytes, SHA-256 `c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9`). Scouts is now 47,779 bytes, SHA-256 `245f216fc094e5188fa44806c1ecf46a77b32672e823efb05943590a73e33322`.
 

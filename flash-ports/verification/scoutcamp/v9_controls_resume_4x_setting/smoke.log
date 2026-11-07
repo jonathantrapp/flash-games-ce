@@ -1,0 +1,66 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\scoutcamp\v9_controls_resume_4x_setting\smoke.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 220
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 220
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 220
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 220
+Launching command release | +
+Launching command delay | 150
+Launching command hold | 0
+Launching command delay | 220
+Launching command release | 0
+Launching command delay | 150
+Launching command hold | 0
+Launching command delay | 220
+Launching command release | 0
+Launching command delay | 150
+Launching command delay | 500
+Launching command hashWait | scout_diag_0
+	[Test passed!] Hash #scout_diag_0 had a matching CRC.
+[CPU] PC=d1ac17 SP=d1a723
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.

@@ -1,0 +1,82 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\scoutcamp\v9_retry\smoke.json loaded and verified. 3 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 500
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 500
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 300
+Launching command hold | alpha
+Launching command delay | 500
+Launching command release | alpha
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | graph
+Launching command delay | 500
+Launching command release | graph
+Launching command delay | 150
+Launching command hold | alpha
+Launching command delay | 500
+Launching command release | alpha
+Launching command delay | 150
+Launching command delay | 125000
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 1000
+Launching command hashWait | scout_diag_0
+	[Test passed!] Hash #scout_diag_0 had a matching CRC.
+Launching command hashWait | scout_diag_10
+	[Test passed!] Hash #scout_diag_10 had a matching CRC.
+Launching command hashWait | scout_diag_11
+	[Test passed!] Hash #scout_diag_11 had a matching CRC.
+[CPU] PC=d30f83 SP=d1a6e2
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 3 tests attempted, 3 passed, and 0 failed.

@@ -1,7 +1,8 @@
 """Compare cached-coordinate physics with the uncached v8 collision reference on the actual CE ABI.
 
 All17 original maps,10 enemy/motion/status variants,160 ticks and3 substeps.
-Compares every Enemy byte, food state, escape count and focus after each call.
+Compares every gameplay Enemy byte, food state, escape count and focus after
+each call, plus the two derived quotient-cache fields' invariant.
 The graphics cache initializer is stubbed; actual map banks and physics run.
 """
 from pathlib import Path
@@ -16,6 +17,7 @@ source=r'''#include <tice.h>
 #include <sys/timers.h>
 #include <sys/power.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
@@ -62,7 +64,7 @@ int main(void){
    if(enemies[0].active)physicsEnemy(&enemies[0],sub);
    trace_time[1]+=timer_GetSafe(1,TIMER_UP)-start;
    new_state=enemies[0];memcpy(new_food,foods,sizeof foods);
-   if(memcmp(&old_state,&new_state,sizeof old_state)||memcmp(old_food,new_food,sizeof foods)||old_focus!=focusEnemy||old_escaped!=escaped){
+   if(memcmp(&old_state,&new_state,offsetof(Enemy,movementVelocity))||new_state.movementStep!=new_state.movementVelocity/60||memcmp(old_food,new_food,sizeof foods)||old_focus!=focusEnemy||old_escaped!=escaped){
     trace_diag[2]++;trace_diag[3]=stage+1;trace_diag[4]=variant;trace_diag[0]=2;while(1){kb_Scan();}
    }
    trace_diag[1]++;

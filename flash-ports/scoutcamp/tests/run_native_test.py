@@ -1,6 +1,6 @@
 """Launch one native fixture and assert its four-byte diagnostic result."""
 from pathlib import Path
-import argparse,json,re,subprocess
+import argparse,hashlib,json,re,struct,subprocess
 p=argparse.ArgumentParser();p.add_argument('name');p.add_argument('directory');p.add_argument('symbol');p.add_argument('hexbytes');a=p.parse_args()
 root=Path(__file__).resolve().parents[1];out=root/'tests'/'native-runs'/a.name;out.mkdir(parents=True,exist_ok=True)
 m=re.search(r'^\s*(0x[0-9a-f]+)\s+_'+a.symbol+r'\s*$',(root/a.directory/(a.name+'.map')).read_text(),re.M);assert m
@@ -11,4 +11,10 @@ for b in data:
 lib=root/'../../local-tools/cemu/clibs/clibs'
 files=[lib/(n+'.8xv')for n in ['libload','graphx','keypadc','fileioc']]+[root/a.directory/(a.name+'.8xp')]
 config={'rom':'C:/Users/jonat/Downloads/ti-84ce.rom','transfer_files':[str(f.resolve())for f in files],'target':{'name':a.name,'isASM':True},'delay_after_step':0,'sequence':['action|launch','delay|5000','hashWait|pass'],'hashes':{'pass':{'description':a.symbol,'start':m[1],'size':len(data),'expected_CRCs':['%08X'%(crc^0xffffffff)],'timeout':3000}}}
-f=out/'test.json';f.write_text(json.dumps(config));result=subprocess.run([str(root/'../../build/cemu-cli/cemu-autotester.exe'),'-d',str(f)],cwd=out,capture_output=True,text=True,timeout=120,creationflags=0x08000040);(out/'log.txt').write_text(result.stdout+result.stderr);print(result.stdout+result.stderr);raise SystemExit(result.returncode)
+f=out/'test.json';f.write_text(json.dumps(config));result=subprocess.run([str(root/'../../build/cemu-cli/cemu-autotester.exe'),'-d',str(f)],cwd=out,capture_output=True,text=True,timeout=120,creationflags=0x08000040);(out/'log.txt').write_text(result.stdout+result.stderr)
+program=(root/a.directory/(a.name+'.8xp')).read_bytes()
+report=dict(program_sha256=hashlib.sha256(program).hexdigest(),program_bytes=len(program),map_sha256=hashlib.sha256((root/a.directory/(a.name+'.map')).read_bytes()).hexdigest(),symbol=a.symbol,expected_hex=a.hexbytes,failed=bool(result.returncode or 'NMI' in result.stdout+result.stderr),scope='Native CEmu fixture; no physical or campaign claim')
+ram=out/'native-ram.bin'
+if ram.exists():report['fixture_trace_at_d3f000']=hex(struct.unpack_from('<I',ram.read_bytes(),0x3f000)[0])
+(out/'result.json').write_text(json.dumps(report,indent=2)+'\n')
+print(result.stdout+result.stderr);raise SystemExit(report['failed'])

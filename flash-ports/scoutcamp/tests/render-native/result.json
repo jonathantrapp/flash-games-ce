@@ -1,7 +1,8 @@
 {
+  "free_ram_phase": "0xfeed0061",
   "debug_only": false,
   "stop": 0,
-  "program_sha256": "d6f68a3c1f89bc66271e7d4aae46df550d191f74416329a4e6b197d11aedcf73",
+  "program_sha256": "756a2d42a0fa2ca74de5dcd76da6bc0f2b7508f455e95542519a64252487b1b9",
   "expected": [
     1,
     272,
@@ -19,18 +20,20 @@
   ],
   "failed": false,
   "render_ticks": [
-    1724467,
-    1255367
+    1724400,
+    1215755
   ],
   "mean_render_ms": [
-    193.47998675178079,
-    140.84838418399588
+    193.47246955422793,
+    136.40403747558594
   ],
   "source_sha256": {
     "art.c": "4ee15107dcf19297f22efd799d7d1e022a3acd7ac172bbd349aeda0df274756c",
     "main.c": "c0ad699368d5e8b031e5c2ab8a358bf8f34c9b1b5d2908d10077c646873ed67c",
-    "engine.h": "865099e81d041e4be25911cada4c9d75634a943f80d1975d1a54514c03940e22",
-    "combat.h": "338623e2af53070f5abefb0a9c21f34d6521f286b9351aec3cc6e281eef5f7cd"
+    "engine.h": "c4d428bfe59751a1a841d0c581aead8d3cfa67866d397b763a4e48f283e138de",
+    "combat.h": "338623e2af53070f5abefb0a9c21f34d6521f286b9351aec3cc6e281eef5f7cd",
+    "small_format.c": "9762d27300a705816b060165b19de4c8320bd373830fba409f87e41f66e1b2bc",
+    "../../pedrofu/src/small_format.c": "75c64fc49f4c8cbe1534bcdaccfe74e51c423a5bf0d2200a36b44a65e7ebaafa"
   },
-  "scope": "Compare actual Scouts rendering with the frozen pre-optimization renderer.\n\nNative GraphX, all 17 maps, both framebuffer addresses, camera edges, actors,\nstatus pips, towers, HUD/briefing/results and nonzero cache canaries.\nSynthetic states, not campaign wins.\n"
+  "scope": "Compare Scouts with the small formatter against frozen rendering/nanoprintf.\n\nNative GraphX, all 17 maps, both framebuffer addresses, camera edges, actors,\nstatus pips, towers, HUD/briefing/results and nonzero cache canaries.\nSynthetic states, not campaign wins.\n"
 }

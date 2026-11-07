@@ -1,0 +1,68 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\scoutcamp\v9_candidate_stage06\smoke.json loaded and verified. 2 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | vars
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command release | vars
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 200
+Launching command hold | 2nd
+Launching command delay | 500
+Launching command release | 2nd
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | 2nd
+Launching command delay | 500
+Launching command release | 2nd
+Launching command delay | 150
+Launching command hold | graph
+Launching command delay | 500
+Launching command release | graph
+Launching command delay | 150
+Launching command delay | 1500
+Launching command hashWait | scout_diag_1
+	[Test passed!] Hash #scout_diag_1 had a matching CRC.
+Launching command hashWait | scout_diag_0
+	[Test passed!] Hash #scout_diag_0 had a matching CRC.
+[CPU] PC=d20e27 SP=d1a772
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 2 tests attempted, 2 passed, and 0 failed.

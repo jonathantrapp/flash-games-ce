@@ -1,0 +1,35 @@
+{
+  "zip": "FlashGamesCE-v9-preview.zip",
+  "bytes": 425908,
+  "sha256": "6d31aa31478fcfd32db4e9e6438f50841b603343e7b312d2df4adb1ce9d69e03",
+  "members": 75,
+  "programs": 2,
+  "data_appvars": 61,
+  "libraries": 4,
+  "zip_integrity": true,
+  "ti_checksums_and_internal_names": true,
+  "manifest_hashes": true,
+  "sha256sums": true,
+  "pedro_and_banks_equal_v7": true,
+  "scouts_build": {
+    "program_sha256": "9ae1dad156c59bc03cd4e453affb6a85d68bcb2a2205525907522aa125248aae",
+    "source_root": "src",
+    "source_sha256": {
+      "main.c": "c0ad699368d5e8b031e5c2ab8a358bf8f34c9b1b5d2908d10077c646873ed67c",
+      "art.c": "4ee15107dcf19297f22efd799d7d1e022a3acd7ac172bbd349aeda0df274756c",
+      "engine.h": "c4d428bfe59751a1a841d0c581aead8d3cfa67866d397b763a4e48f283e138de",
+      "combat.h": "338623e2af53070f5abefb0a9c21f34d6521f286b9351aec3cc6e281eef5f7cd",
+      "small_format.c": "9762d27300a705816b060165b19de4c8320bd373830fba409f87e41f66e1b2bc",
+      "../../pedrofu/src/small_format.c": "75c64fc49f4c8cbe1534bcdaccfe74e51c423a5bf0d2200a36b44a65e7ebaafa"
+    },
+    "flags": "-Wall -Wextra -Oz -std=c11; HAS_PRINTF=NO",
+    "overlay": false
+  },
+  "excluded": [
+    "ROM",
+    "raw RAM",
+    "saves",
+    "fillers",
+    "diagnostic and experimental programs"
+  ]
+}

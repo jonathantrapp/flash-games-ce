@@ -12,9 +12,9 @@ extensions = {'.py', '.c', '.h', '.s', '.S', '.ld', '.as', '.md', '.json', '.png
 count = 0
 for source in SRC.rglob('*'):
     rel = source.relative_to(SRC)
-    if len(rel.parts)>=3 and rel.parts[:2]==('scoutcamp','tests') and rel.parts[2] in {'art-native','render-native','food-native','physics-native','route-native'}:
+    if len(rel.parts)>=3 and rel.parts[:2]==('scoutcamp','tests') and rel.parts[2] in {'art-native','render-native','food-native','physics-native','route-native','movement-native','format-render-native','standing-native','gc-native','native-runs','qa_archive_gc'}:
         continue
-    if rel.name=='NEXT-DEV-PROMPT.md':
+    if rel.name in {'NEXT-DEV-PROMPT.md','CONTINUATION-v9-WIP-2026-11-07.md','check_native_formatter_render.py','check_archive_gc.py','verify_gc_capture.py'}:
         continue
     if not source.is_file() or excluded.intersection(rel.parts) or any(part.startswith(('obj_', 'bin_')) or re.fullmatch(r'(?:obj|bin)[0-9]+',part) for part in rel.parts):
         continue
@@ -180,6 +180,29 @@ for tag in ['before_slope_fix','after_ceiling_fix','inclusive_floor_fix','frozen
 for name,tag in {'scout-v8-win.png':'v8_campaign_two_rocks','scout-v8-unlock-ram32k.png':'v8_win_unlock_ram32k'}.items():
     shutil.copy2(SRC/'verification/scoutcamp'/tag/'screen.png',DST/'docs/screenshots'/name)
 for name in ['FlashGamesCE-v8-preview.zip','FlashGamesCE-v8-preview.zip.sha256']:
+    shutil.copy2(ROOT/'release'/name,DST/'dist'/name)
+# v9: only accepted production runs and selected native summaries.
+for name in ['CHECKPOINT-v9.md','STAGE-SMOKE-v9_candidate-scoutcamp.md','v9-package-validation.json','validate_v9_package.py','RELEASE-v9.md']:
+    shutil.copy2(SRC/'verification'/name,DST/'flash-ports/verification'/name)
+for scenario in (SRC/'verification/scoutcamp').glob('v9*'):
+    accepted = scenario.name.startswith(('v9_candidate_stage','v9_combined_','v9_controls_','v9_ready500_')) or scenario.name in {'v9_loss','v9_retry','v9_stage3_combined','v9_stage3_rocks_snow','v9_campaign_stage2_reinforce','v9_stage4_entry_earned','v9_win_unlock_ram32k','v9-campaign-results.json'}
+    if not accepted:continue
+    names=['smoke.log','run-metadata.json'] if scenario.is_dir() else [None]
+    for name in names:
+        source=scenario/name if name else scenario
+        if source.is_file() and (name or source.suffix=='.json'):
+            dest=DST/'flash-ports/verification/scoutcamp'/scenario.name
+            if name:dest=dest/name
+            dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for folder in ['movement-native','render-native','food-native','physics-native','native-runs/SCENG']:
+    for name in ['result.json','log.txt' if folder.startswith('native-runs') else 'smoke.log']:
+        source=SRC/'scoutcamp/tests'/folder/name
+        if source.is_file():
+            dest=DST/'flash-ports/scoutcamp/tests'/folder/name
+            dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for name,tag in {'scout-v9-stage3-win.png':'v9_stage3_combined','scout-v9-unlock-ram32k.png':'v9_win_unlock_ram32k'}.items():
+    shutil.copy2(SRC/'verification/scoutcamp'/tag/'screen.png',DST/'docs/screenshots'/name)
+for name in ['FlashGamesCE-v9-preview.zip','FlashGamesCE-v9-preview.zip.sha256']:
     shutil.copy2(ROOT/'release'/name,DST/'dist'/name)
 shutil.copy2(SRC/'REPO-README.md',DST/'README.md')
 for name in ['FlashGamesCE-v7-preview.zip','FlashGamesCE-v7-preview.zip.sha256']:

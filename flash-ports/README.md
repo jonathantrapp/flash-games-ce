@@ -2,7 +2,7 @@
 
 These are native C rebuilds of the two supplied SWFs, written from the AS3 recovered with JPEXS. Both are works in progress: see [PARITY-AUDIT.md](PARITY-AUDIT.md) for what is verified and what is not, and each game's notes for controls and known gaps.
 
-The current deliverable is the **v8 Scouts route and rendering preview**. Read [the changes](CONTINUATION-v8-2026-11-07.md) and [verification](verification/CHECKPOINT-v8.md) before installing. Scouts now verifies a real stage-one win/loss/retry and saved stage-two unlock, including with 32KB RAM pressure. Exact-pixel rendering measures 10.17 FPS in quiet stage one; crowded stage16 remains slow at1.33 FPS/15.83 simulation ticks per second. Pedro is unchanged from v7: optional sky cache, about 6.9KB free with it and36.4KB with an 8 KB filler selecting flash,40.0/21.15 cached stationary/moving FPS. CEmu OS5.3 results do not establish physical stability, complete campaigns or archive-GC coverage.
+The current deliverable is the **v9 Scouts memory and campaign preview**. Read [the changes](CONTINUATION-v9-2026-11-07.md) and [verification](verification/CHECKPOINT-v9.md) before installing. Scouts now uses 6,696 fewer running bytes, with 54,844 bytes free in the crowded sample. Actual campaign play has won the first three stages; the selected v9 build repeats the stage-three win and passes loss/retry and a saved unlock with 32KB RAM pressure. Quiet production measures 10.83 FPS; crowded stage16 remains slow at 1.50 FPS/16.17 simulation ticks per second. Pedro is unchanged from v7: about 6.9KB free with the optional sky cache and 36.4KB with an 8KB filler selecting flash, with cached stationary/moving rates of 40.0/21.15 FPS. CEmu OS5.3 results do not establish physical stability, complete campaigns or archive-GC coverage.
 
 | Supplied file | Original game | Calculator program |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ The original games, artwork and characters were created by Hamumu Software (2012
 
 ## Install
 
-1. Extract `FlashGamesCE-v7-preview.zip` on your computer. Check `SHA256SUMS.txt` and the manifest. (To assemble it yourself from compiled programs, run `python flash-ports/package.py` from the workspace root.)
+1. Extract `FlashGamesCE-v9-preview.zip` on your computer. Check `SHA256SUMS.txt` and the manifest. (To assemble it yourself from compiled programs, run `python flash-ports/package.py` from the workspace root.)
 2. Connect the TI-84 Plus CE using USB and open TI Connect CE's Calculator Explorer.
 3. Send the `.8xp` and `.8xv` files from the extracted package. Keep the `.8xv` files in archive. Each game's asset AppVars must accompany its program.
 4. Launch `SCOUTCE` or `PEDROCE` through Cesium using your existing native-game setup.

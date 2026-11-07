@@ -17,9 +17,10 @@ void art_cache_level(const uint8_t*a,const uint8_t*b,const uint8_t*c,int d,int e
 volatile uint8_t engine_diag[4];
 static const uint16_t portal[]={290};static const Route route[]={ {portal,1} };
 static const Map testMap={32,12,253,1,0,route};
-#define CHECK(c,id) do{if(!(c)){engine_diag[1]=(id);goto failed;}engine_diag[3]++;}while(0)
+#define CHECK(c,id) do{*(volatile uint32_t*)0xd3f000=0xface0000u+(id);if(!(c)){engine_diag[1]=(id);goto failed;}engine_diag[3]++;}while(0)
 static void flat(void){focusEnemy=-1;map=&testMap;mapWidth=32;mapHeight=12;campTileX=map->camp%mapWidth;campTileY=map->camp/mapWidth;for(int y=0;y<12;y++)rowOffsets[y]=y*32;memset(layers,0,sizeof layers);for(int x=0;x<32;x++)layers[1][10*32+x]=1;memset(enemies,0,sizeof enemies);enemyTop=MAXEN;bulletTop=MAXBULLET;/* cases activate slots directly; full marks stay exact-safe */memset(towers,0,sizeof towers);memset(bullets,0,sizeof bullets);memset(skills,0,sizeof skills);skills[0]=1;money=500;}
 int main(void){
+ *(volatile uint32_t*)0xd3f000=0xfaceff00u;gfx_Begin();gfx_SetDrawBuffer();*(volatile uint32_t*)0xd3f000=0xfaceff01u;
  flat();Enemy*e=spawnEnemy(0,1,290);e->born=0;e->ground=1;e->facing=1;e->x=136*FP;e->y=160*FP;
  for(int t=0;t<20;t++){tick++;for(int sub=0;sub<3;sub++)physicsEnemy(e,sub);}
  CHECK(abs(e->x-156*FP)<FP,1);CHECK(e->y==160*FP,2);
@@ -71,6 +72,6 @@ int main(void){
   flat();e=spawnEnemy(0,1,290);e->born=0;e->x=136*FP;e->y=160*FP;e->vy=(rising?-5:5)*FP;e->ground=0;layers[1][9*32+8]=tile;
   physicsEnemy(e,0);CHECK(e->ground&&e->vy==0&&e->y==surface(ex(e),144)*FP,71+tile+rising);
  }
- engine_diag[0]=1;os_ClrHome();os_PutStrFull("ENGINE PARITY PASS");while(!os_GetCSC()){}return 0;
-failed:engine_diag[0]=2;os_ClrHome();os_PutStrFull("ENGINE CHECK FAILED");while(!os_GetCSC()){}return 1;
+ *(volatile uint32_t*)0xd3f000=0xfaceffffu;engine_diag[0]=1;while(1){kb_Scan();}
+failed:engine_diag[0]=2;while(1){kb_Scan();}
 }

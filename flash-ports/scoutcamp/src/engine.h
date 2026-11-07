@@ -31,6 +31,7 @@ typedef struct {
     uint8_t active,type,action,ground,immune,advancing,escaping,slowRate;
     int8_t facing,carry;
     uint8_t homeX,homeY; /* immutable portal coordinates, populated at spawn */
+    int movementVelocity,movementStep; /* derived vx/60 cache; zeroed at spawn */
 } Enemy;
 typedef struct {
     uint16_t cell,spent,damage,range,reloadTime,second,cooldown,born,noFire,buff,buffTime,animation,instaLock,buildTime;
@@ -141,7 +142,7 @@ static void physicsEnemy(Enemy*e,int substep){
     if(e->action==1)speed=35*FP;else if(e->boost&&e->type!=1&&e->type!=5)speed=40*FP;
     if(e->slow)speed=speed*e->slowRate/100;
     if(e->escaping)speed=speed*(100-skills[SK_REFRIGERATION]*5)/100;
-    if(!e->fling)e->vx=e->facing*speed;
+    if(!e->fling)e->vx=e->facing==1?speed:e->facing==-1?-speed:e->facing*speed;
     if(e->ground){
         int front=(px+e->facing*4)/16,checky=py/16;
         if(slope(tileAt(1,tilex,checky)))checky--;
@@ -151,7 +152,8 @@ static void physicsEnemy(Enemy*e,int substep){
         bool up=(e->advancing?campTileY:e->homeY)*16<py;
         if(up&&marker>=3&&marker<=11){int direction=(marker-3)%3,power=(marker-3)/3+1;bool dirOK=direction==2||(direction==0&&e->facing<0)||(direction==1&&e->facing>0);if(dirOK&&((e->facing<0&&px<=tilex*16+8)||(e->facing>0&&px>=tilex*16+8))){e->x=(tilex*16+8)*FP;e->vy=-(90+30*(power-1))*FP;e->vx=e->facing*35*FP;e->action=1;e->ground=0;}}
     }
-    int oldx=e->x,oldy=e->y;e->x+=e->vx/60;e->traveled+=abs(e->x-oldx);
+    if(e->vx!=e->movementVelocity){e->movementVelocity=e->vx;e->movementStep=e->vx/60;}
+    int oldx=e->x,oldy=e->y;e->x+=e->movementStep;e->traveled+=abs(e->x-oldx);
     int nx=ex(e),mid=(e->y_pixel-h/2)/16,wall=tileAt(1,(nx+e->facing*2)/16,mid);
     if(wall&&!slope(wall)){e->x=oldx;e->facing=-e->facing;e->vx=-e->vx;}
     if(e->x<3*FP){e->x=3*FP;e->facing=1;}if(e->x>(map->width*16-3)*FP){e->x=(map->width*16-3)*FP;e->facing=-1;}

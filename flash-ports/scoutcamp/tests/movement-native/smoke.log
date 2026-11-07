@@ -1,0 +1,9 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\scoutcamp\tests\movement-native\smoke.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 1000
+Launching command hashWait | trace
+	[Test passed!] Hash #trace had a matching CRC.
+[CPU] PC=c31d9 SP=d1a7b5
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.

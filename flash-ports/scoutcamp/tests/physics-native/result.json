@@ -15,11 +15,11 @@
   ],
   "failed": false,
   "reference_candidate_timer_ticks": [
-    1286715,
-    1070982
+    1286897,
+    970493
   ],
-  "source_sha256": "865099e81d041e4be25911cada4c9d75634a943f80d1975d1a54514c03940e22",
+  "source_sha256": "c4d428bfe59751a1a841d0c581aead8d3cfa67866d397b763a4e48f283e138de",
   "reference_sha256": "6056b958b9586377044983cdb16d2691c17dfe12540f0b6450dcc2516561dbea",
-  "program_sha256": "377ef5d6858bacdcca87fbafa3424a4ae905b43568d26709ef8c62b7a3f218b0",
-  "scope": "Compare cached-coordinate physics with the uncached v8 collision reference on the actual CE ABI.\n\nAll17 original maps,10 enemy/motion/status variants,160 ticks and3 substeps.\nCompares every Enemy byte, food state, escape count and focus after each call.\nThe graphics cache initializer is stubbed; actual map banks and physics run.\n"
+  "program_sha256": "1b66ae2f0633a4dd376b312b1ad3823175894bb60e8e531fe96c133d3cf88866",
+  "scope": "Compare cached-coordinate physics with the uncached v8 collision reference on the actual CE ABI.\n\nAll17 original maps,10 enemy/motion/status variants,160 ticks and3 substeps.\nCompares every gameplay Enemy byte, food state, escape count and focus after\neach call, plus the two derived quotient-cache fields' invariant.\nThe graphics cache initializer is stubbed; actual map banks and physics run.\n"
 }
