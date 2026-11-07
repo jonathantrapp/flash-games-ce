@@ -10,22 +10,26 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 HERE = ROOT / 'flash-ports'
 p = argparse.ArgumentParser(description=__doc__)
-p.add_argument('--name', default='FlashGamesCE-v7-preview')
+p.add_argument('--name', default='FlashGamesCE-v8-preview')
+p.add_argument('--scout-bin',default='bin')
+p.add_argument('--pedro-bin',default='bin')
+p.add_argument('--checkpoint',default='CONTINUATION-v8-2026-11-07.md')
+p.add_argument('--verification',default='CHECKPOINT-v8.md')
 a = p.parse_args()
 assert a.name and all(c.isalnum() or c in '-_' for c in a.name)
 OUT = ROOT / 'release' / a.name
 OUT.mkdir(parents=True, exist_ok=True)
-inputs = [HERE / 'scoutcamp/bin/SCOUTCE.8xp', HERE / 'pedrofu/bin/PEDROCE.8xp']
+inputs = [HERE / 'scoutcamp'/a.scout_bin/'SCOUTCE.8xp', HERE / 'pedrofu'/a.pedro_bin/'PEDROCE.8xp']
 for program in inputs:
     maptext=program.with_suffix('.map').read_text()
     end=int(re.search(r'^\s*(0x[\da-fA-F]+)\s+___data_high\s*=',maptext,re.M)[1],16)
     assert end<=0xD40000, f'{program.name} overlaps LCD buffers'
 scout_banks=int(re.search(r'#define ART_BANKS (\d+)',(HERE/'scoutcamp/src/art.h').read_text())[1])
 pedro_banks=int(re.search(r'#define BUNDLE_BANKS (\d+)',(HERE/'pedrofu/src/bundle.h').read_text())[1])
-assert {p.stem for p in (HERE/'scoutcamp/bin').glob('*.8xv')}=={f'SCA{i:02d}' for i in range(scout_banks)}
-assert {p.stem for p in (HERE/'pedrofu/bin').glob('*.8xv')}==({f'PDB{i:02d}' for i in range(pedro_banks)}|{'PDCOLOR','PDTILE0','PDTILE1'}|{f'PDU{i}{h}' for i in range(3) for h in range(2)})
-inputs += sorted((HERE / 'scoutcamp/bin').glob('*.8xv'))
-inputs += sorted((HERE / 'pedrofu/bin').glob('*.8xv'))
+assert {p.stem for p in (HERE/'scoutcamp'/a.scout_bin).glob('*.8xv')}=={f'SCA{i:02d}' for i in range(scout_banks)}
+assert {p.stem for p in (HERE/'pedrofu'/a.pedro_bin).glob('*.8xv')}==({f'PDB{i:02d}' for i in range(pedro_banks)}|{'PDCOLOR','PDTILE0','PDTILE1'}|{f'PDU{i}{h}' for i in range(3) for h in range(2)})
+inputs += sorted((HERE / 'scoutcamp'/a.scout_bin).glob('*.8xv'))
+inputs += sorted((HERE / 'pedrofu'/a.pedro_bin).glob('*.8xv'))
 inputs += [ROOT / 'local-tools/cemu/clibs/clibs' / (n + '.8xv')
            for n in ['libload', 'graphx', 'keypadc', 'fileioc']]
 for source in inputs:
@@ -36,10 +40,10 @@ for source in inputs:
     assert raw[60:68].rstrip(b'\0').decode().casefold()==source.stem.casefold(), source
     shutil.copy2(source, OUT / source.name)
 documents=[(HERE / 'README.md', 'START-HERE.md'), (HERE / 'CREDITS.md', 'CREDITS.md'),
-                     (HERE / 'CONTINUATION-v7-2026-11-06.md', 'CHECKPOINT.md'),
+                     (HERE / a.checkpoint, 'CHECKPOINT.md'),
                      (HERE / 'scoutcamp/README.md', 'Scouts-Controls-and-Notes.md'),
                      (HERE / 'pedrofu/PORT-NOTES.md', 'Pedro-Controls-and-Notes.md'),
-                     (HERE / 'verification/CHECKPOINT-v7.md', 'Verification.md')]
+                     (HERE / 'verification' / a.verification, 'Verification.md')]
 allowed={p.name for p in inputs}|{name for _,name in documents}|{'manifest.json','SHA256SUMS.txt'}
 assert all(p.is_file() and p.name in allowed for p in OUT.iterdir()), 'Unexpected existing package file/directory; use a fresh package name'
 for source, name in documents:

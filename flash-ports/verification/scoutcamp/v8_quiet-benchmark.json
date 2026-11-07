@@ -1,0 +1,65 @@
+{
+  "program_sha256": "245f216fc094e5188fa44806c1ecf46a77b32672e823efb05943590a73e33322",
+  "stage": 1,
+  "quiet": true,
+  "requested_ticks_per_second": 80,
+  "short": {
+    "diag": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      5,
+      0,
+      0,
+      0,
+      196,
+      0
+    ],
+    "frames": 150,
+    "ticks": 196
+  },
+  "long": {
+    "diag": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      5,
+      0,
+      0,
+      0,
+      164,
+      2
+    ],
+    "frames": 211,
+    "ticks": 676
+  },
+  "interval_seconds": 6,
+  "fps": 10.166666666666666,
+  "ticks_per_second": 80.0,
+  "build": {
+    "program_sha256": "245f216fc094e5188fa44806c1ecf46a77b32672e823efb05943590a73e33322",
+    "source_sha256": {
+      "main.c": "c0ad699368d5e8b031e5c2ab8a358bf8f34c9b1b5d2908d10077c646873ed67c",
+      "art.c": "4ee15107dcf19297f22efd799d7d1e022a3acd7ac172bbd349aeda0df274756c",
+      "engine.h": "865099e81d041e4be25911cada4c9d75634a943f80d1975d1a54514c03940e22",
+      "combat.h": "338623e2af53070f5abefb0a9c21f34d6521f286b9351aec3cc6e281eef5f7cd"
+    },
+    "flags": "-Wall -Wextra -Oz -std=c11",
+    "overlay": false
+  },
+  "scope": "Measure Scouts production frame/tick throughput without a profiling overlay.\n\nStage16 uses QA only to open its map. Natural first wave; paired intervals\nexclude identical startup, loading and warmup. No campaign-unlock claim.\n"
+}

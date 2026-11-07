@@ -2,7 +2,7 @@
 
 TI-84 Plus CE ports of **Scouts vs Aliens** and **Pedro Kicks Back**.
 
-The latest deliverable is the **v7 RAM and input preview**. [Download the calculator package](dist/FlashGamesCE-v7-preview.zip), check [its SHA-256](dist/FlashGamesCE-v7-preview.zip.sha256), and read [changes/limits](flash-ports/CONTINUATION-v7-2026-11-06.md) and [verification](flash-ports/verification/CHECKPOINT-v7.md). Pedro's running footprint including libraries drops from151,597 to107,871 bytes; it selects an optional exact sky cache or flash according to available RAM. Sampled free RAM is6,867 bytes with the cache,36,368 with an8KB filler selecting flash. Production FPS is40.0/21.15 stationary/moving with the cache,37.0/19.49 from flash. Scouts reaches80.33 ticks/sec at requested4x in quiet stage1, but only14.5 with25–29 enemies in stage16. All15/17 stage entries pass; full campaigns and physical hardware remain unverified. [Developer handoff](flash-ports/HANDOFF.md).
+The latest deliverable is the **v8 Scouts route and rendering preview**. [Download the calculator package](dist/FlashGamesCE-v8-preview.zip), check [its SHA-256](dist/FlashGamesCE-v8-preview.zip.sha256), and read [changes/limits](flash-ports/CONTINUATION-v8-2026-11-07.md) and [verification](flash-ports/verification/CHECKPOINT-v8.md). Scouts now verifies stage-one loss, retry, a six-wave win and a saved stage-two unlock, including 32KB RAM pressure. Native render/reference/canary tests preserve pixels. Quiet production reaches 10.17 FPS/80 simulation ticks per second; crowded stage16 remains slow at1.33 FPS/15.83 ticks. Pedro retains v7's smaller footprint and optional sky cache. Full campaigns, archive-GC and physical hardware remain unverified. [Developer handoff](flash-ports/HANDOFF.md).
 
 The original games and artwork are by Hamumu Software (2012). This repository tracks calculator port development and the supplied games' recovered reference material.
 
@@ -14,7 +14,13 @@ Per-game notes, controls and known gaps: [flash-ports/scoutcamp](flash-ports/sco
 
 Native calculator-emulator (CEmu) captures
 
-Latest v7 production captures (counter benchmarks have no overlay):
+Latest v8 production campaign captures:
+
+| Stage-one win | Saved stage-two unlock under 32KB RAM pressure |
+| --- | --- |
+| ![Scouts stage-one win](docs/screenshots/scout-v8-win.png) | ![Scouts saved unlock](docs/screenshots/scout-v8-unlock-ram32k.png) |
+
+Earlier v7 production captures (counter benchmarks have no overlay):
 
 | Pedro optional cache | Pedro flash fallback | Scouts crowded stage16 |
 | --- | --- | --- |

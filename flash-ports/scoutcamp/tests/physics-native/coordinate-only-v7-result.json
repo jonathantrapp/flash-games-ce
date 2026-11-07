@@ -1,0 +1,26 @@
+{
+  "expected": [
+    1,
+    81600,
+    0,
+    0,
+    0
+  ],
+  "observed": [
+    1,
+    81600,
+    0,
+    0,
+    0
+  ],
+  "failed": false,
+  "reference_candidate_timer_ticks": [
+    1197809,
+    983017
+  ],
+  "source_sha256": "bf2202676513b9a16fd9765ace4d443df7c9eccce569e7c2a9462acf3eab03ae",
+  "reference_sha256": "fd8a61ff0babf76c4c6ee3fd98f8badfa5a2666bc98738427e551591014dd928",
+  "program_sha256": "62a7b0c9128417aadcb1e80b31f753a681dedae2c0f0118618f821c8319fa7a0",
+  "scope": "Compare cached-coordinate physics with frozen v7 on the actual CE ABI.\n\nAll17 original maps,10 enemy/motion/status variants,160 ticks and3 substeps.\nCompares every Enemy byte, food state, escape count and focus after each call.\nThe graphics cache initializer is stubbed; actual map banks and physics run.\n",
+  "candidate_physics_sha256": "c69a1c4d42717f5a220deaebb40fb41eceffcb1fdbdcf913f4f82aa6d61b0802"
+}

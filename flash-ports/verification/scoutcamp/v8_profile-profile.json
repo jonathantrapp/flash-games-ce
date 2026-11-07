@@ -1,0 +1,118 @@
+{
+  "program_sha256": "23335b61511c32ba5b67c3beedea4a381314663a7889518964e30c67e6e1f474",
+  "short": {
+    "diag": [
+      1,
+      15,
+      1,
+      0,
+      25,
+      0,
+      0,
+      0,
+      0,
+      1,
+      5,
+      0,
+      0,
+      0,
+      117,
+      2
+    ],
+    "tick": 629,
+    "simulation_ticks": [
+      13588,
+      339597,
+      82428,
+      6247,
+      5533,
+      406,
+      449,
+      2423
+    ],
+    "last_render_ms": [
+      24,
+      94,
+      10,
+      2,
+      33
+    ],
+    "last_epoch": [
+      3,
+      636,
+      355,
+      0
+    ]
+  },
+  "long": {
+    "diag": [
+      1,
+      15,
+      1,
+      0,
+      29,
+      0,
+      0,
+      0,
+      0,
+      1,
+      5,
+      0,
+      0,
+      0,
+      203,
+      2
+    ],
+    "tick": 715,
+    "simulation_ticks": [
+      15454,
+      464812,
+      107595,
+      7104,
+      6290,
+      466,
+      512,
+      2750
+    ],
+    "last_render_ms": [
+      24,
+      94,
+      11,
+      2,
+      33
+    ],
+    "last_epoch": [
+      1,
+      210,
+      786,
+      0
+    ]
+  },
+  "steps": 86,
+  "interval_seconds": 6,
+  "ticks_per_second": 14.333333333333334,
+  "simulation_ms_per_step": {
+    "waves": 0.6621604742005814,
+    "enemy_physics_specials": 44.43323889444041,
+    "food": 8.930649868277616,
+    "towers": 0.3041112145712209,
+    "sprays": 0.2686256586119186,
+    "bullets": 0.021291333575581394,
+    "explosions": 0.022355900254360465,
+    "finish_and_marks": 0.1160377679869186
+  },
+  "last_render_fields": [
+    "sky",
+    "map",
+    "actors",
+    "effects",
+    "hud"
+  ],
+  "source_sha256": {
+    "main.c": "f6b3e598c5c7091608dd7c5fdb06f6a86bd66f5ba0bc1368b28dc743c246d9f3",
+    "art.c": "d3fda32820bf1181425a1d94ea9f1d508a861cf5aeb2248c4ae3e28f325f8b70",
+    "engine.h": "3616d975791f9d10bea0ece85f481f54def6f8578e18a6c404355527c19d5d2f",
+    "combat.h": "be50af4138faa168e8fd461b1b7ddb828ae0b94488d331d46db7685863527bc8"
+  },
+  "scope": "Profile unchanged Scouts rules/rendering during a natural crowded stage16 wave.\n\nRequires QA_PERF without QA_OVERLAY. Paired intervals exclude common startup.\nCounters add overhead; production throughput needs a separate benchmark.\n"
+}

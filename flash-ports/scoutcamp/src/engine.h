@@ -30,6 +30,7 @@ typedef struct {
     int8_t wobbleDir;
     uint8_t active,type,action,ground,immune,advancing,escaping,slowRate;
     int8_t facing,carry;
+    uint8_t homeX,homeY; /* immutable portal coordinates, populated at spawn */
 } Enemy;
 typedef struct {
     uint16_t cell,spent,damage,range,reloadTime,second,cooldown,born,noFire,buff,buffTime,animation,instaLock,buildTime;
@@ -58,7 +59,7 @@ static int squareDistance(int x,int y,int xx,int yy){int dx=x-xx,dy=y-yy;return 
 static int random100(void){return rand()%100;}
 static void say(const char *s){strncpy(status,s,sizeof status-1);status[sizeof status-1]=0;statusTicks=60;}
 static uint16_t rowOffsets[64];
-static uint8_t mapWidth,mapHeight;
+static uint8_t mapWidth,mapHeight,campTileX,campTileY;
 static __attribute__((always_inline)) inline int tileAt(int layer,int x,int y){if((unsigned)x>=mapWidth||(unsigned)y>=mapHeight)return layer==1?1:0;return layers[layer][rowOffsets[y]+x];}
 static bool slope(int tile){return tile==14||tile==18;}
 static int surface(int x,int y){int tile=tileAt(1,x/16,y/16);if(!tile)return 32767;int top=(y/16)*16;if(tile==14)return top+15-(x&15);if(tile==18)return top+(x&15);return top;}
@@ -88,7 +89,7 @@ static void sellTower(void) {
     }
     say("Tower sold");
 }
-static Enemy *spawnEnemy(int type,int lv,int portal){for(int i=0;i<MAXEN;i++)if(!enemies[i].active){Enemy*e=&enemies[i];memset(e,0,sizeof *e);e->active=1;if(i>=enemyTop)enemyTop=i+1;e->type=type;e->home=portal;e->x=(portal%map->width*16+8)*FP;e->y=(portal/map->width*16+16)*FP;e->facing=rand()&1?1:-1;e->advancing=1;e->carry=-1;e->monsterLevel=lv;e->hp=e->maxhp=monster_Life(type,lv)*100;e->born=e->birthLength=HZ;e->speed=monsterSpeed[type]*FP;e->scale=10000;e->wobble=1000;e->wobbleDir=-1;e->slowRate=100;e->babyThreshold=99;e->babyLevel=1;return e;}return NULL;}
+static Enemy *spawnEnemy(int type,int lv,int portal){for(int i=0;i<MAXEN;i++)if(!enemies[i].active){Enemy*e=&enemies[i];memset(e,0,sizeof *e);e->active=1;if(i>=enemyTop)enemyTop=i+1;e->type=type;e->home=portal;e->homeX=portal%mapWidth;e->homeY=portal/mapWidth;e->x=(portal%map->width*16+8)*FP;e->y=(portal/map->width*16+16)*FP;e->facing=rand()&1?1:-1;e->advancing=1;e->carry=-1;e->monsterLevel=lv;e->hp=e->maxhp=monster_Life(type,lv)*100;e->born=e->birthLength=HZ;e->speed=monsterSpeed[type]*FP;e->scale=10000;e->wobble=1000;e->wobbleDir=-1;e->slowRate=100;e->babyThreshold=99;e->babyLevel=1;return e;}return NULL;}
 static void dropFood(Enemy*e){if(e->carry>=0){Food*f=&foods[e->carry];f->holder=-1;f->x=e->x;f->y=e->y-monsterHeight[e->type]*FP/2;f->vy=0;e->carry=-1;}}
 typedef struct {int16_t x,y;uint16_t damage;} Explosion;
 static Explosion explosions[MAXEN];
@@ -134,8 +135,8 @@ static void physicsEnemy(Enemy*e,int substep){
     if(e->freeze){if(!substep)e->freeze--;return;}if(e->flat){if(!substep)e->flat--;return;}
     int h=monsterHeight[e->type],px=ex(e),feet=e->y_pixel,py=feet-h/2;
     int tilex=px/16,tiley=py/16;
-    if(tilex==map->camp%map->width&&tiley==map->camp/map->width)e->advancing=0;
-    if(tilex==e->home%map->width&&tiley==e->home/map->width){e->advancing=1;if(e->escaping){if(e->carry>=0){foods[e->carry].active=0;escaped++;}e->active=0;if(e-enemies==focusEnemy)focusEnemy=-1;return;}}
+    if(tilex==campTileX&&tiley==campTileY)e->advancing=0;
+    if(tilex==e->homeX&&tiley==e->homeY){e->advancing=1;if(e->escaping){if(e->carry>=0){foods[e->carry].active=0;escaped++;}e->active=0;if(e-enemies==focusEnemy)focusEnemy=-1;return;}}
     int speed=e->speed;
     if(e->action==1)speed=35*FP;else if(e->boost&&e->type!=1&&e->type!=5)speed=40*FP;
     if(e->slow)speed=speed*e->slowRate/100;
@@ -147,7 +148,7 @@ static void physicsEnemy(Enemy*e,int substep){
         int wall=tileAt(1,front,checky);
         if(wall&&!slope(wall)){e->facing=-e->facing;e->vx=-e->vx;}
         int marker=tileAt(3,tilex,tiley);
-        bool up=(e->advancing?map->camp/map->width:e->home/map->width)*16<py;
+        bool up=(e->advancing?campTileY:e->homeY)*16<py;
         if(up&&marker>=3&&marker<=11){int direction=(marker-3)%3,power=(marker-3)/3+1;bool dirOK=direction==2||(direction==0&&e->facing<0)||(direction==1&&e->facing>0);if(dirOK&&((e->facing<0&&px<=tilex*16+8)||(e->facing>0&&px>=tilex*16+8))){e->x=(tilex*16+8)*FP;e->vy=-(90+30*(power-1))*FP;e->vx=e->facing*35*FP;e->action=1;e->ground=0;}}
     }
     int oldx=e->x,oldy=e->y;e->x+=e->vx/60;e->traveled+=abs(e->x-oldx);
@@ -156,8 +157,20 @@ static void physicsEnemy(Enemy*e,int substep){
     if(e->x<3*FP){e->x=3*FP;e->facing=1;}if(e->x>(map->width*16-3)*FP){e->x=(map->width*16-3)*FP;e->facing=-1;}
     int oldVelocity=e->vy;e->vy+=200*FP/60;e->y+=(oldVelocity+e->vy)/120;e->ground=0;
     int oldFeet=oldy/FP,newFeet=e->y_pixel,x=ex(e);
-    if(e->vy>=0){for(int yy=oldFeet/16;yy<=newFeet/16+1;yy++){int surf=surface(x,yy*16);if(surf!=32767&&surf>=oldFeet-4&&surf<=newFeet+1){e->y=surf*FP;e->vy=0;e->ground=1;e->action=0;break;}}}
-    else if(tileAt(1,x/16,(newFeet-h)/16)){e->y=(((newFeet-h)/16+1)*16+h)*FP;e->vy=0;}
+    /* FlxTilemapExt floor slopes accept feet through the inclusive bottom
+     * edge, including upward motion. Looking only in feet/16 misses that
+     * edge and lets a walker enter beneath the slope. */
+    int slopeRow=(newFeet-1)/16,slopeTile=tileAt(1,x/16,slopeRow);
+    int slopeSurface=slope(slopeTile)?surface(x,slopeRow*16):32767;
+    if(newFeet>=slopeSurface&&newFeet<=slopeRow*16+16){
+        e->y=slopeSurface*FP;e->vy=0;e->ground=1;e->action=0;
+    }
+    else if(e->vy>=0){for(int yy=oldFeet/16;yy<=newFeet/16+1;yy++){int surf=surface(x,yy*16);if(surf!=32767&&surf>=oldFeet-4&&surf<=newFeet+1){e->y=surf*FP;e->vy=0;e->ground=1;e->action=0;break;}}}
+    else {
+        /* Original tiles14/18 carry FLOOR and a side flag, never CEILING. */
+        int ceiling=tileAt(1,x/16,(newFeet-h)/16);
+        if(ceiling&&!slope(ceiling)){e->y=(((newFeet-h)/16+1)*16+h)*FP;e->vy=0;}
+    }
     e->immune=e->type==4&&e->ground&&!e->disabled;
 }
 static void stepSpecials(Enemy*e){if(e->disabled||e->born)return;
@@ -166,5 +179,32 @@ static void stepSpecials(Enemy*e){if(e->disabled||e->born)return;
     if(e->type==7&&tick%5==0){for(int i=0;i<MAXTOWER;i++){Tower*t=&towers[i];if(t->active&&squareDistance(ex(e),ey(e),t->cell%map->width*16+8,t->cell/map->width*16+8)<3600)t->noFire=6;}}
     if(e->type==8){e->wobble+=e->wobbleDir<0?-25:15;if(e->wobble<=750){e->wobble=750;e->wobbleDir=1;}if(e->wobble>=1000){e->wobble=1000;e->wobbleDir=-1;}if(e->special)e->special--;if(!e->special&&e->ground&&(uint32_t)e->hp<=(uint32_t)e->maxhp*e->babyThreshold/100){e->babyThreshold--;e->scale=(uint32_t)e->scale*99/100;e->special=HZ;for(int j=0;j<3;j++){Enemy*b=spawnEnemy(9,e->babyLevel,e->home);if(b){b->x=e->x;b->y=e->y;b->facing=e->advancing?e->facing:-e->facing;b->speed=j==0?35*FP:j==1?35*FP/2:35*FP/4;b->born=b->birthLength=j==0?9:j==1?18:36;b->traveled=e->traveled;b->vx=0;b->special=j;}}e->babyLevel++;}for(int j=0;j<5;j++){Food*f=&foods[j];if(f->active&&f->holder>=0&&squareDistance(ex(e),ey(e),f->x_pixel,f->y_pixel)<100){Enemy*n=&enemies[f->holder];f->active=0;n->carry=-1;n->escaping=0;n->facing=-n->facing;n->advancing=!n->advancing;escaped++;}}}
 }
-static void stepFood(void){for(int i=0;i<5;i++){Food*f=&foods[i];if(!f->active)continue;if(f->holder>=0){Enemy*e=&enemies[f->holder];if(!e->active){f->holder=-1;continue;}f->x=e->x;f->y=e->y-monsterHeight[e->type]*FP;continue;}int old=f->y_pixel;f->vy+=200*FP/HZ;f->y+=f->vy/HZ;for(int yy=old/16;yy<=f->y_pixel/16+1;yy++){int surf=surface(f->x_pixel,yy*16);if(surf>=old-2&&surf<=f->y_pixel){f->y=surf*FP;f->vy=0;break;}}for(int j=0;j<enemyTop;j++){Enemy*e=&enemies[j];if(e->active&&!e->born&&!e->escaping&&e->type!=8&&e->action!=1&&squareDistance(f->x_pixel,f->y_pixel,ex(e),ey(e))<256){f->holder=j;e->carry=i;e->escaping=1;if(e->advancing){e->facing=-e->facing;e->advancing=0;}break;}}}}
+static void stepFood(void){
+    for(int i=0;i<5;i++){
+        Food *f=&foods[i];if(!f->active)continue;
+        if(f->holder>=0){
+            Enemy *e=&enemies[f->holder];
+            if(!e->active){f->holder=-1;continue;}
+            f->x=e->x;f->y=e->y-monsterHeight[e->type]*FP;continue;
+        }
+        int old=f->y_pixel;f->vy+=200*FP/HZ;f->y+=f->vy/HZ;
+        for(int yy=old/16;yy<=f->y_pixel/16+1;yy++){
+            int surf=surface(f->x_pixel,yy*16);
+            if(surf>=old-2&&surf<=f->y_pixel){f->y=surf*FP;f->vy=0;break;}
+        }
+        const int fx=f->x_pixel,fy=f->y_pixel;
+        for(int j=0;j<enemyTop;j++){
+            Enemy *e=&enemies[j];
+            if(!e->active||e->born||e->escaping||e->type==8||e->action==1)continue;
+            /* A distance below16 requires both integer axes in[-15,15].
+             * Reject distant enemies before either software multiply. */
+            int dx=fx-ex(e);if((unsigned)(dx+15)>=31)continue;
+            int dy=fy-ey(e);if((unsigned)(dy+15)>=31)continue;
+            if(dx*dx+dy*dy>=256)continue;
+            f->holder=j;e->carry=i;e->escaping=1;
+            if(e->advancing){e->facing=-e->facing;e->advancing=0;}
+            break;
+        }
+    }
+}
 #endif

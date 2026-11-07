@@ -22,6 +22,7 @@ GAMES = {
 }
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('games',nargs='*',choices=list(GAMES));p.add_argument('--tag',default='continuation')
+p.add_argument('--bin-dir',default='bin',help='Isolated build folder; applies to each selected game')
 p.add_argument('--jobs',type=int,default=1)
 a=p.parse_args();games=a.games or list(GAMES)
 assert a.tag and all(c.isalnum() or c in '-_' for c in a.tag)
@@ -33,7 +34,7 @@ for game in games:
         tasks.append((game,k,steps(k),checks(k)))
 def run(task):
     game,k,keys,checks=task;scenario=a.tag+'_stage%02d'%(k+1)
-    command=[sys.executable,str(HERE/'run_scenario.py'),game,scenario,keys,'--tap','500']
+    command=[sys.executable,str(HERE/'run_scenario.py'),game,scenario,keys,'--tap','500','--bin-dir',a.bin_dir]
     for c in checks:command+=['--check',c]
     result=subprocess.run(command,capture_output=True,text=True)
     passed=result.returncode==0 and 'Autotest passed' in result.stdout+result.stderr
@@ -44,7 +45,7 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=max(1,a.jobs)) as pool:
     rows=list(pool.map(run,tasks))
 lines = ['# Stage launch smoke results', '', 'Each stage was opened in windowless CEmu through the QA stage-select path and played for a few seconds.',
          'This checks launch and an expected gameplay/dialogue/result state only, not completability. NMI resets fail even if diagnostic bytes match.', '',
-         'Binary SHA-256: '+', '.join(game+' '+hashlib.sha256((HERE/game/'bin'/({'scoutcamp':'SCOUTCE','pedrofu':'PEDROCE'}[game]+'.8xp')).read_bytes()).hexdigest() for game in games),
+         'Binary SHA-256: '+', '.join(game+' '+hashlib.sha256((HERE/game/a.bin_dir/({'scoutcamp':'SCOUTCE','pedrofu':'PEDROCE'}[game]+'.8xp')).read_bytes()).hexdigest() for game in games),
          '', '| Game | Stage | Result |', '| --- | --- | --- |']
 lines += ['| %s | %d | %s |' % row for row in rows]
 (HERE / 'verification' / ('STAGE-SMOKE-'+a.tag+'-'+ '-'.join(games)+'.md')).write_text('\n'.join(lines) + '\n', encoding='utf-8')

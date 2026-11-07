@@ -1,5 +1,7 @@
 # Original-game parity audit
 
+Latest evidence: [v8 Scouts collision/rendering and stage-one campaign milestone](verification/CHECKPOINT-v8.md), [v7 Pedro RAM/input milestone](verification/CHECKPOINT-v7.md). These supersede historical entries where stated; later campaigns and physical hardware remain open.
+
 This is the historical November 5 audit/checklist. Later changes and their evidence are recorded in the [v4 continuation](CONTINUATION-2026-11-06.md); unchecked or incomplete items below may have since changed. No gameplay-fidelity percentage is inferred from either report.
 
 This is a source-bound scope and acceptance checklist, not a claim of completed parity. The supplied games are Hamumu Software's **Scouts vs Aliens** and **Pedro Kicks Back** (2012). JPEXS recovered their AS3 into `*/original/scripts/xplor`. A checked acceptance item requires implementation inspection and a relevant native test. New native implementations were still in progress when this checklist was written.

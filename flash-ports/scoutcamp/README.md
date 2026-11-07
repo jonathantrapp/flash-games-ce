@@ -4,7 +4,7 @@ Native calculator rebuild of the supplied `scoutcamp_unlocked.swf` (the in-game 
 
 `bin/SCOUTCE.8xp` is the program; all 33 banks `SCA00.8xv` through `SCA32.8xv` hold the artwork, maps and original skill descriptions and must be sent with it. Runtime libraries and install steps are in the parent README.
 
-The v7 high-water marks reduce inactive enemy/bullet scans. Quiet stage one now measures19.83/80.33 simulation ticks/sec at1x/4x; crowded stage16 with25–29 enemies reaches only14.5 ticks/sec at requested4x. Gameplay controls pass220/150,80/80 and40/40ms press/release intervals after settled menu entry, with no queue overflows. Short menu-entry taps can still miss during loading. Cursor repeat uses a200ms timer. See [v7 verification](../verification/CHECKPOINT-v7.md); physical timing and full campaigns remain unverified. The renderer experiment is excluded from this package.
+The v8 preview fixes floor-slope collisions that blocked stage-one food theft. Production play now verifies a loss, retry, six-wave win and saved stage-two unlock, including a32KB RAM-filler round trip. The renderer preserves exact pixels in 272 scenes and 358 art montages. Quiet stage one measures 10.17 FPS and80 simulation ticks/sec; crowded stage16 with 28–32 enemies reaches only 1.33 FPS/15.83 ticks/sec at requested4x. Settled gameplay input at 220/150,80/80 and40/40ms,8 speed checks and 17 stage entries pass. Short menu-entry taps may still miss during loading. Read [v8 verification](../verification/CHECKPOINT-v8.md); later campaigns, archive-GC and physical hardware remain unverified.
 
 ## Play
 

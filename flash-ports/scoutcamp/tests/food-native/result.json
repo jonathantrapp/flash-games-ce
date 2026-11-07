@@ -1,0 +1,26 @@
+{
+  "expected": [
+    1,
+    816,
+    0,
+    0,
+    0
+  ],
+  "observed": [
+    1,
+    816,
+    0,
+    0,
+    0
+  ],
+  "failed": false,
+  "reference_candidate_timer_ticks": [
+    259205,
+    194312
+  ],
+  "source_sha256": "865099e81d041e4be25911cada4c9d75634a943f80d1975d1a54514c03940e22",
+  "reference_sha256": "908fbdebc8321c3c5942afb33152eced75fb340c60716051b6b2a03707f03f54",
+  "program_sha256": "eef6848295d10187753e07c8a9fcd019464c46bdf701f3634f57f12da43a8a27",
+  "scope": "Compare actual food updates with frozen v7 on all original maps in CEmu.\n\nSparse/full enemy slots, pickup-distance boundaries, held/dropped/inactive\nfood and excluded enemy states. Every food/enemy byte and escape count must\nmatch; graphics-cache initialization is stubbed, gameplay rules are real.\n",
+  "debug_stop": 0
+}

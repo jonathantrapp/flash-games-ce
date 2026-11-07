@@ -1,0 +1,36 @@
+{
+  "debug_only": false,
+  "stop": 0,
+  "program_sha256": "d6f68a3c1f89bc66271e7d4aae46df550d191f74416329a4e6b197d11aedcf73",
+  "expected": [
+    1,
+    272,
+    0,
+    0,
+    0
+  ],
+  "timing_scope": "Synthetic raw-sprite oracle versus candidate; not a production FPS comparison",
+  "observed": [
+    1,
+    272,
+    0,
+    0,
+    0
+  ],
+  "failed": false,
+  "render_ticks": [
+    1724467,
+    1255367
+  ],
+  "mean_render_ms": [
+    193.47998675178079,
+    140.84838418399588
+  ],
+  "source_sha256": {
+    "art.c": "4ee15107dcf19297f22efd799d7d1e022a3acd7ac172bbd349aeda0df274756c",
+    "main.c": "c0ad699368d5e8b031e5c2ab8a358bf8f34c9b1b5d2908d10077c646873ed67c",
+    "engine.h": "865099e81d041e4be25911cada4c9d75634a943f80d1975d1a54514c03940e22",
+    "combat.h": "338623e2af53070f5abefb0a9c21f34d6521f286b9351aec3cc6e281eef5f7cd"
+  },
+  "scope": "Compare actual Scouts rendering with the frozen pre-optimization renderer.\n\nNative GraphX, all 17 maps, both framebuffer addresses, camera edges, actors,\nstatus pips, towers, HUD/briefing/results and nonzero cache canaries.\nSynthetic states, not campaign wins.\n"
+}

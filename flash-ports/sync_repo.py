@@ -12,7 +12,7 @@ extensions = {'.py', '.c', '.h', '.s', '.S', '.ld', '.as', '.md', '.json', '.png
 count = 0
 for source in SRC.rglob('*'):
     rel = source.relative_to(SRC)
-    if rel.parts[:3] in [('scoutcamp','tests','art-native'),('scoutcamp','tests','render-native')]:
+    if len(rel.parts)>=3 and rel.parts[:2]==('scoutcamp','tests') and rel.parts[2] in {'art-native','render-native','food-native','physics-native','route-native'}:
         continue
     if rel.name=='NEXT-DEV-PROMPT.md':
         continue
@@ -153,6 +153,34 @@ for name,scenario in {'pedro-v7-cache.png':'pedrofu/v7_ram_production_pair_10s',
                       'pedro-v7-flash.png':'pedrofu/v7_ram_art_fill',
                       'scout-v7-crowded.png':'scoutcamp/v7_stage16_crowded_7'}.items():
     shutil.copy2(SRC/'verification'/scenario/'screen.png',DST/'docs/screenshots'/name)
+# v8: explicitly selected summaries/logs only, never native binaries/RAM/saves.
+for name in ['CHECKPOINT-v8.md','STAGE-SMOKE-v8_candidate-scoutcamp.md','v8-package-validation.json']:
+    shutil.copy2(SRC/'verification'/name,DST/'flash-ports/verification'/name)
+for scenario in (SRC/'verification/scoutcamp').glob('v8*'):
+    if scenario.name=='v8_art_native_launcher':continue # failed experimental fixture
+    if scenario.is_file() and scenario.suffix=='.json':
+        dest=DST/'flash-ports/verification/scoutcamp'/scenario.name
+        dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(scenario,dest)
+    elif scenario.is_dir():
+        for name in ['smoke.log','run-metadata.json']:
+            source=scenario/name
+            if source.is_file():
+                dest=DST/'flash-ports/verification/scoutcamp'/scenario.name/name
+                dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for folder in ['art-native','render-native','physics-native','food-native']:
+    for name in ['result.json','smoke.log']+(['coordinate-only-v7-result.json'] if folder=='physics-native' else []):
+        source=SRC/'scoutcamp/tests'/folder/name
+        dest=DST/'flash-ports/scoutcamp/tests'/folder/name
+        dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for tag in ['before_slope_fix','after_ceiling_fix','inclusive_floor_fix','frozen_v7_control']:
+    for name in ['result.json','smoke.log']:
+        source=SRC/'scoutcamp/tests/route-native/runs'/tag/name
+        dest=DST/'flash-ports/scoutcamp/tests/route-native/runs'/tag/name
+        dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for name,tag in {'scout-v8-win.png':'v8_campaign_two_rocks','scout-v8-unlock-ram32k.png':'v8_win_unlock_ram32k'}.items():
+    shutil.copy2(SRC/'verification/scoutcamp'/tag/'screen.png',DST/'docs/screenshots'/name)
+for name in ['FlashGamesCE-v8-preview.zip','FlashGamesCE-v8-preview.zip.sha256']:
+    shutil.copy2(ROOT/'release'/name,DST/'dist'/name)
 shutil.copy2(SRC/'REPO-README.md',DST/'README.md')
 for name in ['FlashGamesCE-v7-preview.zip','FlashGamesCE-v7-preview.zip.sha256']:
     shutil.copy2(ROOT/'release'/name,DST/'dist'/name)

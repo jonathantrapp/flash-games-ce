@@ -7,7 +7,7 @@ from pathlib import Path
 import argparse,concurrent.futures,json,re,subprocess,sys,hashlib
 
 HERE=Path(__file__).resolve().parent;GAME=HERE.parent;ROOT=GAME.parents[1]
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--bin-dir',default='bin');parser.add_argument('--read-existing',action='store_true',help='Analyze existing named native captures without running CEmu again');args=parser.parse_args()
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--tag',default='controls');parser.add_argument('--bin-dir',default='bin');parser.add_argument('--read-existing',action='store_true',help='Analyze existing named native captures without running CEmu again');args=parser.parse_args()
 maptext=(GAME/args.bin_dir/'SCOUTCE.map').read_text()
 offset=int(re.search(r'^\s*(0x[0-9a-f]+)\s+_scout_diag\s*$',maptext,re.M)[1],16)-0xd00000
 previous_offset=int(re.search(r'\.data\._previousSpeedThirds\s+(0x[0-9a-f]+)',maptext)[1],16)-0xd00000
@@ -24,7 +24,7 @@ cases={
  'lower_bound':prefix+'-*15',
 }
 def run(item):
- name,keys=item;scenario='controls_'+name
+ name,keys=item;scenario=args.tag+'_'+name
  command=[sys.executable,str(ROOT/'flash-ports/run_scenario.py'),'scoutcamp',scenario,keys,'--tap','220','--bin-dir',args.bin_dir,'--check','scout_diag:1:1']
  if not args.read_existing:
   result=subprocess.run(command,capture_output=True,text=True,timeout=180)

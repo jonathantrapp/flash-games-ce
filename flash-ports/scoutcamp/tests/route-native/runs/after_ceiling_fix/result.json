@@ -1,0 +1,16 @@
+{
+  "observed": [
+    2,
+    717,
+    2500,
+    0,
+    5,
+    0
+  ],
+  "expected_done": 1,
+  "expected_blocked_control": false,
+  "failed": true,
+  "source_sha256": "57f09f026e7b4502aab1f5c11c351ad77e8341d3a31b6a3891595eda8939cc28",
+  "program_sha256": "8a392b59a4eeca90525c479a289b869b56d264628ac72b3689fb8031e20e1b12",
+  "scope": "Reproduce a real stage-one portal->food->portal route using native physics.\n\nOne ordinary Lumpy, real map/markers/food, no towers. This is a focused route\nregression, not a complete campaign or a throughput benchmark.\n"
+}

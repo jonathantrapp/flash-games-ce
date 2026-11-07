@@ -1,0 +1,10 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\scoutcamp\tests\route-native\runs\after_ceiling_fix\smoke.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 1000
+Launching command hashWait | route
+	[Test failed!] Hash #route ("Native food round-trip") did not match the expected CRC 9522E17F (got F7006846).
+	Dumped memory into failure_hashroute_num1_dump.bin
+[CPU] PC=c31d9 SP=d1a7ee
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest failed] Out of 1 tests attempted, 0 passed, and 1 failed.

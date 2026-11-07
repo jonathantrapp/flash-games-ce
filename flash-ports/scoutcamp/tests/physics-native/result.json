@@ -1,0 +1,25 @@
+{
+  "expected": [
+    1,
+    81600,
+    0,
+    0,
+    0
+  ],
+  "observed": [
+    1,
+    81600,
+    0,
+    0,
+    0
+  ],
+  "failed": false,
+  "reference_candidate_timer_ticks": [
+    1286715,
+    1070982
+  ],
+  "source_sha256": "865099e81d041e4be25911cada4c9d75634a943f80d1975d1a54514c03940e22",
+  "reference_sha256": "6056b958b9586377044983cdb16d2691c17dfe12540f0b6450dcc2516561dbea",
+  "program_sha256": "377ef5d6858bacdcca87fbafa3424a4ae905b43568d26709ef8c62b7a3f218b0",
+  "scope": "Compare cached-coordinate physics with the uncached v8 collision reference on the actual CE ABI.\n\nAll17 original maps,10 enemy/motion/status variants,160 ticks and3 substeps.\nCompares every Enemy byte, food state, escape count and focus after each call.\nThe graphics cache initializer is stubbed; actual map banks and physics run.\n"
+}

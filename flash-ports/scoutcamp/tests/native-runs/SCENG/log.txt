@@ -3,8 +3,8 @@ E:\AI Stuff\Calc Stuff\flash-ports\scoutcamp\tests\native-runs\SCENG\test.json l
 Launching command action | launch
 Launching command delay | 5000
 Launching command hashWait | pass
-[value] pass = 620756993
+[value] pass = 738197505
 	[Test passed!] Hash #pass had a matching CRC.
-[CPU] PC=3a3f1 SP=d1a750
+[CPU] PC=39f61 SP=d1a74b
 [CLOCK] CPU=48000000 RUN=1000
 [Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.

@@ -2,7 +2,7 @@
 
 These are native C rebuilds of the two supplied SWFs, written from the AS3 recovered with JPEXS. Both are works in progress: see [PARITY-AUDIT.md](PARITY-AUDIT.md) for what is verified and what is not, and each game's notes for controls and known gaps.
 
-The current deliverable is a **v7 RAM and input preview**. Read [CONTINUATION-v7-2026-11-06.md](CONTINUATION-v7-2026-11-06.md) and [the verification report](verification/CHECKPOINT-v7.md) before installing. Pedro uses an optional temporary sky cache: the sampled empty emulator has 6.9 KB free with it, while an 8 KB filler selects flash and leaves 36.4 KB free. It measures 40.0/21.15 FPS stationary/moving with the cache and 37.0/19.49 from flash. Scouts reaches the requested 4x in the quiet test, but only 14.5 ticks/sec with 25–29 enemies in stage 16. These OS 5.3 emulator results do not establish physical stability, full campaigns or crowded-battle speed.
+The current deliverable is the **v8 Scouts route and rendering preview**. Read [the changes](CONTINUATION-v8-2026-11-07.md) and [verification](verification/CHECKPOINT-v8.md) before installing. Scouts now verifies a real stage-one win/loss/retry and saved stage-two unlock, including with 32KB RAM pressure. Exact-pixel rendering measures 10.17 FPS in quiet stage one; crowded stage16 remains slow at1.33 FPS/15.83 simulation ticks per second. Pedro is unchanged from v7: optional sky cache, about 6.9KB free with it and36.4KB with an 8 KB filler selecting flash,40.0/21.15 cached stationary/moving FPS. CEmu OS5.3 results do not establish physical stability, complete campaigns or archive-GC coverage.
 
 | Supplied file | Original game | Calculator program |
 | --- | --- | --- |

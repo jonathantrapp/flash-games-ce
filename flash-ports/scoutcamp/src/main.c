@@ -23,6 +23,8 @@ enum { MODE_MENU = 0, MODE_PLAY = 1, MODE_MAP = 2, MODE_LOST = 3, MODE_WON = 4, 
 #define KEY_DOWN(k) (input_held[(k) >> 8] & ((k) & 0xFF))
 #define KEY_PRESS(k) (input_pressed[(k) >> 8] & ((k) & 0xFF))
 
+volatile uint32_t scout_totals[2]; /* rendered frames, simulation ticks; no overlay */
+
 #ifdef QA_PERF
 volatile uint16_t scout_perf[4],scout_render_ms[5];
 static uint32_t renderStamp;
@@ -309,9 +311,11 @@ static void renderGame(void) {
     int theme=level==16?2:level>11?3:level>7?2:level>3?1:0;
     for (int layer = 0; layer < 3; layer++)
         for (int y = camy / 16; y < map->height && y * 16 - camy < 240; y++) {
-            for (int x = camx / 16; x < map->width && x * 16 - camx < 320; x++) {
-                int tile = layers[layer][y * map->width + x];
-                if (tile && tile < 128) art_draw(ART_TILES0+theme, tile, x * 16 - camx, y * 16 - camy);
+            const uint8_t *row=layers[layer]+y*map->width+camx/16;
+            int screenY=y*16-camy,screenX=-(camx%16);
+            for (int x = camx / 16; x < map->width && screenX < 320; x++,screenX+=16) {
+                int tile = *row++;
+                if (tile && tile < 128) art_draw(ART_TILES0+theme, tile, screenX, screenY);
             }
             input_poll();
         }
@@ -617,6 +621,7 @@ int main(void) {
 #endif
 #endif
         updateDiagnostics();
+        scout_totals[0]++;scout_totals[1]=(unsigned)tick;
         gfx_SwapDraw();
     }
     save(); gfx_End();
