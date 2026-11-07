@@ -14,12 +14,13 @@
     0
   ],
   "full_reused_overflow": [
-    552,
-    48,
-    12
+    1200,
+    0,
+    24
   ],
   "failed": false,
-  "renderer_normalized_sha256": "abcad2c2cde200821b91c6f28cacec446f226ba3c1674efff5ff0c8778195df3",
+  "renderer_normalized_sha256": "460b7ef93af93a77c7dd9b249dc8e02df18e62360bb147cd4dd1a08ca11263b9",
   "reference_sha256": "43779d982d6d64202678e5af8e6747bcb873f1eb6f977fae1fd0e58b4615d97a",
-  "scope": "Compare the actual complete renderer with frozen v5 across synthetic states.\n\nActual GraphX/fonts/assets in CEmu. This tests native pixel preservation, not\nFlash fidelity, gameplay completion or physical hardware. Intro is stubbed off.\n"
+  "sky_mode": "cache",
+  "scope": "600 native full-redraw comparisons of RAM cache against the flash sky path, with notice/scene canaries. Flash path independently compared with frozen v5. No retained-frame claim from this cache fixture."
 }

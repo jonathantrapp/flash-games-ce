@@ -1,0 +1,9 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\pedrofu\tests\scene-native-flash\smoke.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 220000
+Launching command hashWait | scene
+	[Test passed!] Hash #scene had a matching CRC.
+[CPU] PC=c31d9 SP=d1a7f7
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.

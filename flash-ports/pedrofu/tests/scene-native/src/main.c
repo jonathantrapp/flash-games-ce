@@ -35,6 +35,7 @@ void ref_draw_game(void);
 /* World, actor and HUD drawing for Pedro Kicks Back CE. */
 #include "../../../src/game.h"
 #include "../../../src/sky_rows.h"
+#include "../../../src/sky_runtime.h"
 #include "../../../src/intro.h"
 #include "../../../src/render_cache.h"
 #ifdef PEDRO_PROFILE
@@ -126,7 +127,16 @@ static void draw_sky_region(int left,int top,int right,int bottom) {
     for(unsigned y=top;y<(unsigned)bottom;y++,dest+=320){
         unsigned offset=sky_row_offsets[y];
         if(offset==65535)memset(dest,sky_row_colors[y],width);
+#ifdef SKY_FLASH_ROWS
+        else if(sky_ram_pixels)memcpy(dest,sky_ram_pixels+offset+left,width);
+        /* Original sky halves PDU20/PDU21 (160x240 each) read in place from archive. */
+        else{
+            if(left<160){unsigned end=right<160?right:160;memcpy(dest,uidata[2][0]+2+y*160+left,end-left);}
+            if(right>160){unsigned start=left>160?left:160;memcpy(dest+(start-left),uidata[2][1]+2+y*160+(start-160),right-start);}
+        }
+#else
         else memcpy(dest,sky_row_pixels+offset+left,width);
+#endif
     }
 }
 static void draw_sky(int bottom){draw_sky_region(0,22,320,bottom);}
@@ -383,6 +393,10 @@ void draw_game(void) {
     cached->valid=g.mode==PLAY&&!intro_is_active();drawing_scene=NULL;
 }
 
+void ref_draw_game(void){
+ const uint8_t *saved=sky_ram_pixels;int oldx=camx,oldy=camy;sky_ram_pixels=NULL;
+ invalidate_scene_cache();draw_game();sky_ram_pixels=saved;camx=oldx;camy=oldy;invalidate_scene_cache();
+}
 volatile uint16_t scene_diag[5]; /* done,frames,pixel failures,guard failures,first failed frame */
 static char changing_notice[96];
 static void fixture(int stage,int k){
@@ -408,6 +422,7 @@ int main(void){
  memset(scene_guard.before,0xa5,64);memset(scene_guard.after,0xa5,64);
  if(!load_resources()){scene_diag[0]=2;while(1){}}
  cache_hud();pick_colors();
+ sky_runtime_start();if(!sky_ram_pixels){scene_diag[0]=4;while(1){}}
  for(int surface=0;surface<2;surface++)for(int stage=1;stage<=15;stage++){
   char name[9];snprintf(name,sizeof name,"PDLV%02d",stage);unsigned size;const uint8_t*p=bundle_find(name,&size);
   memset(&g,0,sizeof g);g.w=p[0]+256*p[1];g.h=p[2]+256*p[3];g.n=g.w*g.h;

@@ -1,0 +1,14 @@
+{
+  "checks": 9312,
+  "failures": 0,
+  "source_sha256": "75c64fc49f4c8cbe1534bcdaccfe74e51c423a5bf0d2200a36b44a65e7ebaafa",
+  "observed_conversions": [
+    "%%",
+    "%02d",
+    "%06X",
+    "%d",
+    "%s",
+    "%u"
+  ],
+  "scope": "Compare the game's bounded formatter with host snprintf, with canaries.\n\n24-bit int / 32-bit long boundaries are included; native fixtures additionally\nexercise the actual CE ABI. Unsupported formats must not enter game sources.\n"
+}

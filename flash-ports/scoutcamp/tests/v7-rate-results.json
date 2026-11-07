@@ -1,0 +1,13 @@
+{
+  "rates": {
+    "4x": {
+      "ticks": 482,
+      "ticks_per_second": 80.33333333333333
+    },
+    "1x": {
+      "ticks": 119,
+      "ticks_per_second": 19.833333333333332
+    }
+  },
+  "scope": "v7 production SCOUTCE, CEmu OS5.3 48MHz, stage 1 before first wave; 7s minus 1s runs over 6 emulated seconds. Same method as v5 (44.83 at 4x). Not a crowded-battle or physical measurement."
+}

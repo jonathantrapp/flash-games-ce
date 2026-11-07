@@ -1,0 +1,5 @@
+{
+  "program_sha256": "2447f78a30e103a038f9555400399196166d99a7ce7805d79f1fcf1c8c64b9e3",
+  "restored_comment": "2026-11-06T20:44:11-0500 v15.0",
+  "proof": "The complete file hash exactly matches the original test metadata. Only the TI transfer-file timestamp comment differs between rebuilds; calculator data and checksum are unchanged."
+}

@@ -329,7 +329,7 @@ static void renderGame(void) {
         const Tower *t = &towers[i];
         if (t->active) drawTowerArt(t, t->cell % map->width * 16 - camx, t->cell / map->width * 16 - camy);
     }
-    for (int i = 0; i < MAXEN; i++) {
+    for (int i = 0; i < enemyTop; i++) {
         if(!(i&7))input_poll();
         const Enemy *e = &enemies[i]; if (!e->active) continue;
         int id = monsterArt[e->type]; const Art *art = &artTable[id];
@@ -365,7 +365,7 @@ static void renderGame(void) {
 #ifdef QA_PERF
     renderMark(2);
 #endif
-    for (int i = 0; i < MAXBULLET; i++) {
+    for (int i = 0; i < bulletTop; i++) {
         if(!(i&7))input_poll();
         const Bullet *b = &bullets[i]; if (!b->active) continue;
         int bx = b->x_pixel - camx, by = b->y_pixel - camy;
@@ -611,8 +611,10 @@ int main(void) {
         drawTotal+=timer_GetSafe(1,TIMER_UP)-drawStart;frameCount++;
         uint32_t perfNow=timer_GetSafe(1,TIMER_UP),span=perfNow-perfStart;
         if(span>=32768){scout_perf[0]=(uint32_t)frameCount*32768/span;scout_perf[1]=drawTotal*1000/span;scout_perf[2]=simTotal*1000/span;scout_perf[3]=accumulator;perfStart=perfNow;drawTotal=simTotal=frameCount=0;}
+#ifdef QA_OVERLAY /* text overlay distorts timing; counters alone stay in scout_perf */
         snprintf(textbuf,sizeof textbuf,"FPS%u D%u S%u",scout_perf[0],scout_perf[1],scout_perf[2]);label(textbuf,2,204,cYellow);
         snprintf(textbuf,sizeof textbuf,"SK%u MP%u EN%u FX%u HU%u",scout_render_ms[0],scout_render_ms[1],scout_render_ms[2],scout_render_ms[3],scout_render_ms[4]);label(textbuf,2,193,cYellow);
+#endif
 #endif
         updateDiagnostics();
         gfx_SwapDraw();

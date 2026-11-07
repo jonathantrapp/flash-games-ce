@@ -1,0 +1,6 @@
+{
+  "failures": 0,
+  "output": "76800 pixels; lifecycle assertions passed",
+  "source_sha256": "4cc33cbbf9f0b1c549945decdacae7d5ee0fb08f92f6e5492a6353c4c25875f6",
+  "scope": "Execute actual sky cache lifecycle with moving-RAM/file-I/O host stubs.\n\nVerifies exact row reconstruction, threshold/failure fallback, relocation,\ncrash-leftover disposal, archive rejection and exit cleanup. CEmu scene tests\nseparately compare the flash/cache paths against the frozen renderer.\n"
+}

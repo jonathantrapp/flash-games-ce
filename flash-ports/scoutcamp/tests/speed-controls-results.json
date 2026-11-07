@@ -1,20 +1,20 @@
 {
   "checks": 8,
   "failures": [],
-  "one_x_ticks": 24,
-  "fast_setting_ticks": 67,
+  "one_x_ticks": 25,
+  "fast_setting_ticks": 99,
   "snapshots": {
     "freeze_short": {
       "mode": 1,
       "speed_thirds": 0,
       "previous_speed_thirds": 3,
-      "tick": 8
+      "tick": 7
     },
     "freeze_long": {
       "mode": 1,
       "speed_thirds": 0,
       "previous_speed_thirds": 3,
-      "tick": 8
+      "tick": 7
     },
     "resume_1x": {
       "mode": 1,
@@ -31,26 +31,26 @@
     "freeze_4x": {
       "mode": 1,
       "speed_thirds": 0,
-      "previous_speed_thirds": 11,
-      "tick": 160
+      "previous_speed_thirds": 12,
+      "tick": 173
     },
     "resume_4x": {
       "mode": 1,
       "speed_thirds": 0,
-      "previous_speed_thirds": 11,
-      "tick": 227
+      "previous_speed_thirds": 12,
+      "tick": 272
     },
     "resume_4x_setting": {
       "mode": 1,
-      "speed_thirds": 11,
-      "previous_speed_thirds": 11,
-      "tick": 203
+      "speed_thirds": 12,
+      "previous_speed_thirds": 12,
+      "tick": 229
     },
     "upper_bound": {
       "mode": 1,
       "speed_thirds": 12,
       "previous_speed_thirds": 3,
-      "tick": 268
+      "tick": 356
     },
     "lower_bound": {
       "mode": 1,
@@ -60,6 +60,6 @@
     }
   },
   "reused_captures": true,
-  "program_sha256": "8c6bf764ae0679215e4fb017d4474c4c9c10aa37a59b605fab6372c9c85a50fd",
-  "scope": "Actual keypad input in CEmu: frozen tick stability, restoration of the stored speed setting, progress and bounds0..4x. Initial exact4x rate expectation did not pass (109expected/67observed); repeated220ms taps also missed one increment, yielding11thirds rather than12. Exact4x rate and reliable rapid-input sampling remain unverified. No physical speed claim."
+  "program_sha256": "2447f78a30e103a038f9555400399196166d99a7ce7805d79f1fcf1c8c64b9e3",
+  "scope": "Actual keypad input in CEmu OS5.3: frozen tick stability, exact restoration of settings3 and12 thirds, forward progress and bounds0..4x. Raw fast-setting totals include control/render overhead; use paired input-timing results for rates. No physical speed or crowded-battle minimum claim."
 }

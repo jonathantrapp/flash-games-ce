@@ -1,0 +1,63 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\scoutcamp\v7_campaign_loss\smoke.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | +
+Launching command delay | 500
+Launching command release | +
+Launching command delay | 150
+Launching command hold | graph
+Launching command delay | 500
+Launching command release | graph
+Launching command delay | 150
+Launching command delay | 45000
+Launching command hashWait | scout_diag_0
+	[Test failed!] Hash #scout_diag_0 ("scout_diag:3:1") did not match the expected CRC 412DA0A5 (got A016D052).
+	Dumped memory into failure_hashscout_diag_0_num1_dump.bin
+[CPU] PC=d1b04d SP=d1a767
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest failed] Out of 1 tests attempted, 0 passed, and 1 failed.

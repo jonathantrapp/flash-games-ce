@@ -1,0 +1,26 @@
+{
+  "program_sha256": "077999fdc687f49d1ef15b361bc672fd3e480128fec4f8e5cbbe90dbf62ff9a0",
+  "short": [
+    626,
+    890,
+    56234,
+    1168523,
+    102533
+  ],
+  "long": [
+    777,
+    1124,
+    56750,
+    1382302,
+    136251
+  ],
+  "interval_seconds": 7.8,
+  "motion": true,
+  "production_entry": true,
+  "fps": 19.358974358974358,
+  "steps_per_second": 30.0,
+  "wait_ms_per_frame": 0.1042852338576159,
+  "draw_ms_per_frame": 43.205412807843544,
+  "simulation_ms_per_frame": 6.814514564362582,
+  "scope": "Stage-one production opening entry. CEmu OS5.3 at48MHz, no overlay. Idle: matched 10s/4s intervals. Motion: 9 versus3 right/left cycles while holding jump after4s moving right; each cycle1.3s including release gaps. Frame boundaries give sampling error. Not a whole-game minimum, original comparison or physical-calculator result."
+}

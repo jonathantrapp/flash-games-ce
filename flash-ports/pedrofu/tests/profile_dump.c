@@ -2,6 +2,7 @@
 static int parity_rand(void){return 99;}
 #define rand parity_rand
 #include "../src/profile.c"
+void sky_runtime_refresh(void){}
 Game g;
 int clampi(int v,int lo,int hi){return v<lo?lo:v>hi?hi:v;}
 static void reset(void){memset(&progress,0,sizeof progress);memset(&g,0,sizeof g);}

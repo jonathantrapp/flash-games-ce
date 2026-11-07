@@ -1,4 +1,6 @@
 #include "game.h"
+#include "hwdiag.h"
+#include "sky_runtime.h"
 Progress progress;
 int maxlife(void){int n=5;for(int i=0;i<15;i++)n+=progress.hearts[i]!=0;return n*100;}
 int maxfury(void){int n=1;for(int i=0;i<15;i++)n+=progress.souls[i]!=0;return (n>5?5:n)*100;}
@@ -8,7 +10,16 @@ void profile_load(void){
  for(int i=0;i<45;i++)if(progress.skills[i]>5)progress.skills[i]=0;
  if(progress.rank>99)progress.rank=0;
 }
-void profile_save(void){uint8_t f=ti_Open("PDPROG2","w");if(f){ti_Write("PDF2",1,4,f);ti_Write(&progress,1,sizeof progress,f);ti_Close(f);}}
+void profile_save(void){
+#ifdef PEDRO_HWDIAG
+ unsigned saved_phase=diag_last_phase;DIAG_PHASE(DP_FILEIO);
+#endif
+ uint8_t f=ti_Open("PDPROG2","w");if(f){ti_Write("PDF2",1,4,f);ti_Write(&progress,1,sizeof progress,f);ti_Close(f);}
+ sky_runtime_refresh();
+#ifdef PEDRO_HWDIAG
+ diag_free_ram=os_MemChk(NULL);DIAG_PHASE(saved_phase);
+#endif
+}
 /* Original Profile.GetXP: truncate the Fancy Footwork bonus, level at most once per gain, keep the remainder. */
 void profile_xp(int n){n=n*(100+progress.skills[FANCYFOOTWORK]*6)/100;if(progress.rank==99){progress.xp=1;return;}progress.xp+=n;int need=progress.rank*10+50;if(progress.xp>=need){progress.xp-=need;progress.rank++;progress.points++;if(progress.rank==99)progress.xp=1;notice("Level up! A skill point is ready.");}}
 int skill_need(int id){int spent=0,rank=(id%15)/3;for(int i=id/15*15;i<id/15*15+rank*3;i++)spent+=progress.skills[i];return rank*3-spent;}

@@ -1,0 +1,27 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\pedrofu\v7_flash_production_pair_10s\smoke.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 600
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 600
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 30000
+Launching command hold | enter
+Launching command delay | 600
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 600
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 10000
+Launching command hashWait | pedro_diag_0
+	[Test passed!] Hash #pedro_diag_0 had a matching CRC.
+[CPU] PC=d285fb SP=d1a76c
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.

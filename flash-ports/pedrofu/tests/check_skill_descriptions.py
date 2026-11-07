@@ -65,6 +65,8 @@ profiles=[[rank]*45 for rank in range(6)]
 profiles += [[5 if i==chosen else 0 for i in range(45)]for chosen in range(45)]
 rng=random.Random(20261106);profiles += [[rng.randrange(6)for i in range(45)]for j in range(16)]
 source='''#include "../src/game.h"
+#define snprintf pd_snprintf
+#include "../src/small_format.c"
 #include "../src/skill_descriptions.h"
 Progress progress;
 static const uint8_t profiles[][45]={PROFILE_DATA};
@@ -101,6 +103,7 @@ for line in run.stdout.splitlines():
 result=dict(checks=checks,failures=failures,accepted_flash_roundoff_cases=roundoff,maximum_description_bytes=maximum_length,
  guarded_capacities=[0,1,2,64,384],source_sha256=hashlib.sha256(original.encode()).hexdigest(),
  generated_sha256=hashlib.sha256((GAME/'src/skill_descriptions.h').read_bytes()).hexdigest(),
+ formatter_sha256=hashlib.sha256((GAME/'src/small_format.c').read_bytes()).hexdigest(),
  scope='All45 original descriptions, ranks0..5,67 modifier profiles; original text with CE key labels; numeric Flash roundoff tolerance0.01; actual native generated C, not UI rendering.')
 (HERE/'skill-description-results.json').write_text(json.dumps(result,indent=2))
 print(checks,'descriptions;',len(failures),'failures;',roundoff,'Flash roundoff cases; maximum',maximum_length,'bytes; guarded capacities passed')

@@ -71,7 +71,9 @@ int main(void){gfx_Begin();gfx_SetDefaultPalette(gfx_8bpp);gfx_SetDrawBuffer();g
 }
 '''.replace('CACHE',cache.replace('#include "game.h"','#include "../../../src/game.h"').replace('#include "render_cache.h"','#include "../../../src/render_cache.h"'))
 (NATIVE/'src/main.c').write_text(source)
+(NATIVE/'src/small_format.c').write_text((GAME/'src/small_format.c').read_text())
 (NATIVE/'makefile').write_text('NAME = PDRCACHE\nDESCRIPTION = "Render cache pixel QA"\nCOMPRESSED = YES\nARCHIVED = YES\nCFLAGS = -Wall -Wextra -Oz -std=c11\nCEDEV_TOOLCHAIN = ../../../../local-tools/cedev/CEdev\ninclude ../../../../local-tools/cedev/CEdev/meta/makefile.mk\n')
+(NATIVE/'makefile').write_text((NATIVE/'makefile').read_text().replace('COMPRESSED = YES','COMPRESSED = NO\nHAS_PRINTF = NO').replace('ARCHIVED = YES','ARCHIVED = NO'))
 subprocess.run([str(ROOT/'local-tools/cedev/CEdev/bin/make.exe')],cwd=NATIVE,check=True)
 maptext=(NATIVE/'bin/PDRCACHE.map').read_text();addr=int(re.search(r'^\s*(0x[\da-fA-F]+)\s+_render_diag\s*$',maptext,re.M)[1],16)
 lib=ROOT/'local-tools/cemu/clibs/clibs'
@@ -86,7 +88,7 @@ expected=[1,19,8,0,0]
 config=dict(rom='C:/Users/jonat/Downloads/ti-84ce.rom',transfer_files=list(map(str,files)),target=dict(name='PDRCACHE',isASM=True),delay_after_step=0,
  sequence=['action|launch','delay|60000','hashWait|pixels','hashWait|visible'],hashes=dict(pixels=dict(description='All stage tile selections and clipped HUD match reference pixels; canaries intact',start=hex(addr),size=10,expected_CRCs=[crc(struct.pack('<5H',*expected))],timeout=5000),visible=dict(description='Result screen has completed its framebuffer swap',start=hex(addr+14),size=2,expected_CRCs=[crc(struct.pack('<H',1))],timeout=5000)))
 (NATIVE/'smoke.json').write_text(json.dumps(config,indent=2))
-run=subprocess.run([str(ROOT/'build/cemu-cli/cemu-autotester.exe'),'-d',str(NATIVE/'smoke.json')],cwd=NATIVE,capture_output=True,text=True,timeout=240)
+run=subprocess.run([str(ROOT/'build/cemu-cli/cemu-autotester.exe'),'-d',str(NATIVE/'smoke.json')],cwd=NATIVE,capture_output=True,text=True,timeout=240,creationflags=0x00000040|0x08000000)
 (NATIVE/'smoke.log').write_text(run.stdout+run.stderr);print(run.stdout+run.stderr)
 counts=struct.unpack_from('<8H',(NATIVE/'native-ram.bin').read_bytes(),addr-0xD00000)
 failed=bool(run.returncode or 'NMI' in run.stdout+run.stderr or list(counts[:5])!=expected or counts[6]!=10 or counts[7]!=1)

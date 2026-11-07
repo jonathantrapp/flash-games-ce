@@ -42,18 +42,18 @@
   "delay_after_step": 0,
   "sequence": [
     "action|launch",
-    "delay|220000",
+    "delay|1000",
     "hashWait|scene"
   ],
   "hashes": {
     "scene": {
-      "description": "600 v5 comparisons: scrolling, retained frames, changed terrain/pickups and overflow",
-      "start": "0xd0c69a",
+      "description": "600 native sky/scene comparisons",
+      "start": "0xd110b8",
       "size": 10,
       "expected_CRCs": [
         "24C01402"
       ],
-      "timeout": 2000
+      "timeout": 220000
     }
   }
 }

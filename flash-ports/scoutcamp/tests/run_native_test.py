@@ -8,5 +8,7 @@ crc=0xffffffff;data=bytes.fromhex(a.hexbytes)
 for b in data:
  crc^=b
  for _ in range(8):crc=(crc>>1)^(0x82f63b78 if crc&1 else 0)
-config={'rom':'C:/Users/jonat/Downloads/ti-84ce.rom','transfer_files':[str(root/a.directory/(a.name+'.8xp'))],'target':{'name':a.name,'isASM':True},'delay_after_step':0,'sequence':['action|launch','delay|5000','hashWait|pass'],'hashes':{'pass':{'description':a.symbol,'start':m[1],'size':len(data),'expected_CRCs':['%08X'%(crc^0xffffffff)],'timeout':3000}}}
+lib=root/'../../local-tools/cemu/clibs/clibs'
+files=[lib/(n+'.8xv')for n in ['libload','graphx','keypadc','fileioc']]+[root/a.directory/(a.name+'.8xp')]
+config={'rom':'C:/Users/jonat/Downloads/ti-84ce.rom','transfer_files':[str(f.resolve())for f in files],'target':{'name':a.name,'isASM':True},'delay_after_step':0,'sequence':['action|launch','delay|5000','hashWait|pass'],'hashes':{'pass':{'description':a.symbol,'start':m[1],'size':len(data),'expected_CRCs':['%08X'%(crc^0xffffffff)],'timeout':3000}}}
 f=out/'test.json';f.write_text(json.dumps(config));result=subprocess.run([str(root/'../../build/cemu-cli/cemu-autotester.exe'),'-d',str(f)],cwd=out,capture_output=True,text=True,timeout=120,creationflags=0x08000040);(out/'log.txt').write_text(result.stdout+result.stderr);print(result.stdout+result.stderr);raise SystemExit(result.returncode)

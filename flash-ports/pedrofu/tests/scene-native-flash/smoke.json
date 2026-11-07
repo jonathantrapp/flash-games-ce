@@ -1,0 +1,59 @@
+{
+  "rom": "C:/Users/jonat/Downloads/ti-84ce.rom",
+  "transfer_files": [
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\libload.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\graphx.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\keypadc.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\fileioc.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB00.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB01.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB02.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB03.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB04.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB05.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB06.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB07.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB08.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB09.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB10.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB11.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB12.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB13.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB14.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB15.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB16.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB17.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDB18.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDCOLOR.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDTILE0.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDTILE1.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDU00.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDU01.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDU10.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDU11.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDU20.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\bin\\PDU21.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\tests\\scene-native-flash\\bin\\PDSCENE.8xp"
+  ],
+  "target": {
+    "name": "PDSCENE",
+    "isASM": true
+  },
+  "delay_after_step": 0,
+  "sequence": [
+    "action|launch",
+    "delay|220000",
+    "hashWait|scene"
+  ],
+  "hashes": {
+    "scene": {
+      "description": "600 v5 comparisons: scrolling, retained frames, changed terrain/pickups and overflow",
+      "start": "0xd0c688",
+      "size": 10,
+      "expected_CRCs": [
+        "24C01402"
+      ],
+      "timeout": 2000
+    }
+  }
+}

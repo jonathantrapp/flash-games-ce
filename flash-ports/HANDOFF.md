@@ -1,4 +1,16 @@
-# Developer handoff, v6 performance preview, 6 November 2026
+# Developer handoff, v7 RAM/input preview, 6 November 2026
+
+Read `CONTINUATION-v7-2026-11-06.md` and `verification/CHECKPOINT-v7.md` first. They supersede the uncommitted-start snapshot `CONTINUATION-v7-WIP-2026-11-06.md`. Pedro production: 51,070 bytes, SHA-256 `c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9`; Scouts: 47,348 bytes, SHA-256 `2447f78a30e103a038f9555400399196166d99a7ce7805d79f1fcf1c8c64b9e3`.
+
+Pedro defaults to flash sky rows, with a 37,679-byte optional temporary RAM AppVar when `os_MemChk` permits a 6 KB reserve. It refreshes the cache pointer after profile saves, deletes the cache at exit and recreates crash leftovers. The small formatter replaces nanoprintf. Actual running footprint including libraries: 107,871 bytes; gameplay free RAM 6,867 with cache, 36,368 with an 8 KB filler selecting flash. Final production benchmarks: cache40.0/21.15 FPS stationary/moving; flash37.0/19.49. All15/17 stage entries, Pedro pixel/cache/formatter fixtures and Scouts engine/input/speed tests pass within their documented scope.
+
+Scouts' crowded stage16 result is14.5 ticks/sec at requested4x (25–29 enemies); quiet stage1 reaches80.33. The attempted renderer optimization remains local under `scoutcamp/tests/experiments`, excluded from production/sync. Its native fixture returned to an OS error through the sprite accessor although direct bank/header lookup worked. Keep that failure distinct from game results. No rendering-speed improvement is claimed.
+
+Campaign attempts did not produce a loss or retry: stage1 stillPLAY,41 enemies and5 food at tick3212 after150 emulated seconds. Investigate path/food progression before counting any campaign lifecycle. Wins/unlocks and archive-GC round trips remain open. The user explicitly deferred physical-crash work; do not resume it or ask for transfers/downloads without their request.
+
+CEdev stamps the TI file's42-byte comment with build time. Scouts' rebuilt calculator data/checksum exactly matches the validated file; restoring its original comment reproduces the full recorded SHA-256 (`scoutcamp/tests/v7-container-reproduction.json`). Do not overwrite final `bin/` programs with experiments. Package only the selected programs and banks. `package.py` now checks TI checksums/internal names, rejects unexpected release-folder entries and writes per-file/ZIP checksums. `sync_repo.py` publishes the v7 package/evidence through the separate checkout. Never commit the root NeuroFlappy repository or change Horsey.
+
+## Historical v6 state
 
 ## Latest performance continuation
 

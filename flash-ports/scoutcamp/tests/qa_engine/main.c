@@ -18,7 +18,7 @@ volatile uint8_t engine_diag[4];
 static const uint16_t portal[]={290};static const Route route[]={ {portal,1} };
 static const Map testMap={32,12,253,1,0,route};
 #define CHECK(c,id) do{if(!(c)){engine_diag[1]=(id);goto failed;}engine_diag[3]++;}while(0)
-static void flat(void){focusEnemy=-1;map=&testMap;mapWidth=32;mapHeight=12;for(int y=0;y<12;y++)rowOffsets[y]=y*32;memset(layers,0,sizeof layers);for(int x=0;x<32;x++)layers[1][10*32+x]=1;memset(enemies,0,sizeof enemies);memset(towers,0,sizeof towers);memset(bullets,0,sizeof bullets);memset(skills,0,sizeof skills);skills[0]=1;money=500;}
+static void flat(void){focusEnemy=-1;map=&testMap;mapWidth=32;mapHeight=12;for(int y=0;y<12;y++)rowOffsets[y]=y*32;memset(layers,0,sizeof layers);for(int x=0;x<32;x++)layers[1][10*32+x]=1;memset(enemies,0,sizeof enemies);enemyTop=MAXEN;bulletTop=MAXBULLET;/* cases activate slots directly; full marks stay exact-safe */memset(towers,0,sizeof towers);memset(bullets,0,sizeof bullets);memset(skills,0,sizeof skills);skills[0]=1;money=500;}
 int main(void){
  flat();Enemy*e=spawnEnemy(0,1,290);e->born=0;e->ground=1;e->facing=1;e->x=136*FP;e->y=160*FP;
  for(int t=0;t<20;t++){tick++;for(int sub=0;sub<3;sub++)physicsEnemy(e,sub);}

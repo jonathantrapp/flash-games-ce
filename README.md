@@ -2,7 +2,7 @@
 
 TI-84 Plus CE ports of **Scouts vs Aliens** and **Pedro Kicks Back**.
 
-The latest deliverable is the **6 November v6 performance preview**. [Download the calculator package](dist/FlashGamesCE-v6-preview.zip), read [what changed and what remains](flash-ports/CONTINUATION-v6-2026-11-06.md), and see [verification details](flash-ports/verification/CHECKPOINT-v6.md). Pedro's packaged binary measured **40 FPS stationary and 21.8 FPS during the tested movement sequence** in OS 5.3 CEmu, with approximately 30 simulation steps/sec. These are scene measurements, not physical or whole-game minima. All 600 native scene comparisons and 15 final Pedro stage-entry checks passed. Original artwork remains unchanged; the physical RAM-clear report and full campaigns remain unresolved. Scouts is the unchanged v5 program. [Developer handoff](flash-ports/HANDOFF.md).
+The latest deliverable is the **v7 RAM and input preview**. [Download the calculator package](dist/FlashGamesCE-v7-preview.zip), check [its SHA-256](dist/FlashGamesCE-v7-preview.zip.sha256), and read [changes/limits](flash-ports/CONTINUATION-v7-2026-11-06.md) and [verification](flash-ports/verification/CHECKPOINT-v7.md). Pedro's running footprint including libraries drops from151,597 to107,871 bytes; it selects an optional exact sky cache or flash according to available RAM. Sampled free RAM is6,867 bytes with the cache,36,368 with an8KB filler selecting flash. Production FPS is40.0/21.15 stationary/moving with the cache,37.0/19.49 from flash. Scouts reaches80.33 ticks/sec at requested4x in quiet stage1, but only14.5 with25–29 enemies in stage16. All15/17 stage entries pass; full campaigns and physical hardware remain unverified. [Developer handoff](flash-ports/HANDOFF.md).
 
 The original games and artwork are by Hamumu Software (2012). This repository tracks calculator port development and the supplied games' recovered reference material.
 
@@ -14,11 +14,13 @@ Per-game notes, controls and known gaps: [flash-ports/scoutcamp](flash-ports/sco
 
 Native calculator-emulator (CEmu) captures
 
-Latest v6 production captures (timing comes from separate counters, with no overlay):
+Latest v7 production captures (counter benchmarks have no overlay):
 
-| Pedro stationary camera | Pedro movement/jump sequence |
-| --- | --- |
-| ![Stationary scene](docs/screenshots/pedro-v6-stationary.png) | ![Movement scene](docs/screenshots/pedro-v6-moving.png) |
+| Pedro optional cache | Pedro flash fallback | Scouts crowded stage16 |
+| --- | --- | --- |
+| ![Pedro cache](docs/screenshots/pedro-v7-cache.png) | ![Pedro flash](docs/screenshots/pedro-v7-flash.png) | ![Scouts crowd](docs/screenshots/scout-v7-crowded.png) |
+
+The crowded stage uses QA only to open the stage; its enemies spawn naturally. This is no campaign-win or unlock proof.
 
 Earlier v5 production captures:
 

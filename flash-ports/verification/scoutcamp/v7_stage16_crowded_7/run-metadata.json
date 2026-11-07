@@ -1,0 +1,8 @@
+{
+  "launcher": "direct Asm(prgm) control",
+  "libraries": "package/toolchain",
+  "steps": "GAME enter down:vars right*15 enter up:vars enter wait:300 alpha +*9 graph alpha wait:20000 0 wait:500 0 wait:7000 0",
+  "scope": "CEmu OS 5.3 ROM; launcher path only, not OS 5.8.2.29 hardware.",
+  "program_sha256": "2447f78a30e103a038f9555400399196166d99a7ce7805d79f1fcf1c8c64b9e3",
+  "program_bytes": 47348
+}

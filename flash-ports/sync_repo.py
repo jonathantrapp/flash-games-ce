@@ -1,17 +1,22 @@
 """Copy only this port project into its separate GitHub checkout."""
 from pathlib import Path
 import shutil
+import re
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / 'flash-ports'
 DST = ROOT / 'build/flash-games-ce-repo'
 assert (DST / '.git').is_dir(), 'Clone the separate flash-games-ce repository first'
-excluded = {'obj', 'obj_qa', '__pycache__', 'verification', 'bin', 'bin_qa', 'data'}
+excluded = {'obj', 'obj_qa', '__pycache__', 'verification', 'bin', 'bin_qa', 'data', 'experiments', 'compiler-cache'}
 extensions = {'.py', '.c', '.h', '.s', '.S', '.ld', '.as', '.md', '.json', '.png', '.bin'}
 count = 0
 for source in SRC.rglob('*'):
     rel = source.relative_to(SRC)
-    if not source.is_file() or excluded.intersection(rel.parts) or any(part.startswith(('obj_', 'bin_')) for part in rel.parts):
+    if rel.parts[:3] in [('scoutcamp','tests','art-native'),('scoutcamp','tests','render-native')]:
+        continue
+    if rel.name=='NEXT-DEV-PROMPT.md':
+        continue
+    if not source.is_file() or excluded.intersection(rel.parts) or any(part.startswith(('obj_', 'bin_')) or re.fullmatch(r'(?:obj|bin)[0-9]+',part) for part in rel.parts):
         continue
     if source.suffix == '.bin' and 'assets' not in rel.parts:
         continue
@@ -117,4 +122,38 @@ for scenario in scenarios:
 source=SRC/'pedrofu/tests/scene-native/smoke.log'
 dest=DST/'flash-ports/pedrofu/tests/scene-native/smoke.log'
 dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for name in ['CHECKPOINT-v7.md','STAGE-SMOKE-v7_final-pedrofu-scoutcamp.md']:
+    shutil.copy2(SRC/'verification'/name,DST/'flash-ports/verification'/name)
+for game in ['pedrofu','scoutcamp']:
+    for scenario in (SRC/'verification'/game).glob('v7*'):
+        if scenario.is_file() and scenario.suffix=='.json':
+            dest=DST/'flash-ports/verification'/game/scenario.name
+            dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(scenario,dest)
+        elif scenario.is_dir():
+            for name in ['smoke.log','run-metadata.json']:
+                source=scenario/name
+                if source.is_file():
+                    dest=DST/'flash-ports/verification'/game/scenario.name/name
+                    dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for scenario in (SRC/'verification/scoutcamp').glob('controls_*'):
+    for name in ['smoke.log','run-metadata.json']:
+        source=scenario/name
+        if source.is_file():
+            dest=DST/'flash-ports/verification/scoutcamp'/scenario.name/name
+            dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for folder in ['scene-native','scene-native-flash','render-native','format-native']:
+    source=SRC/'pedrofu/tests'/folder/'smoke.log'
+    if source.is_file():
+        dest=DST/'flash-ports/pedrofu/tests'/folder/'smoke.log'
+        dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+source=SRC/'scoutcamp/tests/native-runs/SCENG/log.txt'
+dest=DST/'flash-ports/scoutcamp/tests/native-runs/SCENG/log.txt'
+dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for name,scenario in {'pedro-v7-cache.png':'pedrofu/v7_ram_production_pair_10s',
+                      'pedro-v7-flash.png':'pedrofu/v7_ram_art_fill',
+                      'scout-v7-crowded.png':'scoutcamp/v7_stage16_crowded_7'}.items():
+    shutil.copy2(SRC/'verification'/scenario/'screen.png',DST/'docs/screenshots'/name)
+shutil.copy2(SRC/'REPO-README.md',DST/'README.md')
+for name in ['FlashGamesCE-v7-preview.zip','FlashGamesCE-v7-preview.zip.sha256']:
+    shutil.copy2(ROOT/'release'/name,DST/'dist'/name)
 print('Synced', count, 'project files and checkpoint evidence to', DST)

@@ -1,0 +1,15 @@
+{
+  "expected": [
+    1,
+    640,
+    0
+  ],
+  "observed": [
+    1,
+    640,
+    0
+  ],
+  "failed": false,
+  "source_sha256": "75c64fc49f4c8cbe1534bcdaccfe74e51c423a5bf0d2200a36b44a65e7ebaafa",
+  "scope": "Check the formatter on the actual CE 24-bit-int/32-bit-long ABI in CEmu."
+}

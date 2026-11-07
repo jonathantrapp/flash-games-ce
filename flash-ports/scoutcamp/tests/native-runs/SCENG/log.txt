@@ -1,0 +1,10 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\scoutcamp\tests\native-runs\SCENG\test.json loaded and verified. 1 unique tests found.
+Launching command action | launch
+Launching command delay | 5000
+Launching command hashWait | pass
+[value] pass = 620756993
+	[Test passed!] Hash #pass had a matching CRC.
+[CPU] PC=3a3f1 SP=d1a750
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.

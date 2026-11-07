@@ -4,6 +4,8 @@
 #include <sys/power.h>
 #include "intro.h"
 #include "render_cache.h"
+#include "hwdiag.h"
+#include "sky_runtime.h"
 
 #define STEP_TICKS (32768 / FPS)
 
@@ -36,16 +38,24 @@ void game_step(void) {
     g.ticks++;
     if (g.notice_timer) g.notice_timer--;
     if (intro_is_active() && (g.tap & MENUKEY)) { g.mode=PAUSE;return; }
+    DIAG_SUB(DS_INTRO);
     if (intro_update()) return;
+    DIAG_SUB(DS_STORY);
     story_triggers();
     if (g.mode != PLAY) return;
+    DIAG_SUB(DS_PLAYER);
     player_update();
     if (g.mode != PLAY) return;
+    DIAG_SUB(DS_ENEMY);
     enemy_update();
     if (g.mode != PLAY) return;
+    DIAG_SUB(DS_SHOT);
     projectile_update();
+    DIAG_SUB(DS_PROP);
     prop_update();
+    DIAG_SUB(DS_ARENA);
     arena_update();
+    DIAG_SUB(DS_NONE);
     if (g.mode == VICTORY && g.level == 14) g.mode = ENDING;
 }
 static void update_diagnostics(void) {
@@ -65,7 +75,7 @@ int main(void) {
     boot_Set48MHzMode();
     ti_CloseAll(); gfx_Begin(); gfx_SetDrawBuffer(); gfx_SetTransparentColor(0); gfx_SetTextTransparentColor(0); gfx_SetTextBGColor(0);
     if (!load_resources()) { missing_resources(); gfx_End(); ti_CloseAll(); return 0; }
-    cache_hud(); pick_colors(); profile_load();
+    cache_hud(); pick_colors(); profile_load(); sky_runtime_start(); diag_start();
     g.mode = TITLE; g.level = 0; g.story_event = -1; g.arena = -1; g.carry = -1;
     timer_Set(1, 0); timer_Enable(1, TIMER_32K, TIMER_NOINT, TIMER_UP);
     uint32_t last = timer_GetSafe(1, TIMER_UP), accumulator = 0;
@@ -73,6 +83,7 @@ int main(void) {
     uint16_t pending_taps = 0;
     uint16_t previous = 0;
     while (1) {
+        DIAG_PHASE(DP_INPUT);
         uint16_t keys = read_keys();
         if (keys & EXITKEY) break;
         pending_taps |= keys & ~previous;
@@ -80,6 +91,7 @@ int main(void) {
         uint32_t now = timer_GetSafe(1, TIMER_UP); accumulator += now - last; last = now;
         g.frame++;
         uint32_t simstart = timer_GetSafe(1, TIMER_UP);
+        DIAG_PHASE(DP_SIM);
         if (g.mode == PLAY) {
             int steps = 0;
             while (accumulator >= STEP_TICKS && steps < 4) {
@@ -88,11 +100,14 @@ int main(void) {
             }
             if (steps == 4) accumulator = 0;
         } else if (g.mode == DIALOGUE) {
+            DIAG_PHASE(DP_FRONTEND);
             story_update(); pending_taps = 0; accumulator = 0; if (g.mode == DIALOGUE) g.ticks++;
-        } else { frontend_update(); pending_taps = 0; accumulator = 0; }
+        } else { DIAG_PHASE(DP_FRONTEND); frontend_update(); pending_taps = 0; accumulator = 0; }
         uint32_t waitstart = timer_GetSafe(1, TIMER_UP);
         simtime += waitstart - simstart;pedro_totals[4]+=waitstart-simstart;
+        DIAG_PHASE(DP_WAIT);
         gfx_Wait();
+        DIAG_PHASE(DP_DRAW);
         uint32_t drawstart = timer_GetSafe(1, TIMER_UP);
         waittime += drawstart-waitstart;pedro_totals[2]+=drawstart-waitstart;
 #ifdef PEDRO_PROFILE
@@ -121,9 +136,11 @@ int main(void) {
         snprintf(timing, sizeof timing, "SK%lu MAP%lu ACT%lu DEC%lu HUD%lu",pedro_draw_profile[0]/33,pedro_draw_profile[1]/33,pedro_draw_profile[2]/33,pedro_draw_profile[3]/33,pedro_draw_profile[4]/33);print_fit(timing,2,43);}
 #endif
         update_diagnostics();
+        diag_frame();
+        DIAG_PHASE(DP_SWAP);
         gfx_SwapDraw();
     }
-    profile_save(); gfx_End();
+    profile_save(); sky_runtime_stop(); gfx_End();
     /* Archive only after rendering has stopped: flash garbage collection may
      * move resource banks, so retain RAM saves while their pointers are used. */
     {uint8_t save=ti_Open("PDPROG2","r");if(save){ti_SetArchiveStatus(true,save);ti_Close(save);}}

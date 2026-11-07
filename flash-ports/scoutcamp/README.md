@@ -4,7 +4,7 @@ Native calculator rebuild of the supplied `scoutcamp_unlocked.swf` (the in-game 
 
 `bin/SCOUTCE.8xp` is the program; all 33 banks `SCA00.8xv` through `SCA32.8xv` hold the artwork, maps and original skill descriptions and must be sent with it. Runtime libraries and install steps are in the parent README.
 
-The v5 input queue retains keypad transitions sampled during rendering and between simulation steps. Cursor repeat uses a 200 ms timer. Tests passed nine repeated plus taps at 220/150, 80/80 and 40/40 ms press/release intervals, with no queue overflows; they don't guarantee every short tap under arbitrary battle load. The tested stage-one setup measured 19.83 simulation ticks/sec at 1× and 44.83 at the requested 4× setting (targets: 20 and 80). See [v5 verification](../verification/CHECKPOINT-v5.md); physical timing and full campaigns remain unverified.
+The v7 high-water marks reduce inactive enemy/bullet scans. Quiet stage one now measures19.83/80.33 simulation ticks/sec at1x/4x; crowded stage16 with25–29 enemies reaches only14.5 ticks/sec at requested4x. Gameplay controls pass220/150,80/80 and40/40ms press/release intervals after settled menu entry, with no queue overflows. Short menu-entry taps can still miss during loading. Cursor repeat uses a200ms timer. See [v7 verification](../verification/CHECKPOINT-v7.md); physical timing and full campaigns remain unverified. The renderer experiment is excluded from this package.
 
 ## Play
 

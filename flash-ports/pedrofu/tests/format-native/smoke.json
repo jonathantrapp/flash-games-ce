@@ -1,0 +1,31 @@
+{
+  "rom": "C:/Users/jonat/Downloads/ti-84ce.rom",
+  "transfer_files": [
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\libload.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\graphx.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\keypadc.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\local-tools\\cemu\\clibs\\clibs\\fileioc.8xv",
+    "E:\\AI Stuff\\Calc Stuff\\flash-ports\\pedrofu\\tests\\format-native\\bin\\PDFMT.8xp"
+  ],
+  "target": {
+    "name": "PDFMT",
+    "isASM": true
+  },
+  "delay_after_step": 0,
+  "sequence": [
+    "action|launch",
+    "delay|1000",
+    "hashWait|format"
+  ],
+  "hashes": {
+    "format": {
+      "description": "640 CE ABI formatter/canary checks",
+      "start": "0xd052c6",
+      "size": 9,
+      "expected_CRCs": [
+        "23F1D665"
+      ],
+      "timeout": 10000
+    }
+  }
+}

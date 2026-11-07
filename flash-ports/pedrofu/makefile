@@ -2,9 +2,20 @@ NAME = PEDROCE
 DESCRIPTION = "Pedro Fu CE adaptation"
 COMPRESSED = YES
 ARCHIVED = YES
+HAS_PRINTF = NO
 CFLAGS = -Wall -Wextra -Oz -std=c11
 EXTRA_LDFLAGS += -T ram_guard.ld
 FAST_RENDER ?= NO
+HWDIAG ?= NO
+SKY_FLASH ?= YES
+ifeq ($(SKY_FLASH),YES)
+CFLAGS += -DSKY_FLASH_ROWS
+endif
+ifeq ($(HWDIAG),YES)
+CFLAGS += -DPEDRO_HWDIAG
+NAME = PEDRODG
+DESCRIPTION = "Pedro CE hardware diagnostic"
+endif
 ifeq ($(FAST_RENDER),YES)
 LTO = NO
 endif

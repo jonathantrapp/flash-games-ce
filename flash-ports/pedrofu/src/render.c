@@ -1,6 +1,7 @@
 /* World, actor and HUD drawing for Pedro Kicks Back CE. */
 #include "game.h"
 #include "sky_rows.h"
+#include "sky_runtime.h"
 #include "intro.h"
 #include "render_cache.h"
 #ifdef PEDRO_PROFILE
@@ -91,7 +92,16 @@ static void draw_sky_region(int left,int top,int right,int bottom) {
     for(unsigned y=top;y<(unsigned)bottom;y++,dest+=320){
         unsigned offset=sky_row_offsets[y];
         if(offset==65535)memset(dest,sky_row_colors[y],width);
+#ifdef SKY_FLASH_ROWS
+        else if(sky_ram_pixels)memcpy(dest,sky_ram_pixels+offset+left,width);
+        /* Original sky halves PDU20/PDU21 (160x240 each) read in place from archive. */
+        else{
+            if(left<160){unsigned end=right<160?right:160;memcpy(dest,uidata[2][0]+2+y*160+left,end-left);}
+            if(right>160){unsigned start=left>160?left:160;memcpy(dest+(start-left),uidata[2][1]+2+y*160+(start-160),right-start);}
+        }
+#else
         else memcpy(dest,sky_row_pixels+offset+left,width);
+#endif
     }
 }
 static void draw_sky(int bottom){draw_sky_region(0,22,320,bottom);}

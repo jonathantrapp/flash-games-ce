@@ -1,0 +1,8 @@
+{
+  "launcher": "Cabri Jr + ARTIFICE from user backup",
+  "libraries": "package/toolchain",
+  "steps": "apps wait:800 2 wait:4000 enter wait:2500 y= wait:1500 down down enter wait:1500 enter wait:4000 down enter wait:3000 GAME enter enter wait:24000 enter enter hold:right:3000 clear wait:3000 down enter wait:3000 enter",
+  "scope": "CEmu OS 5.3 ROM; launcher path only, not OS 5.8.2.29 hardware.",
+  "program_sha256": "c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9",
+  "program_bytes": 51070
+}

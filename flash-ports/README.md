@@ -2,7 +2,7 @@
 
 These are native C rebuilds of the two supplied SWFs, written from the AS3 recovered with JPEXS. Both are works in progress: see [PARITY-AUDIT.md](PARITY-AUDIT.md) for what is verified and what is not, and each game's notes for controls and known gaps.
 
-The current deliverable is a **v6 performance preview**. Read [CONTINUATION-v6-2026-11-06.md](CONTINUATION-v6-2026-11-06.md) before installing. Pedro exceeds 30 FPS in the tested stationary-camera scene and reaches about 22 FPS in the movement sequence; these are OS 5.3 emulator results, not physical minima. The physical RAM-clear report remains unresolved. Scouts remains the v5 program; its requested 4× setting measured about 2.24× nominal simulation speed in the tested scene.
+The current deliverable is a **v7 RAM and input preview**. Read [CONTINUATION-v7-2026-11-06.md](CONTINUATION-v7-2026-11-06.md) and [the verification report](verification/CHECKPOINT-v7.md) before installing. Pedro uses an optional temporary sky cache: the sampled empty emulator has 6.9 KB free with it, while an 8 KB filler selects flash and leaves 36.4 KB free. It measures 40.0/21.15 FPS stationary/moving with the cache and 37.0/19.49 from flash. Scouts reaches the requested 4x in the quiet test, but only 14.5 ticks/sec with 25–29 enemies in stage 16. These OS 5.3 emulator results do not establish physical stability, full campaigns or crowded-battle speed.
 
 | Supplied file | Original game | Calculator program |
 | --- | --- | --- |
@@ -13,12 +13,14 @@ The original games, artwork and characters were created by Hamumu Software (2012
 
 ## Install
 
-1. Extract `FlashGamesCE-v6-preview.zip` on your computer. (To assemble it yourself from compiled programs, run `python flash-ports/package.py` from the workspace root.)
+1. Extract `FlashGamesCE-v7-preview.zip` on your computer. Check `SHA256SUMS.txt` and the manifest. (To assemble it yourself from compiled programs, run `python flash-ports/package.py` from the workspace root.)
 2. Connect the TI-84 Plus CE using USB and open TI Connect CE's Calculator Explorer.
 3. Send the `.8xp` and `.8xv` files from the extracted package. Keep the `.8xv` files in archive. Each game's asset AppVars must accompany its program.
 4. Launch `SCOUTCE` or `PEDROCE` through Cesium using your existing native-game setup.
 
 When updating, replace both programs and **all** supplied game data files. The versioned banks deliberately reject mixed old/new resources. Preserve your other programs and the save files `PDPROG2` and `SCTSV02`.
+
+Pedro's unarchived `PDSKYTMP` is a disposable cache, not a save. It deletes and rebuilds a leftover copy at startup, then deletes it on clean exit. The physical-crash investigation is deferred; OS 5.8 and Cesium remain untested in this workspace.
 
 If native games are not set up on your calculator, follow the current [arTIfiCE instructions](https://yvantt.github.io/arTIfiCE/) and obtain [Cesium](https://github.com/mateoconlechuga/cesium/releases). Compatibility depends on your OS and calculator revision; the linked project provides current instructions. There is no need to update the calculator OS to install these games.
 

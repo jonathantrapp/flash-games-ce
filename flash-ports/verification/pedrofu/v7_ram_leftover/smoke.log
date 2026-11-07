@@ -1,0 +1,75 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\pedrofu\v7_ram_leftover\smoke.json loaded and verified. 1 unique tests found.
+Launching command hold | apps
+Launching command delay | 220
+Launching command release | apps
+Launching command delay | 150
+Launching command delay | 800
+Launching command hold | 2
+Launching command delay | 220
+Launching command release | 2
+Launching command delay | 150
+Launching command delay | 4000
+Launching command hold | enter
+Launching command delay | 220
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 2500
+Launching command hold | y=
+Launching command delay | 220
+Launching command release | y=
+Launching command delay | 150
+Launching command delay | 1500
+Launching command hold | down
+Launching command delay | 220
+Launching command release | down
+Launching command delay | 150
+Launching command hold | down
+Launching command delay | 220
+Launching command release | down
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 220
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 1500
+Launching command hold | enter
+Launching command delay | 220
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 4000
+Launching command hold | down
+Launching command delay | 220
+Launching command release | down
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 220
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 3000
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 24000
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 3000
+Launching command release | right
+Launching command delay | 150
+Launching command hashWait | pedro_diag_0
+	[Test passed!] Hash #pedro_diag_0 had a matching CRC.
+[CPU] PC=d2d109 SP=d1a740
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.

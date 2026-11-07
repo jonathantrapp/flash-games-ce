@@ -15,6 +15,7 @@ Game g;
 static int parity_rand(void){return 99;}
 #define rand parity_rand
 #include "../src/profile.c"
+void sky_runtime_refresh(void){}
 #define near_point enemy_near_point
 #include "../src/enemies.c"
 #undef near_point

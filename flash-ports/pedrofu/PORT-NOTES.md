@@ -32,6 +32,8 @@
 
 ## Not done, or not verified
 
+- v7 replaces the resident sky stream and nanoprintf to reduce the running footprint, including libraries, to 107,871 bytes. Flash is the base sky path; an optional `PDSKYTMP` RAM cache accelerates exact row copies when memory permits. It is disposable and contains no save data. Final CEmu measurements: 40.0/21.15 FPS stationary/moving with the cache, 37.0/19.49 with an 8 KB filler selecting flash. The sampled free RAM is 6,867 bytes with the cache or 36,368 with that filler. See [v7 verification](../verification/CHECKPOINT-v7.md); scrolling30FPS and physical stability remain unverified. The user deferred physical-crash diagnostics.
+
 - The original burning-blimp flight, explosions, parachute descent and canopy collapse are now integrated before the opening conversation. Native captures and the checkpoint test cover that transition. Fire scaling, additive alpha and camera effects are approximated.
 - v6 rendering exceeds 30 FPS in the tested stationary-camera scene and reaches about 22 FPS in the movement sequence. Exact sky rows, cached notice pixels and per-framebuffer repair regions preserve tested native pixels. Earlier v5's 13 FPS included a costly diagnostic overlay; its comparable overlay-free baseline measured 17.3 FPS stationary / 16.7 moving. See [v6 verification](../verification/CHECKPOINT-v6.md). Scrolling still falls short of sustained 30 FPS, and physical performance remains unverified. The RAM-clear report after arrow input at the kick instruction, launched through arTIfiCE on revision 8 / OS 5.8.2.29, remains unresolved.
 - No music or sound (the calculator has none); screen shake and some flash effects are omitted.
@@ -47,7 +49,7 @@
 1. `build_assets.py`: stage maps (`PDLV01..15`) and base tiles.
 2. `build_full_assets.py`: original sprite sheets, UI art, palette, skill metadata (`src/resources.h`, `src/ui_resources.h`, `src/skill_meta.h`).
 3. `build_intro_assets.py`: blimp, explosion and burning-uppercut frames using the existing palette.
-4. `build_row_sky.py`: exact original sky rows in the production resident row stream. `build_render_cache.py` retains the historical row-fill/RLET representation used by the v5 comparison fixture.
+4. `build_row_sky.py`: exact row offsets/colors and the optional resident reference stream. Production defines `SKY_FLASH_ROWS` and reconstructs an optional temporary cache from the archived sky halves. `build_render_cache.py` retains the historical row-fill/RLET representation used by the v5 comparison fixture.
 5. `bundle_assets.py`: packs the small resources into 19 signed banks of at most 32 KB (`PDB00..`) and writes `src/bundle.h`.
 6. `build_skill_descriptions.py`: generates original live skill descriptions and checks every numeric intermediate against signed24-bit limits.
 

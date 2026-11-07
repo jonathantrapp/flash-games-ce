@@ -126,7 +126,7 @@
     "player.c": "56bcef4a6c5513bd61cd220344ce9ae5522d6f29ea73fee237edce2f0d1c0276",
     "enemies.c": "ea179c63246a51892102aef04b29230d487bdedca0fbea8680b0b7567cdcc076",
     "projectiles.c": "5a451759805a370c1cb652daad7ac75f2af2ed0c70c5724e7bc9439c6bb57aaf",
-    "profile.c": "8d76e0daa1dcad9dd8a47614ce22b2915a5cd1f440298dd3ec27676e1f6d0b91",
+    "profile.c": "6b0a4b3c7cb85dd458422ea1b1228770572477c82351440130b95da641069d54",
     "game.h": "aa5e246daab3583d1acb3b9c849ce6127bb05f3ce6bde9624d81c7ec8cfb04e8"
   },
   "source_rules": {

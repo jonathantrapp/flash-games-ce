@@ -171,7 +171,7 @@ void draw_frontend(void) {
     switch (g.mode) {
     case TITLE:
         gfx_Sprite((gfx_sprite_t *)uidata[0][0], 0, 0); gfx_Sprite((gfx_sprite_t *)uidata[0][1], 160, 0);
-        shadow("v3 checkpoint",4,4,cWhite);
+        shadow("v7 preview",4,4,cWhite);
         panel(70, 193, 180, 36);
         centered(197, "ENTER  Play game", cWhite); centered(207, "ALPHA  Controls", cWhite); centered(217, "CLEAR  Quit", cCyan);
         shadow("Game copyright 2012, Hamumu Software", 60, 231, cWhite);

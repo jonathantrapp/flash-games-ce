@@ -1,0 +1,50 @@
+{
+  "scenarios": [
+    {
+      "scenario": "v7_ram_production_pair_10s",
+      "program_sha256": "c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9",
+      "asm_prgm_size": 107871,
+      "free_ram": 6867,
+      "sky_pointer": 13848180,
+      "symtable_to_progptr_gap_not_total_vat": 306,
+      "symtable_to_opbase_gap_including_vat": 824
+    },
+    {
+      "scenario": "v7_ram_art_cache",
+      "program_sha256": "c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9",
+      "asm_prgm_size": 107871,
+      "free_ram": 6881,
+      "sky_pointer": 13848170,
+      "symtable_to_progptr_gap_not_total_vat": 306,
+      "symtable_to_opbase_gap_including_vat": 839
+    },
+    {
+      "scenario": "v7_ram_art_fill",
+      "program_sha256": "c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9",
+      "asm_prgm_size": 107871,
+      "free_ram": 36368,
+      "sky_pointer": 0,
+      "symtable_to_progptr_gap_not_total_vat": 306,
+      "symtable_to_opbase_gap_including_vat": 839
+    },
+    {
+      "scenario": "v7_ram_leftover",
+      "program_sha256": "c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9",
+      "asm_prgm_size": 107871,
+      "free_ram": 6881,
+      "sky_pointer": 13848170,
+      "symtable_to_progptr_gap_not_total_vat": 306,
+      "symtable_to_opbase_gap_including_vat": 839
+    },
+    {
+      "scenario": "v7_ram_exit_relaunch",
+      "program_sha256": "c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9",
+      "asm_prgm_size": 107871,
+      "free_ram": 36354,
+      "sky_pointer": 0,
+      "symtable_to_progptr_gap_not_total_vat": 306,
+      "symtable_to_opbase_gap_including_vat": 853
+    }
+  ],
+  "scope": "CEmu OS5.3/48MHz snapshots, same production binary; OPS minus FPS, including relocated libraries. Not physical hardware."
+}

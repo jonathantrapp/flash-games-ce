@@ -43,6 +43,9 @@ static Enemy enemies[MAXEN];
 static Tower towers[MAXTOWER];
 static Food foods[5];
 static Bullet bullets[MAXBULLET];
+/* All enemy/bullet slots at or above these marks are inactive. Loops over
+ * active objects stop there; free-slot searches still scan every slot. */
+static int enemyTop,bulletTop;
 static Spawner spawners[24];
 static int waveDue[24];
 static const uint8_t baseTypes[]={ROCK,ROLL,SNOW,SHOCK};
@@ -60,7 +63,7 @@ static __attribute__((always_inline)) inline int tileAt(int layer,int x,int y){i
 static bool slope(int tile){return tile==14||tile==18;}
 static int surface(int x,int y){int tile=tileAt(1,x/16,y/16);if(!tile)return 32767;int top=(y/16)*16;if(tile==14)return top+15-(x&15);if(tile==18)return top+(x&15);return top;}
 static bool lineClear(int x,int y,int xx,int yy){int dx=xx-x,dy=yy-y,n=abs(dx)>abs(dy)?abs(dx):abs(dy);if(!n)return true;for(int t=4;t<n;t+=4)if(tileAt(1,(x+dx*t/n)/16,(y+dy*t/n)/16))return false;return true;}
-static int alive(void){int n=0;for(int i=0;i<MAXEN;i++)n+=enemies[i].active;return n;}
+static int alive(void){int n=0;for(int i=0;i<enemyTop;i++)n+=enemies[i].active;return n;}
 static int towerAt(int cell){for(int i=0;i<MAXTOWER;i++)if(towers[i].active&&towers[i].cell==cell)return i;return -1;}
 static int foodLeft(void){int n=0;for(int i=0;i<5;i++)n+=foods[i].active;return n;}
 static bool valid(int x,int y){int p=y*map->width+x;if(x<=1||x>=map->width-2||y<=1||y>=map->height-1)return false;if(y==map->camp/map->width&&abs(x-map->camp%map->width)<=1)return false;int below=layers[1][p+map->width];return !layers[1][p]&&below&&!slope(below)&&!layers[2][p]&&!(layers[0][p]>=28&&layers[0][p]<=32);}
@@ -78,14 +81,14 @@ static void sellTower(void) {
     int i=towerAt(cy*map->width+cx);if(i<0)return;
     Tower*t=&towers[i];money+=t->spent/2;if(money>9999)money=9999;t->active=0;
     int time=skills[SK_SELL_TOWER]*(t->level+1)*HZ/5;
-    if(time)for(int j=0;j<MAXEN;j++) {
+    if(time)for(int j=0;j<enemyTop;j++) {
         Enemy*e=&enemies[j];if(!e->active)continue;
         if(e->freeze){if(e->freeze<time)e->freeze=time;}
         else e->freeze=(e->type==3||e->type==8)?time/2:time;
     }
     say("Tower sold");
 }
-static Enemy *spawnEnemy(int type,int lv,int portal){for(int i=0;i<MAXEN;i++)if(!enemies[i].active){Enemy*e=&enemies[i];memset(e,0,sizeof *e);e->active=1;e->type=type;e->home=portal;e->x=(portal%map->width*16+8)*FP;e->y=(portal/map->width*16+16)*FP;e->facing=rand()&1?1:-1;e->advancing=1;e->carry=-1;e->monsterLevel=lv;e->hp=e->maxhp=monster_Life(type,lv)*100;e->born=e->birthLength=HZ;e->speed=monsterSpeed[type]*FP;e->scale=10000;e->wobble=1000;e->wobbleDir=-1;e->slowRate=100;e->babyThreshold=99;e->babyLevel=1;return e;}return NULL;}
+static Enemy *spawnEnemy(int type,int lv,int portal){for(int i=0;i<MAXEN;i++)if(!enemies[i].active){Enemy*e=&enemies[i];memset(e,0,sizeof *e);e->active=1;if(i>=enemyTop)enemyTop=i+1;e->type=type;e->home=portal;e->x=(portal%map->width*16+8)*FP;e->y=(portal/map->width*16+16)*FP;e->facing=rand()&1?1:-1;e->advancing=1;e->carry=-1;e->monsterLevel=lv;e->hp=e->maxhp=monster_Life(type,lv)*100;e->born=e->birthLength=HZ;e->speed=monsterSpeed[type]*FP;e->scale=10000;e->wobble=1000;e->wobbleDir=-1;e->slowRate=100;e->babyThreshold=99;e->babyLevel=1;return e;}return NULL;}
 static void dropFood(Enemy*e){if(e->carry>=0){Food*f=&foods[e->carry];f->holder=-1;f->x=e->x;f->y=e->y-monsterHeight[e->type]*FP/2;f->vy=0;e->carry=-1;}}
 typedef struct {int16_t x,y;uint16_t damage;} Explosion;
 static Explosion explosions[MAXEN];
@@ -107,7 +110,7 @@ static void damageEnemy(Enemy*e,int damage,bool crit) {
 }
 static void resolveExplosions(void) {
     while(explosionRead<explosionWrite){Explosion p=explosions[explosionRead++];
-        for(int i=0;i<MAXEN;i++){Enemy*e=&enemies[i];if(e->active&&squareDistance(p.x,p.y,ex(e),ey(e))<=900)damageEnemy(e,p.damage,true);}}
+        for(int i=0;i<enemyTop;i++){Enemy*e=&enemies[i];if(e->active&&squareDistance(p.x,p.y,ex(e),ey(e))<=900)damageEnemy(e,p.damage,true);}}
     explosionRead=explosionWrite=0;
 }
 static void shockEnemy(Enemy*e,int time,int damage) {
@@ -121,7 +124,7 @@ static void stepStatus(Enemy*e) {
     if(e->poison){e->poison--;if(!e->poisonTick){e->poisonTick=HZ;damageEnemy(e,skills[SK_GATHEREDMOSS]*30,true);}if(e->poisonTick)e->poisonTick--;}
     if(e->slow||e->freeze){if(!e->frostTick){e->frostTick=HZ/2;damageEnemy(e,skills[SK_FROSTBITE]*25*(e->freeze?2:1)*(e->shock?100+skills[SK_CONDUCTANCE]*5:100)/100,true);}if(e->frostTick)e->frostTick--;}
     if(e->shock){e->shock--;if(++e->shockTick>=HZ/2){e->shockTick=0;Enemy*other=NULL;int count=0,range=20+skills[SK_ARCING]*8;
-        for(int i=0;i<MAXEN;i++){Enemy*n=&enemies[i];if(n->active&&n!=e&&!n->immune&&squareDistance(ex(e),ey(e),ex(n),ey(n))<range*range){if(rand()%++count==0)other=n;}}
+        for(int i=0;i<enemyTop;i++){Enemy*n=&enemies[i];if(n->active&&n!=e&&!n->immune&&squareDistance(ex(e),ey(e),ex(n),ey(n))<range*range){if(rand()%++count==0)other=n;}}
         damageEnemy(other?other:e,e->shockDamage,true);
     }}
 }
@@ -158,10 +161,10 @@ static void physicsEnemy(Enemy*e,int substep){
     e->immune=e->type==4&&e->ground&&!e->disabled;
 }
 static void stepSpecials(Enemy*e){if(e->disabled||e->born)return;
-    if(e->type==5){for(int i=0;i<MAXEN;i++){Enemy*n=&enemies[i];if(n->active&&n!=e&&n->type!=5&&squareDistance(ex(e),ey(e),ex(n),ey(n))<1600)n->boost=10;}}
-    if(e->type==6&&tick%10==0){for(int i=0;i<MAXEN;i++){Enemy*n=&enemies[i];if(n->active&&n!=e&&squareDistance(ex(e),ey(e),ex(n),ey(n))<3600){n->hp+=e->monsterLevel*100;if(n->hp>n->maxhp)n->hp=n->maxhp;}}}
+    if(e->type==5){for(int i=0;i<enemyTop;i++){Enemy*n=&enemies[i];if(n->active&&n!=e&&n->type!=5&&squareDistance(ex(e),ey(e),ex(n),ey(n))<1600)n->boost=10;}}
+    if(e->type==6&&tick%10==0){for(int i=0;i<enemyTop;i++){Enemy*n=&enemies[i];if(n->active&&n!=e&&squareDistance(ex(e),ey(e),ex(n),ey(n))<3600){n->hp+=e->monsterLevel*100;if(n->hp>n->maxhp)n->hp=n->maxhp;}}}
     if(e->type==7&&tick%5==0){for(int i=0;i<MAXTOWER;i++){Tower*t=&towers[i];if(t->active&&squareDistance(ex(e),ey(e),t->cell%map->width*16+8,t->cell/map->width*16+8)<3600)t->noFire=6;}}
     if(e->type==8){e->wobble+=e->wobbleDir<0?-25:15;if(e->wobble<=750){e->wobble=750;e->wobbleDir=1;}if(e->wobble>=1000){e->wobble=1000;e->wobbleDir=-1;}if(e->special)e->special--;if(!e->special&&e->ground&&(uint32_t)e->hp<=(uint32_t)e->maxhp*e->babyThreshold/100){e->babyThreshold--;e->scale=(uint32_t)e->scale*99/100;e->special=HZ;for(int j=0;j<3;j++){Enemy*b=spawnEnemy(9,e->babyLevel,e->home);if(b){b->x=e->x;b->y=e->y;b->facing=e->advancing?e->facing:-e->facing;b->speed=j==0?35*FP:j==1?35*FP/2:35*FP/4;b->born=b->birthLength=j==0?9:j==1?18:36;b->traveled=e->traveled;b->vx=0;b->special=j;}}e->babyLevel++;}for(int j=0;j<5;j++){Food*f=&foods[j];if(f->active&&f->holder>=0&&squareDistance(ex(e),ey(e),f->x_pixel,f->y_pixel)<100){Enemy*n=&enemies[f->holder];f->active=0;n->carry=-1;n->escaping=0;n->facing=-n->facing;n->advancing=!n->advancing;escaped++;}}}
 }
-static void stepFood(void){for(int i=0;i<5;i++){Food*f=&foods[i];if(!f->active)continue;if(f->holder>=0){Enemy*e=&enemies[f->holder];if(!e->active){f->holder=-1;continue;}f->x=e->x;f->y=e->y-monsterHeight[e->type]*FP;continue;}int old=f->y_pixel;f->vy+=200*FP/HZ;f->y+=f->vy/HZ;for(int yy=old/16;yy<=f->y_pixel/16+1;yy++){int surf=surface(f->x_pixel,yy*16);if(surf>=old-2&&surf<=f->y_pixel){f->y=surf*FP;f->vy=0;break;}}for(int j=0;j<MAXEN;j++){Enemy*e=&enemies[j];if(e->active&&!e->born&&!e->escaping&&e->type!=8&&e->action!=1&&squareDistance(f->x_pixel,f->y_pixel,ex(e),ey(e))<256){f->holder=j;e->carry=i;e->escaping=1;if(e->advancing){e->facing=-e->facing;e->advancing=0;}break;}}}}
+static void stepFood(void){for(int i=0;i<5;i++){Food*f=&foods[i];if(!f->active)continue;if(f->holder>=0){Enemy*e=&enemies[f->holder];if(!e->active){f->holder=-1;continue;}f->x=e->x;f->y=e->y-monsterHeight[e->type]*FP;continue;}int old=f->y_pixel;f->vy+=200*FP/HZ;f->y+=f->vy/HZ;for(int yy=old/16;yy<=f->y_pixel/16+1;yy++){int surf=surface(f->x_pixel,yy*16);if(surf>=old-2&&surf<=f->y_pixel){f->y=surf*FP;f->vy=0;break;}}for(int j=0;j<enemyTop;j++){Enemy*e=&enemies[j];if(e->active&&!e->born&&!e->escaping&&e->type!=8&&e->action!=1&&squareDistance(f->x_pixel,f->y_pixel,ex(e),ey(e))<256){f->holder=j;e->carry=i;e->escaping=1;if(e->advancing){e->facing=-e->facing;e->advancing=0;}break;}}}}
 #endif
