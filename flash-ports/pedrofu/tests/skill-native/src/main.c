@@ -9,6 +9,7 @@ static const uint8_t *banks[BUNDLE_BANKS];
 int absi(int x){return x<0?-x:x;}
 int clampi(int v,int lo,int hi){return v<lo?lo:v>hi?hi:v;}
 int levels_passed(void){return 0;}
+void sky_runtime_refresh(void){} /* profile_save() refreshes the sky cache; not under test here */
 bool load_level(int level){g.level=level;g.mode=PLAY;return true;}
 static const uint8_t *resource(const char *name){
  for(unsigned i=0;i<COUNT(bundle);i++)if(!strcmp(bundle[i].name,name))return banks[bundle[i].bank]+bundle[i].offset;

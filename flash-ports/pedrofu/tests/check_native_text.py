@@ -45,7 +45,7 @@ int main(void){gfx_Begin();gfx_SetDrawBuffer();gfx_SetTextScale(1,1);uint16_t wh
 subprocess.run([str(ROOT/'local-tools/cedev/CEdev/bin/make.exe'),'COMMENT=TextQA'],cwd=NATIVE,check=True)
 maptext=(NATIVE/'bin/PDTEXT.map').read_text();addr=int(re.search(r'^\s*(0x[\da-fA-F]+)\s+_text_diag\s*$',maptext,re.M)[1],16)
 lib=ROOT/'local-tools/cemu/clibs/clibs'
-config=dict(rom='C:/Users/jonat/Downloads/ti-84ce.rom',transfer_files=[str(lib/(s+'.8xv')) for s in ['libload','graphx','keypadc']]+[str(NATIVE/'bin/PDTEXT.8xp')],target=dict(name='PDTEXT',isASM=True),delay_after_step=0,
+config=dict(rom='C:/Users/jonat/Downloads/ti-84ce.rom',transfer_files=[str(lib/(s+'.8xv')) for s in ['libload','graphx','keypadc','fileioc']]+[str(NATIVE/'bin/PDTEXT.8xp')],target=dict(name='PDTEXT',isASM=True),delay_after_step=0,
  sequence=['action|launch','delay|4000','hashWait|done','hashWait|buffers'],hashes={})
 def crc(data):
  v=0xffffffff

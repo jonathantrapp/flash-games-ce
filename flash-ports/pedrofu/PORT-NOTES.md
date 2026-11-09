@@ -13,7 +13,7 @@
 - Enemy classes with their own state machines: Yak, Bruiser, Armor, Archer and Elite Archer, Ninja, Yakolyte, Iron Priest, Torgo/Robot, Master Yak, Barrier Orbs and the Barrier object. Projectiles include arrows, ninja stars, homing shots, rock spikes, ground fire and pike slashes.
 - Stage scripts: tents that spawn Yaks, the five-round mail arenas on stages 11 and 14 (timed bonuses and rewards), tag gates, the Master Yak finale with respawning orbs, and the original conversations (28 pages across 12 events) with their gameplay side effects.
 - Title, stage map, skill screen (original layout and artwork), help, pause, defeat, victory and ending screens.
-- Original descriptions for all 45 skills, calculated with live bonuses, with current/next-rank previews. ALPHA opens details; Left/Right changes preview, Up/Down scrolls, ALPHA or MODE closes. ENTER learns and DEL refunds as on the grid.
+- Original descriptions for all 45 skills, calculated with live bonuses, with current/next-rank previews. ALPHA opens details; Left/Right changes preview, Up/Down scrolls, ALPHA or MODE closes. ENTER learns and DEL (or the minus key) refunds as on the grid.
 
 ## Controls
 
@@ -26,7 +26,7 @@
 | Del | Fury. With a full Fury bar, hold Del and press Down (blast), Left (freeze), Right (frenzy) or Up (fix) |
 | Mode | Pause (Enter resume, Stat skills, Mode back to the map) |
 | Stat | Skills (from the map, pause and result screens) |
-| Enter | Confirm, advance conversation, next stage |
+| Enter | Confirm, next stage; advances a conversation (so do Alpha and Del) |
 | Clear | Save and exit |
 | Vars (held on the map) | QA only: opens any stage regardless of progress |
 
@@ -40,7 +40,7 @@
 - Skill descriptions now use original text/formulas; integer formatting can differ by 0.01 from Flash floating-point rounding. Hover/history and some options/tooltip presentation remain different.
 - Move timing, hitboxes, enemy AI and boss phases are translated from the AS3 but have not been compared frame by frame with the original running in Ruffle. Stages are verified to load and run in the emulator, not to be completable.
 - Not yet tested on a physical calculator.
-- Numerical rules (XP, level-ups, damage multipliers, prerequisites, maxima, Fury Overload) are checked against the original formulas by `tests/check_profile.py` (see `verification/RESULTS.md`).
+- Numerical rules (XP, level-ups, damage multipliers, prerequisites, maxima, Fury Overload) are checked against the original formulas by `tests/check_profile.py` (see [`verification/RESULTS.md`](../verification/RESULTS.md)).
 
 ## Build
 
