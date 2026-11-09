@@ -6,7 +6,7 @@ Counters add overhead; production throughput needs a separate benchmark.
 from pathlib import Path
 import argparse,concurrent.futures,hashlib,json,re,struct,subprocess,sys
 HERE=Path(__file__).resolve().parent;GAME=HERE.parent;ROOT=GAME.parents[1]
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('--bin-dir',default='bin_v8prof');p.add_argument('--tag',default='v8_profile');p.add_argument('--read-existing',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--bin-dir',default='bin_v8prof');p.add_argument('--tag',default='v8_profile');p.add_argument('--read-existing',action='store_true');p.add_argument('--stage',type=int,default=16);p.add_argument('--quiet',action='store_true',help='stage 1 with no wave sent');p.add_argument('--plus',type=int,default=9,help='"+" taps: 9 = 4x (default), 0 = 1x');a=p.parse_args()
 mapping=(GAME/a.bin_dir/'SCOUTCE.map').read_text()
 def offset(name):return int(re.search(r'^\s*(0x[\da-f]+)\s+_'+name+r'\s*$',mapping,re.M)[1],16)-0xd00000
 sha=hashlib.sha256((GAME/a.bin_dir/'SCOUTCE.8xp').read_bytes()).hexdigest()
@@ -14,19 +14,19 @@ source_snapshot={n:hashlib.sha256((GAME/'src'/n).read_bytes()).hexdigest()for n 
 build_meta=GAME/a.bin_dir/'build-metadata.json'
 if build_meta.exists():
  build=json.loads(build_meta.read_text());assert build['program_sha256']==sha;source_snapshot=build['source_sha256']
-prefix='GAME enter down:vars right*15 enter up:vars enter wait:300 alpha +*9 graph alpha wait:20000 0 wait:500 0 '
+prefix='GAME enter down:vars '+('right*%d '%(a.stage-1) if a.stage>1 else '')+'enter up:vars enter wait:300 alpha '+('+*%d '%a.plus if a.plus else '')+('alpha ' if a.quiet else 'graph alpha wait:20000 ')+'0 wait:500 0 '
 def run(seconds):
  name=a.tag+'_'+str(seconds);out=ROOT/'flash-ports/verification/scoutcamp'/name
  if not a.read_existing:
-  c=[sys.executable,str(ROOT/'flash-ports/launcher_scenario.py'),'scoutcamp',name,prefix+'wait:'+str(seconds*1000)+' 0','--direct','--tap','500','--bin-dir',a.bin_dir,'--check','scout_diag:1:1','--check','scout_diag+1:15:1']
+  c=[sys.executable,str(ROOT/'flash-ports/launcher_scenario.py'),'scoutcamp',name,prefix+'wait:'+str(seconds*1000)+' 0','--direct','--tap','500','--bin-dir',a.bin_dir,'--check','scout_diag:1:1','--check','scout_diag+1:%d:1'%(a.stage-1)]
   r=subprocess.run(c,capture_output=True,text=True,timeout=900)
   if r.returncode:raise RuntimeError(r.stdout+r.stderr)
  assert json.loads((out/'run-metadata.json').read_text())['program_sha256']==sha
  ram=(out/'native-ram.bin').read_bytes();d=list(ram[offset('scout_diag'):offset('scout_diag')+16])
- assert d[12]==0 and d[4]>=15,d
- return dict(diag=d,tick=d[14]+256*d[15],simulation_ticks=list(struct.unpack_from('<8I',ram,offset('scout_sim_ticks'))),last_render_ms=list(struct.unpack_from('<5H',ram,offset('scout_render_ms'))),last_epoch=list(struct.unpack_from('<4H',ram,offset('scout_perf'))))
+ assert d[12]==0 and (a.quiet or a.stage!=16 or d[4]>=15),d
+ return dict(diag=d,tick=d[14]+256*d[15],simulation_ticks=list(struct.unpack_from('<8I',ram,offset('scout_sim_ticks'))),last_render_ms=list(struct.unpack_from('<5H',ram,offset('scout_render_ms'))),last_epoch=list(struct.unpack_from('<4H',ram,offset('scout_perf'))),phys_ticks=list(struct.unpack_from('<2I',ram,offset('scout_phys_ticks'))) if re.search(r'_scout_phys_ticks\s*$',mapping,re.M) else [0,0])
 with concurrent.futures.ThreadPoolExecutor(max_workers=2)as pool:short,long=list(pool.map(run,[1,7]))
 delta=[(y-x)&0xffffffff for x,y in zip(short['simulation_ticks'],long['simulation_ticks'])];steps=(long['tick']-short['tick'])&65535
 names=['waves','enemy_physics_specials','food','towers','sprays','bullets','explosions','finish_and_marks']
-report=dict(program_sha256=sha,short=short,long=long,steps=steps,interval_seconds=6,ticks_per_second=steps/6,simulation_ms_per_step={n:v*1000/32768/steps for n,v in zip(names,delta)},last_render_fields=['sky','map','actors','effects','hud'],source_sha256=source_snapshot,scope=__doc__)
+report=dict(program_sha256=sha,short=short,long=long,steps=steps,interval_seconds=6,ticks_per_second=steps/6,simulation_ms_per_step={n:v*1000/32768/steps for n,v in zip(names,delta)},enemy_split_ms_per_step={n:((y-x)&0xffffffff)*1000/32768/steps for n,x,y in zip(['physics','specials'],short['phys_ticks'],long['phys_ticks'])},last_epoch_fields=['fps','draw_ms_per_s','sim_ms_per_s','accumulator'],plus=a.plus,last_render_fields=['sky','map','actors','effects','hud'],source_sha256=source_snapshot,scope=__doc__)
 (ROOT/'flash-ports/verification/scoutcamp'/(a.tag+'-profile.json')).write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))

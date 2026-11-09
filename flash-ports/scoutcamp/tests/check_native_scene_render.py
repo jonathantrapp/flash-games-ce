@@ -98,7 +98,7 @@ def crc(data):
   for _ in range(8):v=(v>>1)^(0x82f63b78 if v&1 else 0)
  return f'{v^0xffffffff:08X}'
 lib=ROOT/'local-tools/cemu/clibs/clibs'
-files=[lib/(s+'.8xv') for s in ['libload','graphx','keypadc','fileioc']]+sorted((GAME/'bin').glob('*.8xv'))+[OUT/'bin/SCREND.8xp']
+files=[lib/(s+'.8xv') for s in ['libload','graphx','keypadc','fileioc']]+sorted((GAME/'bin').glob('*.8xv'))+sorted((OUT/'bin').glob('SCREND.8xp.*.8xv'))+[OUT/'bin/SCREND.8xp'] # parts of a fixture split past 64 KB
 expected=[1,272,0,0,0]
 config=dict(rom='C:/Users/jonat/Downloads/ti-84ce.rom',transfer_files=list(map(str,files)),target=dict(name='SCREND',isASM=True),delay_after_step=0,sequence=['action|launch','delay|1000','hashWait|pixels'],hashes=dict(pixels=dict(description='272 native scene comparisons',start=hex(addr('render_diag')),size=10,expected_CRCs=[crc(struct.pack('<5H',*expected))],timeout=240000)))
 if args.stop:config['hashes']['pixels'].update(size=2,timeout=1000,expected_CRCs=[crc(struct.pack('<H',args.stop))])

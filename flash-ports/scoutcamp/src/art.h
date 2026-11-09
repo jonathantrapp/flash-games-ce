@@ -1209,6 +1209,8 @@ bool art_open(void);
 gfx_sprite_t *art_sprite(int id,int frame);
 void art_draw(int id,int frame,int x,int y);
 void art_background(int left);
+void art_sky_rect(int left,int x0,int y0,int x1,int y1);
+bool art_tile_opaque(int frame);
 const uint8_t *art_map_data(void);
 void art_cache_level(const uint8_t *back,const uint8_t *solid,const uint8_t *decor,int cells,int theme);
 #endif

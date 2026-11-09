@@ -119,9 +119,13 @@ static void stepWaves(void){for(int i=0;i<waveCounts[level];i++){if(waveDue[i]>0
 volatile uint32_t scout_sim_ticks[8];static uint32_t simStamp;
 #define SIM_MARK(i) do{uint32_t n_=timer_GetSafe(1,TIMER_UP);scout_sim_ticks[i]+=n_-simStamp;simStamp=n_;}while(0)
 #define SIM_BEGIN() (simStamp=timer_GetSafe(1,TIMER_UP))
+/* Splits slot 1 (enemies) into physics and specials; reads the same running stamp. */
+volatile uint32_t scout_phys_ticks[2];
+#define PHYS_MARK(i) do{uint32_t n_=timer_GetSafe(1,TIMER_UP);scout_phys_ticks[i]+=n_-simStamp;simStamp=n_;}while(0)
 #else
 #define SIM_MARK(i) ((void)0)
 #define SIM_BEGIN() ((void)0)
+#define PHYS_MARK(i) ((void)0)
 #endif
-static void update(void){if(paused)return;SIM_BEGIN();tick++;if(statusTicks)statusTicks--;stepWaves();SIM_MARK(0);for(int i=0;i<enemyTop;i++)if(enemies[i].active){for(int sub=0;sub<3;sub++)if(enemies[i].active)physicsEnemy(&enemies[i],sub);if(enemies[i].active)stepSpecials(&enemies[i]);}SIM_MARK(1);stepFood();SIM_MARK(2);stepTowers();SIM_MARK(3);stepSprays();SIM_MARK(4);stepBullets();SIM_MARK(5);resolveExplosions();SIM_MARK(6);if(foodLeft()==0){mode=3;save();return;}bool spawning=false;for(int i=0;i<waveCounts[level];i++)spawning|=spawners[i].active;while(enemyTop&&!enemies[enemyTop-1].active)enemyTop--;while(bulletTop&&!bullets[bulletTop-1].active)bulletTop--;SIM_MARK(7);if(wave==waveCounts[level]&&!spawning&&!alive()){mode=4;stageWon[level]=1;if(level+2>unlocked&&level<16)unlocked=level+2;save();}}
+static void update(void){if(paused)return;SIM_BEGIN();tick++;if(statusTicks)statusTicks--;stepWaves();SIM_MARK(0);for(int i=0;i<enemyTop;i++)if(enemies[i].active){for(int sub=0;sub<3;sub++)if(enemies[i].active)physicsEnemy(&enemies[i],sub);PHYS_MARK(0);if(enemies[i].active)stepSpecials(&enemies[i]);PHYS_MARK(1);}SIM_MARK(1);stepFood();SIM_MARK(2);stepTowers();SIM_MARK(3);stepSprays();SIM_MARK(4);stepBullets();SIM_MARK(5);resolveExplosions();SIM_MARK(6);if(foodLeft()==0){mode=3;save();return;}bool spawning=false;for(int i=0;i<waveCounts[level];i++)spawning|=spawners[i].active;while(enemyTop&&!enemies[enemyTop-1].active)enemyTop--;while(bulletTop&&!bullets[bulletTop-1].active)bulletTop--;SIM_MARK(7);if(wave==waveCounts[level]&&!spawning&&!alive()){mode=4;stageWon[level]=1;if(level+2>unlocked&&level<16)unlocked=level+2;save();}}
 #endif

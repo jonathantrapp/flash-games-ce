@@ -7,22 +7,22 @@
     0
   ],
   "debug_only": false,
-  "program_sha256": "0f0cb3ec164f20105afe869684cf221ab3d09ef98b3c2555ab57e11f9f0be865",
-  "generated_art_sha256": "080c66ed3e2638a3af8590775c67a7381249c3e2f55e84148d2dd04c79847fa2",
+  "program_sha256": "b79f410a1fc8abc218ee13e4b7b21fb133cf04f35fe9e547a607e9951b9d470e",
+  "generated_art_sha256": "95ebb379475051592ac69862cfa7a5181fcc6d8bb08c8a2bce33581cce09c26f",
   "observed": [
-    1,
-    358,
+    0,
+    0,
     0,
     0,
     0
   ],
-  "failed": false,
+  "failed": true,
   "map_coordinate_cases": 51940,
   "source_sha256": {
-    "art.c": "4ee15107dcf19297f22efd799d7d1e022a3acd7ac172bbd349aeda0df274756c",
-    "main.c": "c0ad699368d5e8b031e5c2ab8a358bf8f34c9b1b5d2908d10077c646873ed67c",
-    "engine.h": "c4d428bfe59751a1a841d0c581aead8d3cfa67866d397b763a4e48f283e138de",
-    "combat.h": "338623e2af53070f5abefb0a9c21f34d6521f286b9351aec3cc6e281eef5f7cd"
+    "art.c": "7e3efa400692dc1190c1280ce3ff19f4f75bcb0b8452196e895dedd6898a60b7",
+    "main.c": "8e9137d0d3116783fddc710e9379b538da3046bdab71b9c247ed4a1bc1e76ee6",
+    "engine.h": "e7c1303903b4e5df32d8fbed0cc987e82458538a2c4200acb507120da76951d3",
+    "combat.h": "cf8d89db0de4483b10352ca76a9afdc53628fe98212ae36bf849f50195d1f141"
   },
   "scope": "Native exact sky/tile/HUD pixels and cache guards; host map coordinate proof.\n\nRaw original sprites supply the reference. Synthetic fixtures, not campaigns.\n"
 }

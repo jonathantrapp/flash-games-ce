@@ -109,7 +109,7 @@ header+='#define ART_SKILL_BANK '+str(skillBank)+'\n#define ART_SKILL_OFFSET '+s
 header+='static const uint16_t artPalette[]={'+','.join(map(str,pal))+'};\n'
 header+='static const uint16_t artBankSizes[]={'+','.join(str(len(b)) for b in banks)+'};\n'
 header+='static const uint8_t artSignature[]={'+','.join(map(str,signature))+'};\n'
-header+='#define ART_BANKS '+str(len(banks))+'\nextern const uint8_t *artBanks[ART_BANKS];\nextern char art_error[40];\nbool art_open(void);\ngfx_sprite_t *art_sprite(int id,int frame);\nvoid art_draw(int id,int frame,int x,int y);\nvoid art_background(int left);\nconst uint8_t *art_map_data(void);\nvoid art_cache_level(const uint8_t *back,const uint8_t *solid,const uint8_t *decor,int cells,int theme);\n#endif\n'
+header+='#define ART_BANKS '+str(len(banks))+'\nextern const uint8_t *artBanks[ART_BANKS];\nextern char art_error[40];\nbool art_open(void);\ngfx_sprite_t *art_sprite(int id,int frame);\nvoid art_draw(int id,int frame,int x,int y);\nvoid art_background(int left);\nvoid art_sky_rect(int left,int x0,int y0,int x1,int y1);\nbool art_tile_opaque(int frame);\nconst uint8_t *art_map_data(void);\nvoid art_cache_level(const uint8_t *back,const uint8_t *solid,const uint8_t *decor,int cells,int theme);\n#endif\n'
 (root/'src/art.h').write_text(header)
 output.mkdir(exist_ok=True);(root/'build-art').mkdir(exist_ok=True)
 for i,data in enumerate(banks):

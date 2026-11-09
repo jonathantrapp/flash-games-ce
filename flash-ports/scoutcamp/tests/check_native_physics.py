@@ -7,7 +7,9 @@ The graphics cache initializer is stubbed; actual map banks and physics run.
 """
 from pathlib import Path
 import hashlib,json,re,struct,subprocess
-HERE=Path(__file__).resolve().parent;GAME=HERE.parent;ROOT=GAME.parents[1];OUT=HERE/'physics-native';(OUT/'src').mkdir(parents=True,exist_ok=True)
+import argparse
+_p=argparse.ArgumentParser();_p.add_argument('--opt',default='-Oz',help='fixture optimization flags');_p.add_argument('--dir',default='physics-native',help='fixture folder (sibling of physics-native)');_a=_p.parse_args()
+HERE=Path(__file__).resolve().parent;GAME=HERE.parent;ROOT=GAME.parents[1];OUT=HERE/_a.dir;(OUT/'src').mkdir(parents=True,exist_ok=True)
 source_sha=hashlib.sha256((GAME/'src/engine.h').read_bytes()).hexdigest()
 reference=(HERE/'reference/physicsEnemy_v8_uncached.c').read_text().replace('physicsEnemy(','reference_physicsEnemy(')
 source=r'''#include <tice.h>
@@ -74,7 +76,7 @@ int main(void){
 }
 '''.replace('REFERENCE',reference)
 (OUT/'src/main.c').write_text(source);(OUT/'src/art.c').write_text('#include "../../../src/art.c"\n')
-(OUT/'makefile').write_text('NAME = SCPHYS\nDESCRIPTION = "v7 physics trace comparison"\nCOMPRESSED = NO\nARCHIVED = NO\nCFLAGS = -Wall -Wextra -Oz -std=c11\nEXTRA_LDFLAGS += -T ../../ram_guard.ld\nCEDEV_TOOLCHAIN = ../../../../local-tools/cedev/CEdev\ninclude ../../../../local-tools/cedev/CEdev/meta/makefile.mk\n')
+(OUT/'makefile').write_text('NAME = SCPHYS\nDESCRIPTION = "v7 physics trace comparison"\nCOMPRESSED = NO\nARCHIVED = NO\nCFLAGS = -Wall -Wextra '+_a.opt+' -std=c11\nEXTRA_LDFLAGS += -T ../../ram_guard.ld\nCEDEV_TOOLCHAIN = ../../../../local-tools/cedev/CEdev\ninclude ../../../../local-tools/cedev/CEdev/meta/makefile.mk\n')
 subprocess.run([str(ROOT/'local-tools/cedev/CEdev/bin/make.exe')],cwd=OUT,check=True)
 assert source_sha==hashlib.sha256((GAME/'src/engine.h').read_bytes()).hexdigest()
 mapping=(OUT/'bin/SCPHYS.map').read_text()

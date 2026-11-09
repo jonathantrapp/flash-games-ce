@@ -1,68 +1,68 @@
 {
-  "program_sha256": "9ae1dad156c59bc03cd4e453affb6a85d68bcb2a2205525907522aa125248aae",
-  "scenario_tag": "v7_ready500",
+  "program_sha256": "1da4b5aec6466d43efa19b42616c7e0e61352c8611fda859b2adaed2e8a872aa",
+  "scenario_tag": "v10_final_input",
   "reused_captures": false,
   "snapshots": {
     "rapid_220_150": {
-      "tick": 257,
+      "tick": 267,
       "speed_thirds": 12,
-      "max_poll_gap_ms": 111.663818359375,
+      "max_poll_gap_ms": 114.898681640625,
       "queue_overflows": 0,
       "transitions": 28
     },
     "rapid_80_80": {
-      "tick": 139,
+      "tick": 151,
       "speed_thirds": 12,
-      "max_poll_gap_ms": 111.63330078125,
+      "max_poll_gap_ms": 114.898681640625,
       "queue_overflows": 0,
       "transitions": 28
     },
     "rapid_40_40": {
-      "tick": 92,
+      "tick": 105,
       "speed_thirds": 12,
-      "max_poll_gap_ms": 111.63330078125,
+      "max_poll_gap_ms": 114.8681640625,
       "queue_overflows": 0,
       "transitions": 28
     },
     "rate_1x_1000": {
-      "tick": 34,
+      "tick": 39,
       "speed_thirds": 0,
-      "max_poll_gap_ms": 111.663818359375,
+      "max_poll_gap_ms": 114.8681640625,
       "queue_overflows": 0,
       "transitions": 12
     },
     "rate_1x_7000": {
-      "tick": 154,
+      "tick": 159,
       "speed_thirds": 0,
-      "max_poll_gap_ms": 111.663818359375,
+      "max_poll_gap_ms": 114.8681640625,
       "queue_overflows": 0,
       "transitions": 12
     },
     "rate_4x_1000": {
-      "tick": 281,
+      "tick": 292,
       "speed_thirds": 0,
-      "max_poll_gap_ms": 111.663818359375,
+      "max_poll_gap_ms": 114.8681640625,
       "queue_overflows": 0,
       "transitions": 30
     },
     "rate_4x_7000": {
-      "tick": 756,
+      "tick": 772,
       "speed_thirds": 0,
-      "max_poll_gap_ms": 111.663818359375,
+      "max_poll_gap_ms": 114.8681640625,
       "queue_overflows": 0,
       "transitions": 30
     },
     "frozen_short": {
-      "tick": 8,
+      "tick": 13,
       "speed_thirds": 0,
-      "max_poll_gap_ms": 111.663818359375,
+      "max_poll_gap_ms": 114.8681640625,
       "queue_overflows": 0,
       "transitions": 8
     },
     "frozen_long": {
-      "tick": 8,
+      "tick": 13,
       "speed_thirds": 0,
-      "max_poll_gap_ms": 111.663818359375,
+      "max_poll_gap_ms": 114.8681640625,
       "queue_overflows": 0,
       "transitions": 8
     }
@@ -75,9 +75,9 @@
       "requested_ticks_per_second": 20
     },
     "4x": {
-      "ticks": 475,
+      "ticks": 480,
       "interval_seconds": 6,
-      "ticks_per_second": 79.16666666666667,
+      "ticks_per_second": 80.0,
       "requested_ticks_per_second": 80
     }
   },

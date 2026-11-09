@@ -2,64 +2,64 @@
   "checks": 8,
   "failures": [],
   "one_x_ticks": 26,
-  "fast_setting_ticks": 102,
+  "fast_setting_ticks": 104,
   "snapshots": {
     "freeze_short": {
       "mode": 1,
       "speed_thirds": 0,
       "previous_speed_thirds": 3,
-      "tick": 8
+      "tick": 13
     },
     "freeze_long": {
       "mode": 1,
       "speed_thirds": 0,
       "previous_speed_thirds": 3,
-      "tick": 8
+      "tick": 13
     },
     "resume_1x": {
       "mode": 1,
       "speed_thirds": 0,
       "previous_speed_thirds": 3,
-      "tick": 34
+      "tick": 39
     },
     "resume_1x_setting": {
       "mode": 1,
       "speed_thirds": 3,
       "previous_speed_thirds": 3,
-      "tick": 24
+      "tick": 31
     },
     "freeze_4x": {
       "mode": 1,
       "speed_thirds": 0,
       "previous_speed_thirds": 12,
-      "tick": 179
+      "tick": 188
     },
     "resume_4x": {
       "mode": 1,
       "speed_thirds": 0,
       "previous_speed_thirds": 12,
-      "tick": 281
+      "tick": 292
     },
     "resume_4x_setting": {
       "mode": 1,
       "speed_thirds": 12,
       "previous_speed_thirds": 12,
-      "tick": 236
+      "tick": 260
     },
     "upper_bound": {
       "mode": 1,
       "speed_thirds": 12,
       "previous_speed_thirds": 3,
-      "tick": 357
+      "tick": 373
     },
     "lower_bound": {
       "mode": 1,
       "speed_thirds": 0,
       "previous_speed_thirds": 3,
-      "tick": 16
+      "tick": 21
     }
   },
   "reused_captures": false,
-  "program_sha256": "9ae1dad156c59bc03cd4e453affb6a85d68bcb2a2205525907522aa125248aae",
+  "program_sha256": "1da4b5aec6466d43efa19b42616c7e0e61352c8611fda859b2adaed2e8a872aa",
   "scope": "Actual keypad input in CEmu OS5.3: frozen tick stability, exact restoration of settings3 and12 thirds, forward progress and bounds0..4x. Raw fast-setting totals include control/render overhead; use paired input-timing results for rates. No physical speed or crowded-battle minimum claim."
 }

@@ -1,5 +1,43 @@
 # Developer handoff, v9 memory and campaign preview, 7 November 2026
 
+## 9 November 2026: Scouts frame-rate work in progress (not promoted, not pushed)
+
+Candidate `scoutcamp/bin_v10hybrid` (SHA-256 `70008d21…`, built from current src). Changes:
+- Retained background: repair recorded rectangles and redraw each touched tile cell once.
+- Retained HUD.
+- Indexed sky repair.
+- Physics kept out of `main()` and rewritten without shift helpers.
+- 30 FPS frame cap.
+
+CEmu 1x FPS, v9 vs earlier candidate builds:
+
+| Scene | v9 FPS | Candidate FPS |
+|---|---|---|
+| Quiet stage 1 | 12 | 30.0 (capped) |
+| Stage 16 crowd | 2.8 | 13.3 |
+| Mid-wave stages 1/5/9/13/17 | 8.5/9.0/5.8/6.8/7.5 | 25.3/27.8/18.5/21.2/25.5 |
+
+These FPS figures come from the builds before the final RAM trim; rerun the benchmarks on 70008d21.
+
+Verified on 70008d21:
+- `check_retained_render.py`: all 17 stages, 0 mismatches.
+- Native physics: 81,600/81,600.
+- Scene render: 272 scenes, after fixing the split-fixture transfer.
+- 17/17 stage entries.
+
+On the previous build, input timing, speed controls, movement, food, route and host rules passed.
+
+OPEN:
+- `check_native_art_render.py` now FAILS (Autotest failed, empty counters). It passed on the build before the RAM trim (HUD key split, `DIRTY_MAX` 120, 64-pixel sky blocks); investigate first.
+- Free RAM: crowded is about 31.7 KB before the trim, against 54.8 KB in v9. Re-measure with `ram_report.py`. The 32 KB-filler test will likely fail.
+- Not 30 FPS during waves. Enemy motion is still 20 Hz (sim rate).
+
+Tools:
+- `tests/cemu_profile.py`: cycle profiler. Needs `build/build_cemu_prof.py` and the `CEMU_PROFILE` hook in `local-tools/cemu-source/core/cpu.c`; both are local.
+- `tests/record_build.py`.
+- `benchmark_crowded.py --plus 0` measures at 1x.
+- Run benchmarks alone: host load distorts their timing.
+
 ## 9 November 2026: stage-4 start cursor fixed in source (not released)
 
 `startLevel()` now clamps the initial cursor to the movement bounds; stage 4 was the only affected map. The candidate is in `scoutcamp/bin_v10cursor` (43,569 bytes, SHA-256 `b78bf3e9…841a`): 17/17 stage entries pass, and a stage-4 idle entry shows the cursor where v9 showed none. It has not been promoted to `bin/` or packaged; v9 stays the release. See `verification/CHECKPOINT-v10.md`. The v9 notes below about the stage-4 cursor describe the v9 binary.

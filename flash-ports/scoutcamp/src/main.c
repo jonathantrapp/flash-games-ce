@@ -20,10 +20,21 @@
 
 enum { MODE_MENU = 0, MODE_PLAY = 1, MODE_MAP = 2, MODE_LOST = 3, MODE_WON = 4, MODE_HELP = 5, MODE_SKILLS = 6, MODE_OPTIONS = 7, MODE_ENDING = 8 };
 #define STEP_TICKS (32768 / HZ)
+#define FRAME_MIN_TICKS 1092 /* 32768 Hz timer ticks per frame at most 30 FPS */
 #define KEY_DOWN(k) (input_held[(k) >> 8] & ((k) & 0xFF))
 #define KEY_PRESS(k) (input_pressed[(k) >> 8] & ((k) & 0xFF))
 
 volatile uint32_t scout_totals[2]; /* rendered frames, simulation ticks; no overlay */
+#ifdef QA_DAMAGECHECK
+volatile uint32_t scout_damage[2]; /* frames compared, frames whose retained pixels differed from a full redraw */
+static uint32_t frameHash(void) { /* Adler-style position-sensitive sums over the whole draw buffer */
+    /* gfx_vbuffer is the visible screen; the draw buffer is the other VRAM half. */
+    const uint8_t *p = (const uint8_t *)gfx_vbuffer == gfx_vram ? gfx_vram + 320 * 240 : gfx_vram;
+    unsigned a = 1, b = 0;
+    for (unsigned i = 0; i < 320u * 240u; i++) { a += p[i]; b += a; }
+    return (uint32_t)b << 8 ^ a;
+}
+#endif
 
 #ifdef QA_PERF
 volatile uint16_t scout_perf[4],scout_render_ms[5];
@@ -73,10 +84,72 @@ static void pickColors(void) {
     cBlack = nearestColor(0, 0, 0); cWhite = nearestColor(255, 255, 255); cYellow = nearestColor(255, 230, 40);
     cRed = nearestColor(230, 30, 30); cGreen = nearestColor(40, 200, 60); cCyan = nearestColor(90, 220, 255); cPanel = nearestColor(24, 24, 48);
 }
+/* ---------- retained stage background ----------
+ * Each of the two framebuffers keeps the stage background (sky + three tile layers).
+ * Everything drawn over it during play records its rectangle; the next time that
+ * buffer is drawn (two frames later) the sky is repainted exactly inside each recorded
+ * rectangle, then every 16x16 map cell those rectangles touch gets its tile layers
+ * redrawn once, from its topmost opaque tile. A camera move, a different stage or any
+ * other screen forces the original full redraw. Rows y>=217 belong to the HUD panel,
+ * which is repainted whenever anything (a sprite or a redrawn cell) reached it.
+ * QA_DAMAGECHECK compares each retained frame with a full redraw. */
+#define DIRTY_MAX 120 /* overflow falls back to the full redraw */
+#define PANEL_TOP 217
+#define GRID_W 21 /* screen columns of cells, for any camera offset */
+#define GRID_H 15 /* cell rows that can reach above PANEL_TOP */
+typedef struct { uint16_t x0, x1; uint8_t y0, y1; } Rect;
+/* BSS is nearly full: the initializers place these tables in linker-guarded resident data. */
+static Rect dirty[2][DIRTY_MAX] = {{{1, 1, 1, 1}}};
+static uint8_t cellsToDraw[GRID_H][GRID_W] = {{1}};
+static uint8_t dirtyCount[2], drawIndex;
+static bool dirtyOverflow[2], tracking;
+static uint32_t heldBackground[2] = {0xffffffff, 0xffffffff};
+/* Retained HUD: each item remembers, per buffer, exactly what it last drew (text,
+ * colour/value and rectangle). It is redrawn only when that changes (its old rectangle
+ * is repaired first), when a repair or a sprite touched it, or when an item drawn
+ * before it was redrawn over it. HUD items are not in the dirty list. */
+enum { HUD_FRAME, HUD_MONEY, HUD_SLIDER, HUD_WAVE, HUD_TIMER, HUD_FOOD, HUD_LEVEL, HUD_PANEL, HUD_N };
+#define HUD_KEY 24        /* longest one-line HUD text is "LV 99" / "$99999" / "W24/24" */
+#define HUD_PANEL_KEY 128 /* the two panel lines, joined by a newline */
+typedef struct { int16_t x0, y0, x1, y1; uint16_t extra; char key[HUD_KEY]; } HudItem;
+static HudItem hudNow[HUD_N] = {{1, 1, 1, 1, 0, {0}}}, hudHeld[2][HUD_N] = {{{1, 1, 1, 1, 0, {0}}}}; /* resident data, not BSS */
+static char panelNow[HUD_PANEL_KEY] = {1}, panelHeld[2][HUD_PANEL_KEY] = {{1}};
+static bool hudNeed[HUD_N], panelTouched[2] = {true, true};
+static int hudBottom = 240; /* lowest row any non-panel HUD item (now or held) reaches */
+static bool overlaps(int x0, int y0, int x1, int y1, const HudItem *h) {
+    return x0 < h->x1 && h->x0 < x1 && y0 < h->y1 && h->y0 < y1;
+}
+static void hudTouch(int x0, int y0, int x1, int y1) {
+    if (y0 >= hudBottom) return; /* the panel item lies below PANEL_TOP, which marks never reach */
+    for (int i = 0; i < HUD_N; i++)
+        if (overlaps(x0, y0, x1, y1, &hudHeld[drawIndex][i]) || overlaps(x0, y0, x1, y1, &hudNow[i])) hudNeed[i] = true;
+}
+/* Record screen rectangle [x0,x1)x[y0,y1) (already clipped) for repair. */
+static void pushRect(int x0, int y0, int x1, int y1) {
+    uint8_t n = dirtyCount[drawIndex];
+    if (n >= DIRTY_MAX) { dirtyOverflow[drawIndex] = true; return; }
+    dirty[drawIndex][n] = (Rect){x0, x1, y0, y1}; dirtyCount[drawIndex] = n + 1;
+}
+static void mark(int x, int y, int w, int h) {
+    if (!tracking) return;
+    int x1 = x + w, y1 = y + h;
+    if (y1 > PANEL_TOP && y < 240 && x < 320 && x1 > 0) panelTouched[drawIndex] = true;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x1 > 320) x1 = 320;
+    if (y1 > PANEL_TOP) y1 = PANEL_TOP;
+    if (x >= x1 || y >= y1) return;
+    hudTouch(x, y, x1, y1);
+    pushRect(x, y, x1, y1);
+}
+static void artDraw(int id, int frame, int x, int y) {
+    const Art *art = &artTable[id]; mark(x, y, art->width, art->height); art_draw(id, frame, x, y);
+}
 /* GraphX does not clip text at the right edge (it wraps into the next scanline), so truncate to fit. */
 static void printFit(const char *s, int x, int y) {
     if (y < 0 || y > 232 || x > 315) return;
     if (x < 0) x = 0;
+    if (tracking) { int w = gfx_GetStringWidth(s); mark(x, y, w < 316 - x ? w : 316 - x, 8); }
     if (x + (int)gfx_GetStringWidth(s) <= 316) { gfx_PrintStringXY(s, x, y); return; }
     char buffer[96]; int n = 0;
     while (s[n] && n < 90) { buffer[n] = s[n]; buffer[n + 1] = 0; if (x + (int)gfx_GetStringWidth(buffer) > 316) { buffer[n] = 0; break; } n++; }
@@ -85,7 +158,7 @@ static void printFit(const char *s, int x, int y) {
 static void label(const char *s, int x, int y, int color) { gfx_SetTextFGColor(color); printFit(s, x, y); }
 static void shadowLabel(const char *s, int x, int y, int color) { label(s, x + 1, y + 1, cBlack); label(s, x, y, color); }
 static void centered(const char *s, int y, int color) { int w=gfx_GetStringWidth(s);shadowLabel(s,w>=316?2:(320-w)/2,y,color); }
-static void panel(int x, int y, int w, int h) { gfx_SetColor(cPanel); gfx_FillRectangle(x, y, w, h); gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, h); }
+static void panel(int x, int y, int w, int h) { mark(x, y, w, h); gfx_SetColor(cPanel); gfx_FillRectangle(x, y, w, h); gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, h); }
 static void wrapText(const char *s, int x, int y, int width, int step, int color) {
     char line[96]; int n = 0; gfx_SetTextFGColor(color);
     while (*s && y <= 232) {
@@ -105,6 +178,7 @@ static void wrapText(const char *s, int x, int y, int width, int step, int color
 }
 static void drawArt(int id, int frame, int x, int y, bool flip) {
     gfx_sprite_t *sprite = art_sprite(id, frame);
+    mark(x, y, sprite->width, sprite->height);
     if (!flip) { gfx_TransparentSprite(sprite, x, y); return; }
     gfx_FlipSpriteY(sprite, (gfx_sprite_t *)flipBuffer);
     gfx_TransparentSprite((gfx_sprite_t *)flipBuffer, x, y);
@@ -112,6 +186,7 @@ static void drawArt(int id, int frame, int x, int y, bool flip) {
 static int skyFor(int stage) { return stage == 16 ? ART_SKY_CAVEIMAGE_LEFT : stage > 11 ? ART_SKY_DESERTIMAGE_LEFT : stage > 7 ? ART_SKY_CAVEIMAGE_LEFT : stage > 3 ? ART_SKY_SUNSETIMAGE_LEFT : ART_SKY_DESERTIMAGE_LEFT; }
 static int xpNeeded(void) { return playerLevel * (playerLevel < 5 ? 50 : 100); }
 static void xpBar(int x, int y, int w) {
+    mark(x, y, w, 6);
     gfx_SetColor(cBlack); gfx_FillRectangle(x, y, w, 6);
     gfx_SetColor(cYellow); gfx_FillRectangle(x + 1, y + 1, (w - 2) * xp / xpNeeded(), 4);
     gfx_SetColor(cWhite); gfx_Rectangle(x, y, w, 6);
@@ -285,14 +360,71 @@ static void drawTowerArt(const Tower *t, int x, int y) {
     if(t->born){
         gfx_sprite_t*src=art_sprite(id,0);gfx_sprite_t*dst=(gfx_sprite_t*)scaleBuffer;
         dst->width=art->width;dst->height=art->height*(HZ-t->born)/HZ+1;
-        gfx_ScaleSprite(src,dst);gfx_TransparentSprite(dst,x+8-art->width/2,y+16-dst->height);
+        gfx_ScaleSprite(src,dst);mark(x+8-art->width/2,y+16-dst->height,dst->width,dst->height);gfx_TransparentSprite(dst,x+8-art->width/2,y+16-dst->height);
         drawArt(ART_BUILD,(tick*3/4)%4,x-8+(tick%3)*4,y-7,false);return;
     }
     int frame = 0;
     if (t->animation && art->frames > 2) frame = 2 + (tick / 2) % (art->frames - 2);
     drawArt(id, frame, x + 8 - art->width / 2, y + 16 - art->height, t->facing < 0);
     if(t->buildTime)drawArt(ART_BUILD,(tick*3/4)%4,x-8+(tick%3)*4,y-7,false);
-    for (int l = 0; l <= t->level && l < 6; l++) art_draw(ART_UPGRADE, 0, x + (l % 3) * 5, y - 5 - (l / 3) * 5);
+    for (int l = 0; l <= t->level && l < 6; l++) artDraw(ART_UPGRADE, 0, x + (l % 3) * 5, y - 5 - (l / 3) * 5);
+}
+static void hudSet(int i, int x0, int y0, int x1, int y1, unsigned extra, const char *key) {
+    HudItem *h = &hudNow[i];
+    h->x0 = x0; h->y0 = y0; h->x1 = x1; h->y1 = y1; h->extra = extra;
+    strncpy(h->key, key, HUD_KEY - 1); h->key[HUD_KEY - 1] = 0;
+}
+static int fitWidth(const char *s, int x) { int w = gfx_GetStringWidth(s); return w < 316 - x ? w : 316 - x; }
+/* Work out what every HUD item will show this frame (same text as the original code). */
+static void hudCompute(int ti) {
+    const Art *a = &artTable[ART_HUD];
+    hudSet(HUD_FRAME, 195, 0, 195 + a->width, a->height, 0, "");
+    snprintf(textbuf, sizeof textbuf, "$%d", money); hudSet(HUD_MONEY, 267, 23, 267 + fitWidth(textbuf, 267), 31, 0, textbuf);
+    a = &artTable[ART_SPEED_SLIDER]; hudSet(HUD_SLIDER, 210 + speedThirds * 5, 2, 210 + speedThirds * 5 + a->width, 2 + a->height, speedThirds, "");
+    snprintf(textbuf, sizeof textbuf, "W%u/%u", wave, waveCounts[level]); hudSet(HUD_WAVE, 3, 25, 3 + fitWidth(textbuf, 3), 33, 0, textbuf);
+    if (wave < waveCounts[level] && waveDue[wave] > 0) {
+        snprintf(textbuf, sizeof textbuf, "%ds", (waveDue[wave] + HZ - 1) / (sendFast ? HZ * HZ : HZ)); hudSet(HUD_TIMER, 64, 25, 64 + fitWidth(textbuf, 64), 33, 0, textbuf);
+    } else hudSet(HUD_TIMER, 0, 0, 0, 0, 0, "");
+    snprintf(textbuf, sizeof textbuf, "FOOD %d", foodLeft()); hudSet(HUD_FOOD, 3, 3, 4 + fitWidth(textbuf, 4), 12, foodLeft() < 3 ? cRed : cWhite, textbuf);
+    snprintf(textbuf, sizeof textbuf, "LV %d", playerLevel); { int w = 4 + fitWidth(textbuf, 4); hudSet(HUD_LEVEL, 3, 13, w > 83 ? w : 83, 22, (50 - 2) * xp / xpNeeded(), textbuf); }
+    char *k = textbuf;
+    if (statusTicks) { strncpy(k, status, 80); k[80] = 0; }
+    else if (ti >= 0) {
+        const Tower *t = &towers[ti];
+        snprintf(k, 81, "%s L%d  upgrade $%d  sell $%d", towerNames[t->type], t->level + 1, t->level >= 5 ? 0 : upgradeCost((Tower *)t), t->spent / 2);
+    } else snprintf(k, 81, "%d %s $%d   2nd = build", selection + 1, towerNames[baseTypes[selection]], (int)rule_BasePrice(baseTypes[selection], 0));
+    char second[48];
+    if (ti >= 0 && towers[ti].type <= SHOCK) snprintf(second, sizeof second, "MATH %s  APPS %s", towerNames[branchTypes[towers[ti].type][0]], towerNames[branchTypes[towers[ti].type][1]]);
+    else strcpy(second, "GRAPH wave  +/- speed  STAT focus");
+    hudSet(HUD_PANEL, 0, PANEL_TOP, 320, 240, statusTicks != 0, "");
+    snprintf(panelNow, sizeof panelNow, "%s\n%s", second, k);
+    hudBottom = 0;
+    for (int i = 0; i < HUD_PANEL; i++) {
+        if (hudNow[i].y1 > hudBottom) hudBottom = hudNow[i].y1;
+        for (int b = 0; b < 2; b++) if (hudHeld[b][i].y1 > hudBottom) hudBottom = hudHeld[b][i].y1;
+    }
+}
+static bool hudSame(const HudItem *a, const HudItem *b) {
+    return a->x0 == b->x0 && a->y0 == b->y0 && a->x1 == b->x1 && a->y1 == b->y1 && a->extra == b->extra && !strcmp(a->key, b->key);
+}
+static void hudDraw(int i) {
+    const HudItem *h = &hudNow[i];
+    switch (i) {
+    case HUD_FRAME: art_draw(ART_HUD, 0, 195, 0); break;
+    case HUD_MONEY: label(h->key, 267, 23, cWhite); break;
+    case HUD_SLIDER: art_draw(ART_SPEED_SLIDER, 0, h->x0, 2); break;
+    case HUD_WAVE: label(h->key, 3, 25, cWhite); break;
+    case HUD_TIMER: if (h->key[0]) label(h->key, 64, 25, cYellow); break;
+    case HUD_FOOD: shadowLabel(h->key, 3, 3, h->extra); break;
+    case HUD_LEVEL: shadowLabel(h->key, 3, 13, cWhite); xpBar(33, 14, 50); break;
+    default: {
+        gfx_SetColor(cPanel); gfx_FillRectangle(0, 217, 320, 23);
+        const char *line1 = strchr(panelNow, '\n') + 1;
+        char second[48]; size_t n = line1 - 1 - panelNow; memcpy(second, panelNow, n); second[n] = 0;
+        if (h->extra) shadowLabel(line1, 3, 219, cYellow); else label(line1, 3, 219, cWhite);
+        label(second, 3, 229, cCyan);
+    }
+    }
 }
 static void renderGame(void) {
     camx = cx * 16 + 8 - 160; camy = cy * 16 + 8 - 110;
@@ -303,30 +435,82 @@ static void renderGame(void) {
 #ifdef QA_PERF
     renderStamp=timer_GetSafe(1,TIMER_UP);
 #endif
-    art_background(skyFor(level));
-    input_poll();
-#ifdef QA_PERF
-    renderMark(0);
-#endif
     int theme=level==16?2:level>11?3:level>7?2:level>3?1:0;
-    for (int layer = 0; layer < 3; layer++)
-        for (int y = camy / 16; y < map->height && y * 16 - camy < 240; y++) {
-            const uint8_t *row=layers[layer]+y*map->width+camx/16;
-            int screenY=y*16-camy,screenX=-(camx%16);
-            for (int x = camx / 16; x < map->width && screenX < 320; x++,screenX+=16) {
-                int tile = *row++;
-                if (tile && tile < 128) art_draw(ART_TILES0+theme, tile, screenX, screenY);
+    uint32_t backgroundKey=(uint32_t)camx|(uint32_t)camy<<11|(uint32_t)level<<21;
+    int ti = towerAt(cy * map->width + cx);
+    hudCompute(ti);
+    bool full = heldBackground[drawIndex] != backgroundKey || dirtyOverflow[drawIndex];
+    /* A HUD item whose content changed gets its old rectangle repaired with the sprites'. */
+    for (int i = 0; i < HUD_N && !full; i++) {
+        const HudItem *h = &hudHeld[drawIndex][i];
+        hudNeed[i] = !hudSame(&hudNow[i], h) || (i == HUD_PANEL && strcmp(panelNow, panelHeld[drawIndex]));
+        if (hudNeed[i] && h->x0 < h->x1 && h->y0 < PANEL_TOP) pushRect(h->x0, h->y0, h->x1, h->y1 < PANEL_TOP ? h->y1 : PANEL_TOP);
+    }
+    full |= dirtyOverflow[drawIndex];
+    if (full) {
+        for (int i = 0; i < HUD_N; i++) { hudNeed[i] = true; hudHeld[drawIndex][i].x0 = hudHeld[drawIndex][i].x1 = 0; hudHeld[drawIndex][i].key[0] = 1; }
+        panelHeld[drawIndex][0] = 1;
+        panelTouched[drawIndex] = true;
+        art_background(skyFor(level));
+        input_poll();
+#ifdef QA_PERF
+        renderMark(0);
+#endif
+        for (int layer = 0; layer < 3; layer++)
+            for (int y = camy / 16; y < map->height && y * 16 - camy < 240; y++) {
+                const uint8_t *row=layers[layer]+y*map->width+camx/16;
+                int screenY=y*16-camy,screenX=-(camx%16);
+                for (int x = camx / 16; x < map->width && screenX < 320; x++,screenX+=16) {
+                    int tile = *row++;
+                    if (tile && tile < 128) art_draw(ART_TILES0+theme, tile, screenX, screenY);
+                }
+                input_poll();
             }
-            input_poll();
+        heldBackground[drawIndex] = backgroundKey;
+    } else {
+        /* Sky exactly inside each recorded rectangle, then the tile layers of every cell
+         * they touch, once per cell, from its topmost opaque tile. Tiles are exactly one
+         * cell; over correct sky they reproduce the full redraw, and any stale pixel lies
+         * inside a rectangle whose sky was just repaired. A cell crossing PANEL_TOP forces
+         * the panel to be repainted. */
+        int sky=skyFor(level), ox=camx&15, oy=camy&15, cellX=camx>>4, cellY=camy>>4;
+        for (unsigned i = 0; i < dirtyCount[drawIndex]; i++) {
+            const Rect *r = &dirty[drawIndex][i];
+            hudTouch(r->x0, r->y0, r->x1, r->y1);
+            art_sky_rect(sky, r->x0, r->y0, r->x1, r->y1);
+            unsigned gx0 = (r->x0 + ox) >> 4, gx1 = (r->x1 - 1 + ox) >> 4, gy0 = (r->y0 + oy) >> 4, gy1 = (r->y1 - 1 + oy) >> 4;
+            for (unsigned gy = gy0; gy <= gy1; gy++) memset(&cellsToDraw[gy][gx0], 1, gx1 - gx0 + 1);
+            if (!(i & 7)) input_poll();
         }
+        for (int gy = 0; gy < GRID_H; gy++) {
+            int sy = gy * 16 - oy, ty = cellY + gy;
+            uint8_t *cells = cellsToDraw[gy];
+            for (int gx = 0; gx < GRID_W; gx++) {
+                if (!cells[gx]) continue;
+                cells[gx] = 0;
+                int sx = gx * 16 - ox, tx = cellX + gx;
+                if (tx >= map->width || ty >= map->height) continue;
+                if (sy + 16 > PANEL_TOP) panelTouched[drawIndex] = true;
+                int at = ty * map->width + tx;
+                uint8_t tile[3] = {layers[0][at], layers[1][at], layers[2][at]};
+                int first = 0;
+                for (int layer = 2; layer > 0; layer--)
+                    if (tile[layer] && tile[layer] < 128 && art_tile_opaque(tile[layer])) { first = layer; break; }
+                for (int layer = first; layer < 3; layer++)
+                    if (tile[layer] && tile[layer] < 128) art_draw(ART_TILES0+theme, tile[layer], sx, sy);
+            }
+        }
+        input_poll();
+    }
+    dirtyCount[drawIndex] = 0; dirtyOverflow[drawIndex] = false; tracking = true;
 #ifdef QA_PERF
     renderMark(1);
 #endif
     int fx = map->camp % map->width * 16 - camx, fy = map->camp / map->width * 16 - camy;
-    art_draw(ART_TENT, 0, fx - 20, fy + 6); art_draw(ART_TENT, 0, fx + 20, fy + 6); art_draw(ART_FIRE, tick / 2, fx, fy - 3);
+    artDraw(ART_TENT, 0, fx - 20, fy + 6); artDraw(ART_TENT, 0, fx + 20, fy + 6); artDraw(ART_FIRE, tick / 2, fx, fy - 3);
     for (int i = 0; i < 5; i++) {
         const Food *f = &foods[i];
-        if (f->active) art_draw(ART_FOOD, i, f->x_pixel - 8 - camx, f->y_pixel - 16 - camy);
+        if (f->active) artDraw(ART_FOOD, i, f->x_pixel - 8 - camx, f->y_pixel - 16 - camy);
     }
     for (int i = 0; i < MAXTOWER; i++) {
         if(!(i&7))input_poll();
@@ -349,23 +533,25 @@ static void renderGame(void) {
             if(e->born){int total=e->birthLength?e->birthLength:HZ,progress=total-e->born;if(progress<1)progress=1;if(e->type!=9)w=w*progress/total;h=h*progress/total;}
             if(e->flat)h=art->height/10+1;
             if(w<1)w=1;if(h<1)h=1;if(w>64)w=64;if(h>56)h=56;
-            dst->width=w;dst->height=h;gfx_ScaleSprite(src,dst);
+            dst->width=w;dst->height=h;gfx_ScaleSprite(src,dst);mark(x+(art->width-w)/2,y+art->height-h,w,h);
             if(e->facing<0){gfx_FlipSpriteY(dst,(gfx_sprite_t*)flipBuffer);dst=(gfx_sprite_t*)flipBuffer;}
             gfx_TransparentSprite(dst,x+(art->width-w)/2,y+art->height-h);
         }else drawArt(id,frame,x,y,e->facing<0);
         if (e->hp < e->maxhp) {
+            mark(x, y - 3, art->width + 1, 2);
             gfx_SetColor(cBlack); gfx_FillRectangle(x, y - 3, art->width, 2);
             gfx_SetColor(cGreen); gfx_FillRectangle(x, y - 3, (uint32_t)art->width * e->hp / e->maxhp + 1, 2);
         }
         int pip = x;
+        if (e->freeze || e->slow || e->shock || e->poison || e->crippled || e->disabled) mark(x, y - 6, 19, 2);
         if (e->freeze) { gfx_SetColor(cCyan); gfx_FillRectangle(pip, y - 6, 3, 2); pip += 4; }
         if (e->slow) { gfx_SetColor(cWhite); gfx_FillRectangle(pip, y - 6, 3, 2); pip += 4; }
         if (e->shock) { gfx_SetColor(cYellow); gfx_FillRectangle(pip, y - 6, 3, 2); pip += 4; }
         if (e->poison) { gfx_SetColor(cGreen); gfx_FillRectangle(pip, y - 6, 3, 2); pip += 4; }
         if (e->crippled || e->disabled) { gfx_SetColor(cRed); gfx_FillRectangle(pip, y - 6, 3, 2); }
-        if (e->immune) { gfx_SetColor(cWhite); gfx_Rectangle(x - 1, y - 1, art->width + 2, art->height + 2); }
+        if (e->immune) { mark(x - 1, y - 1, art->width + 2, art->height + 2); gfx_SetColor(cWhite); gfx_Rectangle(x - 1, y - 1, art->width + 2, art->height + 2); }
     }
-    if(focusEnemy>=0&&enemies[focusEnemy].active){const Enemy *e=&enemies[focusEnemy];art_draw(ART_BOX,4,ex(e)-12-camx,e->y_pixel-monsterHeight[e->type]-24-camy);}
+    if(focusEnemy>=0&&enemies[focusEnemy].active){const Enemy *e=&enemies[focusEnemy];artDraw(ART_BOX,4,ex(e)-12-camx,e->y_pixel-monsterHeight[e->type]-24-camy);}
 #ifdef QA_PERF
     renderMark(2);
 #endif
@@ -376,7 +562,7 @@ static void renderGame(void) {
         int id=bulletArt[b->type];const Art*art=&artTable[id];
         static const uint8_t slushFrames[6]={0,1,2,3,2,1};
         int frame=b->pop?b->pop:b->type==SLUSHEE?slushFrames[b->age%6]:0;
-        art_draw(id,frame,bx-art->width/2,by-art->height/2);
+        artDraw(id,frame,bx-art->width/2,by-art->height/2);
     }
     for (int i = 0; i < MAXTOWER; i++) {
         if(!(i&7))input_poll();
@@ -385,38 +571,28 @@ static void renderGame(void) {
         int x = t->cell % map->width * 16 + 8 - camx, y = t->cell / map->width * 16 + 8 - camy;
         if (t->animation && (t->type == SHOCK || t->type == CRIPPLER || t->type == LIGHTNING)) {
             gfx_SetColor(t->type == CRIPPLER ? cRed : cYellow);
-            if (t->type == LIGHTNING) gfx_VertLine(x, 0, y); else gfx_Circle(x, y, t->range / 2);
+            if (t->type == LIGHTNING) { mark(x, 0, 1, y); gfx_VertLine(x, 0, y); } else { int r = t->range / 2; mark(x - r, y - r, 2 * r + 1, 2 * r + 1); gfx_Circle(x, y, r); }
         }
     }
 #ifdef QA_PERF
     renderMark(3);
 #endif
     int x = cx * 16 - camx, y = cy * 16 - camy;
-    int ti = towerAt(cy * map->width + cx);
-    if (ti >= 0 && towers[ti].range) { gfx_SetColor(cWhite); gfx_Circle(x + 8, y + 8, towers[ti].range); }
-    art_draw(ART_BOX, valid(cx, cy) || ti >= 0 ? 1 : 0, x - 4, y - 4);
-    art_draw(ART_CURSOR, (valid(cx, cy) || ti >= 0) ? 1 : 0, x, y);
-    art_draw(ART_HUD, 0, 195, 0);
-    snprintf(textbuf, sizeof textbuf, "$%d", money); label(textbuf, 267, 23, cWhite);
-    art_draw(ART_SPEED_SLIDER,0,210+speedThirds*5,2);
-    snprintf(textbuf, sizeof textbuf, "W%u/%u", wave, waveCounts[level]); label(textbuf, 3, 25, cWhite);
-    if (wave < waveCounts[level] && waveDue[wave] > 0) { snprintf(textbuf, sizeof textbuf, "%ds", (waveDue[wave] + HZ - 1) / (sendFast ? HZ * HZ : HZ)); label(textbuf, 64, 25, cYellow); }
-    snprintf(textbuf, sizeof textbuf, "FOOD %d", foodLeft()); shadowLabel(textbuf, 3, 3, foodLeft() < 3 ? cRed : cWhite);
-    snprintf(textbuf, sizeof textbuf, "LV %d", playerLevel); shadowLabel(textbuf, 3, 13, cWhite); xpBar(33, 14, 50);
-    gfx_SetColor(cPanel); gfx_FillRectangle(0, 217, 320, 23);
-    if (statusTicks) shadowLabel(status, 3, 219, cYellow);
-    else if (ti >= 0) {
-        const Tower *t = &towers[ti];
-        snprintf(textbuf, sizeof textbuf, "%s L%d  upgrade $%d  sell $%d", towerNames[t->type], t->level + 1, t->level >= 5 ? 0 : upgradeCost((Tower *)t), t->spent / 2);
-        label(textbuf, 3, 219, cWhite);
-    } else {
-        snprintf(textbuf, sizeof textbuf, "%d %s $%d   2nd = build", selection + 1, towerNames[baseTypes[selection]], (int)rule_BasePrice(baseTypes[selection], 0));
-        label(textbuf, 3, 219, cWhite);
+    if (ti >= 0 && towers[ti].range) { int r = towers[ti].range; mark(x + 8 - r, y + 8 - r, 2 * r + 1, 2 * r + 1); gfx_SetColor(cWhite); gfx_Circle(x + 8, y + 8, r); }
+    artDraw(ART_BOX, valid(cx, cy) || ti >= 0 ? 1 : 0, x - 4, y - 4);
+    artDraw(ART_CURSOR, (valid(cx, cy) || ti >= 0) ? 1 : 0, x, y);
+    tracking = false;
+    for (int i = 0; i < HUD_N; i++) {
+        if (!hudNeed[i] && !(i == HUD_PANEL && panelTouched[drawIndex])) continue;
+        hudDraw(i);
+        const HudItem *h = &hudNow[i];
+        for (int j = i + 1; j < HUD_N; j++)
+            if (overlaps(h->x0, h->y0, h->x1, h->y1, &hudNow[j]) || overlaps(h->x0, h->y0, h->x1, h->y1, &hudHeld[drawIndex][j])) hudNeed[j] = true;
+        hudHeld[drawIndex][i] = hudNow[i];
+        if (i == HUD_PANEL) strcpy(panelHeld[drawIndex], panelNow);
     }
-    if (ti >= 0 && towers[ti].type <= SHOCK) {
-        snprintf(textbuf, sizeof textbuf, "MATH %s  APPS %s", towerNames[branchTypes[towers[ti].type][0]], towerNames[branchTypes[towers[ti].type][1]]);
-        label(textbuf, 3, 229, cCyan);
-    } else label("GRAPH wave  +/- speed  STAT focus", 3, 229, cCyan);
+    panelTouched[drawIndex] = false;
+    tracking = true;
     if(!speedThirds&&!paused&&!showTip){panel(81,84,158,26);centered("TIME FROZEN",90,cYellow);}
 #ifdef QA_PERF
     renderMark(4);
@@ -436,6 +612,7 @@ static void renderGame(void) {
         centered(mode == MODE_WON ? "ENTER next stage" : "ENTER try again", 128, cWhite);
         centered("STAT skills   MODE stage menu", 142, cCyan);
     }
+    tracking = false;
 }
 
 static void beginStage(bool bypass) {
@@ -563,7 +740,7 @@ int main(void) {
     gfx_Begin(); gfx_SetPalette(artPalette, sizeof artPalette, 0); gfx_SetTransparentColor(0); gfx_SetTextTransparentColor(0); gfx_SetTextBGColor(0); gfx_SetDrawBuffer();
     pickColors();
     timer_Set(1, 0); timer_Enable(1, TIMER_32K, TIMER_NOINT, TIMER_UP);
-    uint32_t last = timer_GetSafe(1, TIMER_UP), accumulator = 0;
+    uint32_t last = timer_GetSafe(1, TIMER_UP), accumulator = 0, frameStart = last;
     mode = MODE_MENU;
 #ifdef QA_ENDING /* diagnostic entry, never enabled for production */
     mode = MODE_ENDING;
@@ -610,7 +787,19 @@ int main(void) {
         else if (mode == MODE_ENDING) renderEnding();
         else if (mode == MODE_HELP) renderHelp();
         else if (mode == MODE_SKILLS) renderSkills();
-        else renderGame();
+        else {
+            renderGame();
+#ifdef QA_DAMAGECHECK /* diagnostic only: retained frame must equal a full redraw */
+            uint32_t retained = frameHash();
+            heldBackground[drawIndex] = 0xffffffff; renderGame();
+            scout_damage[0]++; if (frameHash() != retained) scout_damage[1]++;
+#endif
+        }
+        /* Any other screen overwrote this buffer's stage background. */
+        if (mode != MODE_PLAY && mode != MODE_WON && mode != MODE_LOST) heldBackground[drawIndex] = 0xffffffff;
+#ifdef QA_OVERLAY
+        heldBackground[drawIndex] = 0xffffffff;
+#endif
 #ifdef QA_PERF
         drawTotal+=timer_GetSafe(1,TIMER_UP)-drawStart;frameCount++;
         uint32_t perfNow=timer_GetSafe(1,TIMER_UP),span=perfNow-perfStart;
@@ -622,7 +811,10 @@ int main(void) {
 #endif
         updateDiagnostics();
         scout_totals[0]++;scout_totals[1]=(unsigned)tick;
-        gfx_SwapDraw();
+        /* 30 FPS cap: frames that finish early wait (still polling keys) so the picture
+         * changes at a steady rate instead of swinging between ~30 and ~55 FPS. */
+        while ((uint32_t)(timer_GetSafe(1, TIMER_UP) - frameStart) < FRAME_MIN_TICKS) input_poll();
+        gfx_SwapDraw(); drawIndex ^= 1; frameStart = timer_GetSafe(1, TIMER_UP);
     }
     save(); gfx_End();
     return 0;

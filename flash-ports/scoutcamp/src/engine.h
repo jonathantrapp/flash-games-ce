@@ -4,6 +4,11 @@
 #define MAXTOWER 64
 #define MAXBULLET 96
 #define FP 256
+/* Keep enemy physics out of main(): inlined there, every local spill needs the slow
+ * far-IX sequence of main's >128-byte frame (measured 7.3 -> 8.5 FPS crowded). */
+#ifndef PHYS_ATTR
+#define PHYS_ATTR __attribute__((noinline))
+#endif
 #define HZ 20
 #define COORD(name) union {int name;struct __attribute__((packed)) {uint8_t name##_fraction;int16_t name##_pixel;};}
 /* Positions and velocities are 8.8 fixed point; health/damage are hundredths. */
@@ -63,7 +68,7 @@ static uint16_t rowOffsets[64];
 static uint8_t mapWidth,mapHeight,campTileX,campTileY;
 static __attribute__((always_inline)) inline int tileAt(int layer,int x,int y){if((unsigned)x>=mapWidth||(unsigned)y>=mapHeight)return layer==1?1:0;return layers[layer][rowOffsets[y]+x];}
 static bool slope(int tile){return tile==14||tile==18;}
-static int surface(int x,int y){int tile=tileAt(1,x/16,y/16);if(!tile)return 32767;int top=(y/16)*16;if(tile==14)return top+15-(x&15);if(tile==18)return top+(x&15);return top;}
+PHYS_ATTR static int surface(int x,int y){int tile=tileAt(1,x/16,y/16);if(!tile)return 32767;int top=(y/16)*16;if(tile==14)return top+15-(x&15);if(tile==18)return top+(x&15);return top;}
 static bool lineClear(int x,int y,int xx,int yy){int dx=xx-x,dy=yy-y,n=abs(dx)>abs(dy)?abs(dx):abs(dy);if(!n)return true;for(int t=4;t<n;t+=4)if(tileAt(1,(x+dx*t/n)/16,(y+dy*t/n)/16))return false;return true;}
 static int alive(void){int n=0;for(int i=0;i<enemyTop;i++)n+=enemies[i].active;return n;}
 static int towerAt(int cell){for(int i=0;i<MAXTOWER;i++)if(towers[i].active&&towers[i].cell==cell)return i;return -1;}
@@ -130,12 +135,32 @@ static void stepStatus(Enemy*e) {
         damageEnemy(other?other:e,e->shockDamage,true);
     }}
 }
-static void physicsEnemy(Enemy*e,int substep){
+/* ---- Helper-free arithmetic for the physics hot path ----
+ * This compiler lowers every multi-bit shift (x>>8, x/16, x*256) and the 14/18 slope
+ * test (as 1<<tile) to looping runtime helpers, ~20 per substep. These forms give the
+ * same values: byte loads through a volatile view, left shifts (inline adds), a table.
+ * The original slope/surface/ex above stay for the frozen reference that
+ * tests/check_native_physics.py compares this physics against. */
+typedef union { int i; uint8_t b[3]; } IntBytes;
+/* v/16 (C truncation): for 0<=v<4096 it is the middle byte of v<<4. */
+static __attribute__((always_inline)) inline int div16f(int v){if((unsigned)v<4096u){volatile IntBytes t;t.i=v<<4;return t.b[1];}return v/16;}
+/* The packed pixel half of a COORD, loaded from memory rather than re-derived as x>>8. */
+static __attribute__((always_inline)) inline int pixelOf(const int *coord){return *(volatile const int16_t*)((const uint8_t*)coord+1);}
+/* v*FP for -32768<=v<32768 (all pixel coordinates). */
+static __attribute__((always_inline)) inline int toFP(int v){volatile IntBytes s,t;s.i=v;t.b[0]=0;t.b[1]=s.b[0];t.b[2]=s.b[1];return t.i;}
+/* v/FP (C truncation). */
+static __attribute__((always_inline)) inline int fromFP(int v){if(v<0)return v/FP;volatile IntBytes s,t;s.i=v;t.b[0]=s.b[1];t.b[1]=s.b[2];t.b[2]=0;return t.i;}
+static const uint8_t slopeTiles[19]={[14]=1,[18]=1};
+static __attribute__((always_inline)) inline bool isSlope(int tile){return (unsigned)tile<19u&&slopeTiles[tile];}
+static int surfaceF(int x,int y){int ty=div16f(y),tile=tileAt(1,div16f(x),ty);if(!tile)return 32767;int top=ty*16;uint8_t sub=(uint8_t)x&15;if(tile==14)return top+15-sub;if(tile==18)return top+sub;return top;}
+static const Map *limitMap;
+static int limitFP;
+PHYS_ATTR static void physicsEnemy(Enemy*e,int substep){
     if(e->born){if(!substep)e->born--;return;}
     if(!substep)stepStatus(e);if(!e->active)return;
     if(e->freeze){if(!substep)e->freeze--;return;}if(e->flat){if(!substep)e->flat--;return;}
-    int h=monsterHeight[e->type],px=ex(e),feet=e->y_pixel,py=feet-h/2;
-    int tilex=px/16,tiley=py/16;
+    int h=monsterHeight[e->type],half=(uint8_t)monsterHeight[e->type]>>1,px=pixelOf(&e->x),feet=pixelOf(&e->y),py=feet-half;
+    int tilex=div16f(px),tiley=div16f(py);
     if(tilex==campTileX&&tiley==campTileY)e->advancing=0;
     if(tilex==e->homeX&&tiley==e->homeY){e->advancing=1;if(e->escaping){if(e->carry>=0){foods[e->carry].active=0;escaped++;}e->active=0;if(e-enemies==focusEnemy)focusEnemy=-1;return;}}
     int speed=e->speed;
@@ -144,34 +169,35 @@ static void physicsEnemy(Enemy*e,int substep){
     if(e->escaping)speed=speed*(100-skills[SK_REFRIGERATION]*5)/100;
     if(!e->fling)e->vx=e->facing==1?speed:e->facing==-1?-speed:e->facing*speed;
     if(e->ground){
-        int front=(px+e->facing*4)/16,checky=py/16;
-        if(slope(tileAt(1,tilex,checky)))checky--;
+        int front=div16f(px+e->facing*4),checky=tiley;
+        if(isSlope(tileAt(1,tilex,checky)))checky--;
         int wall=tileAt(1,front,checky);
-        if(wall&&!slope(wall)){e->facing=-e->facing;e->vx=-e->vx;}
+        if(wall&&!isSlope(wall)){e->facing=-e->facing;e->vx=-e->vx;}
         int marker=tileAt(3,tilex,tiley);
         bool up=(e->advancing?campTileY:e->homeY)*16<py;
         if(up&&marker>=3&&marker<=11){int direction=(marker-3)%3,power=(marker-3)/3+1;bool dirOK=direction==2||(direction==0&&e->facing<0)||(direction==1&&e->facing>0);if(dirOK&&((e->facing<0&&px<=tilex*16+8)||(e->facing>0&&px>=tilex*16+8))){e->x=(tilex*16+8)*FP;e->vy=-(90+30*(power-1))*FP;e->vx=e->facing*35*FP;e->action=1;e->ground=0;}}
     }
     if(e->vx!=e->movementVelocity){e->movementVelocity=e->vx;e->movementStep=e->vx/60;}
-    int oldx=e->x,oldy=e->y;e->x+=e->movementStep;e->traveled+=abs(e->x-oldx);
-    int nx=ex(e),mid=(e->y_pixel-h/2)/16,wall=tileAt(1,(nx+e->facing*2)/16,mid);
-    if(wall&&!slope(wall)){e->x=oldx;e->facing=-e->facing;e->vx=-e->vx;}
-    if(e->x<3*FP){e->x=3*FP;e->facing=1;}if(e->x>(map->width*16-3)*FP){e->x=(map->width*16-3)*FP;e->facing=-1;}
+    int oldx=e->x,oldy=e->y;e->x+=e->movementStep;{int moved=e->x-oldx;e->traveled+=moved<0?-moved:moved;}
+    int nx=pixelOf(&e->x),mid=div16f(pixelOf(&e->y)-half),wall=tileAt(1,div16f(nx+e->facing*2),mid);
+    if(wall&&!isSlope(wall)){e->x=oldx;e->facing=-e->facing;e->vx=-e->vx;}
+    if(map!=limitMap){limitMap=map;limitFP=(map->width*16-3)*FP;}
+    if(e->x<3*FP){e->x=3*FP;e->facing=1;}if(e->x>limitFP){e->x=limitFP;e->facing=-1;}
     int oldVelocity=e->vy;e->vy+=200*FP/60;e->y+=(oldVelocity+e->vy)/120;e->ground=0;
-    int oldFeet=oldy/FP,newFeet=e->y_pixel,x=ex(e);
+    int oldFeet=fromFP(oldy),newFeet=pixelOf(&e->y),x=pixelOf(&e->x);
     /* FlxTilemapExt floor slopes accept feet through the inclusive bottom
      * edge, including upward motion. Looking only in feet/16 misses that
      * edge and lets a walker enter beneath the slope. */
-    int slopeRow=(newFeet-1)/16,slopeTile=tileAt(1,x/16,slopeRow);
-    int slopeSurface=slope(slopeTile)?surface(x,slopeRow*16):32767;
+    int slopeRow=div16f(newFeet-1),slopeTile=tileAt(1,div16f(x),slopeRow);
+    int slopeSurface=isSlope(slopeTile)?surfaceF(x,slopeRow*16):32767;
     if(newFeet>=slopeSurface&&newFeet<=slopeRow*16+16){
-        e->y=slopeSurface*FP;e->vy=0;e->ground=1;e->action=0;
+        e->y=toFP(slopeSurface);e->vy=0;e->ground=1;e->action=0;
     }
-    else if(e->vy>=0){for(int yy=oldFeet/16;yy<=newFeet/16+1;yy++){int surf=surface(x,yy*16);if(surf!=32767&&surf>=oldFeet-4&&surf<=newFeet+1){e->y=surf*FP;e->vy=0;e->ground=1;e->action=0;break;}}}
+    else if(e->vy>=0){for(int yy=div16f(oldFeet),last=div16f(newFeet)+1;yy<=last;yy++){int surf=surfaceF(x,yy*16);if(surf!=32767&&surf>=oldFeet-4&&surf<=newFeet+1){e->y=toFP(surf);e->vy=0;e->ground=1;e->action=0;break;}}}
     else {
         /* Original tiles14/18 carry FLOOR and a side flag, never CEILING. */
-        int ceiling=tileAt(1,x/16,(newFeet-h)/16);
-        if(ceiling&&!slope(ceiling)){e->y=(((newFeet-h)/16+1)*16+h)*FP;e->vy=0;}
+        int row=div16f(newFeet-h),ceiling=tileAt(1,div16f(x),row);
+        if(ceiling&&!isSlope(ceiling)){e->y=toFP((row+1)*16+h);e->vy=0;}
     }
     e->immune=e->type==4&&e->ground&&!e->disabled;
 }

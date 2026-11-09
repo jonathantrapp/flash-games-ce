@@ -4,7 +4,8 @@ Launching command delay | 1500
 Launching command action | launch
 Launching command delay | 1000
 Launching command hashWait | pixels
-	[Test passed!] Hash #pixels had a matching CRC.
-[CPU] PC=c31d9 SP=d1a7fc
+	[Test failed!] Hash #pixels ("358 native art comparisons") did not match the expected CRC E4ED718E (got E3DDF06B).
+	Dumped memory into failure_hashpixels_num1_dump.bin
+[CPU] PC=39f61 SP=d1a835
 [CLOCK] CPU=48000000 RUN=1000
-[Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.
+[Autotest failed] Out of 1 tests attempted, 0 passed, and 1 failed.
