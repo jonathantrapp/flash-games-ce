@@ -1,5 +1,13 @@
 # Developer handoff, v9 memory and campaign preview, 7 November 2026
 
+## Next session: controls and Pedro launcher icon (user request)
+
+Recorded 7 November 2026 after the v9 release. The user says the arrow keys are difficult to use and wants a more natural, comfortable movement layout. Prioritize an alternative to relying on the calculator arrow pad, especially for Pedro. No replacement key mapping has been selected yet; consider a spaced keypad layout and check reachability of jump, attack and Fury combinations. Keep menu navigation, displayed help/tutorial prompts and controls documentation consistent, and validate actual input in CEmu before packaging. Review Scouts movement/cursor comfort as applicable; the user did not specify the scope more narrowly.
+
+Add a recognizable Pedro icon for the Cesium launcher, using the existing original Pedro artwork. Initial inspection found `pedrofu/makefile` sets DESCRIPTION but no ICON, and its generated `icon.s` contains description metadata only. The installed CEdev makefile supports `ICON = icon.png`; its hello_world example uses a16x16 PNG. Do not download Cesium or perform a physical transfer without asking.
+
+The user's latest instruction is **do not implement this now; write it down for next time**. No game code, artwork, build, package or release was changed for these requests. The published v9 release remains the baseline. This note is local only; do not republish v9 just to incorporate it.
+
 Read `CONTINUATION-v9-2026-11-07.md` and `verification/CHECKPOINT-v9.md` first. v8 was published as `e26212d`. The selected Scouts program is 43,502 bytes, SHA-256 `9ae1dad156c59bc03cd4e453affb6a85d68bcb2a2205525907522aa125248aae`; Pedro remains exactly v7, 51,070 bytes, SHA-256 `c87979b6b2fdd59901cccf2b2b2aafa7d8d1d29a0bfbddfb21ae2268354d78a9`.
 
 Scouts now shares Pedro's bounded formatter and caches each enemy's exact horizontal quotient, refreshing before movement when velocity changes. Two derived fields follow all gameplay fields. Reference/native checks preserve the preceding state and verify the cache separately. Retain all frozen references, native fixtures, nonzero render canaries and `ram_guard.ld`. The checkpoint identifies passing tests and layout-sensitive fixture failures that do not count as acceptance evidence.

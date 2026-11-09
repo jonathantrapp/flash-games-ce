@@ -67,6 +67,6 @@ Launching command delay | 150
 Launching command delay | 500
 Launching command hashWait | scout_diag_0
 	[Test passed!] Hash #scout_diag_0 had a matching CRC.
-[CPU] PC=d1ab86 SP=d1a761
+[CPU] PC=c31d9 SP=d1a755
 [CLOCK] CPU=48000000 RUN=1000
 [Autotest passed] Out of 1 tests attempted, 1 passed, and 0 failed.

@@ -6,6 +6,6 @@
     0,
     0
   ],
-  "frontend_sha256": "b18c62d157d8c1601563f32d8c0d77da449feafb0f7ea760900c6894aa6f979f",
+  "frontend_sha256": "7e13c7db985992b00f42752cfe36d1019585698710bfed9c590cd1847eb5fdb1",
   "scope": "Actual frontend.c/profile.c and GraphX fonts/assets; locked/detail toggle,current-next preview,learn/refund,close/navigation; all45 descriptions ranks0..5 with print bounds; stage load stubbed; emulator OS5.3."
 }

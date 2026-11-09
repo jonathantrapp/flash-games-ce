@@ -2,7 +2,7 @@
   "free_ram_phase": "0xfeed0061",
   "debug_only": false,
   "stop": 0,
-  "program_sha256": "756a2d42a0fa2ca74de5dcd76da6bc0f2b7508f455e95542519a64252487b1b9",
+  "program_sha256": "28e59d7518d1b782a625e01e1a38c45f3de781e8a7640c33ff5d9512234f23ed",
   "expected": [
     1,
     272,

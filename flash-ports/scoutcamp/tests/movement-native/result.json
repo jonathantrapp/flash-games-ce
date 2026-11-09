@@ -20,6 +20,6 @@
   ],
   "source_sha256": "c4d428bfe59751a1a841d0c581aead8d3cfa67866d397b763a4e48f283e138de",
   "reference_sha256": "571a70ebf375c467c7e4f4ce8576916863788a70c717be4420f9380cf1b28bab",
-  "program_sha256": "3e30a0c7b391fd12a4d36968bae1313c9c2eb21bd33a8b28e59511b5e327324b",
+  "program_sha256": "b2dccb38f1017e79e9977ef11f5cb1c7abbc5912a1fa4af2779f1ea571c2d4d8",
   "scope": "Compare horizontal movement cache with frozen production v8 on the actual CE ABI.\n\nAll17 original maps,16 enemy/motion/status variants,160 ticks and3 substeps.\nCompares every gameplay Enemy byte, food state, escape count and focus after\neach call, plus the derived movement-cache invariant. The two new cache fields\nare metadata and are excluded from the frozen-v8 structure comparison.\nThe graphics cache initializer is stubbed; actual map banks and physics run.\n"
 }

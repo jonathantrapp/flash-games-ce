@@ -7,7 +7,7 @@
     0
   ],
   "debug_only": false,
-  "program_sha256": "3303a840b1a6a09b3ee896d8029ffaa8cc268f9704c04b291d80d6275aae700d",
+  "program_sha256": "0f0cb3ec164f20105afe869684cf221ab3d09ef98b3c2555ab57e11f9f0be865",
   "generated_art_sha256": "080c66ed3e2638a3af8590775c67a7381249c3e2f55e84148d2dd04c79847fa2",
   "observed": [
     1,
@@ -21,7 +21,7 @@
   "source_sha256": {
     "art.c": "4ee15107dcf19297f22efd799d7d1e022a3acd7ac172bbd349aeda0df274756c",
     "main.c": "c0ad699368d5e8b031e5c2ab8a358bf8f34c9b1b5d2908d10077c646873ed67c",
-    "engine.h": "865099e81d041e4be25911cada4c9d75634a943f80d1975d1a54514c03940e22",
+    "engine.h": "c4d428bfe59751a1a841d0c581aead8d3cfa67866d397b763a4e48f283e138de",
     "combat.h": "338623e2af53070f5abefb0a9c21f34d6521f286b9351aec3cc6e281eef5f7cd"
   },
   "scope": "Native exact sky/tile/HUD pixels and cache guards; host map coordinate proof.\n\nRaw original sprites supply the reference. Synthetic fixtures, not campaigns.\n"

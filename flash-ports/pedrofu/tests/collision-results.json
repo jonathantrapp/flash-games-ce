@@ -580,7 +580,7 @@
       ]
     }
   ],
-  "source_sha256": "acf1c50eb2f28012a6dd6219b0077af99c80cfc2a066a5d430f44766dc394ba2",
+  "source_sha256": "51bb5323948f44fea0cde92137dac4a2277ad661e2b17d18317497a3c37dc5e0",
   "returncode": 0,
   "method": "Actual optimized move_body extracted from world.c vs saved pre-optimization native algorithm; all15 original solidmaps plus emptyedgefixture, valid starting cornerboxes only; deterministic xorshift velocities incl high-speed cases."
 }

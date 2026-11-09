@@ -1,6 +1,6 @@
 {
   "program_sha256": "9ae1dad156c59bc03cd4e453affb6a85d68bcb2a2205525907522aa125248aae",
-  "scenario_tag": "v9_ready500",
+  "scenario_tag": "v7_ready500",
   "reused_captures": false,
   "snapshots": {
     "rapid_220_150": {

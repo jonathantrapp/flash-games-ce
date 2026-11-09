@@ -10,6 +10,6 @@
   ],
   "returncode": 0,
   "resource_definition_sha256": "03de65fc73425898d76f11446654fe59c9f7e28c2f625c7a118d73ae33c6ee1e",
-  "cache_sha256": "2bea99f1772329a7e1be756e1be40015ab60df9e4c2203d85f4f4b53faf8b9f9",
+  "cache_sha256": "bc520508221b08b3e198be7c0c9720129a5dc19d302bb38cfdd5856be09ccb5e",
   "scope": "Native actual GraphX conversion roundtrips with410/1024byte guarded capacities;296 original tiles, selected first/middle/last frames both facings, two alternating transparency fixtures."
 }
