@@ -1,0 +1,244 @@
+{
+ "scope": "formula check against original level files; not an in-game run",
+ "pass": true,
+ "stages": [
+  {
+   "stage": 1,
+   "width": 55,
+   "height": 14,
+   "raw": [
+    6,
+    10
+   ],
+   "start": [
+    6,
+    10
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 2,
+   "width": 32,
+   "height": 18,
+   "raw": [
+    6,
+    16
+   ],
+   "start": [
+    6,
+    16
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 3,
+   "width": 34,
+   "height": 18,
+   "raw": [
+    8,
+    14
+   ],
+   "start": [
+    8,
+    14
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 4,
+   "width": 53,
+   "height": 16,
+   "raw": [
+    55,
+    9
+   ],
+   "start": [
+    51,
+    9
+   ],
+   "clamped": true
+  },
+  {
+   "stage": 5,
+   "width": 33,
+   "height": 31,
+   "raw": [
+    6,
+    5
+   ],
+   "start": [
+    6,
+    5
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 6,
+   "width": 34,
+   "height": 28,
+   "raw": [
+    14,
+    8
+   ],
+   "start": [
+    14,
+    8
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 7,
+   "width": 34,
+   "height": 23,
+   "raw": [
+    8,
+    19
+   ],
+   "start": [
+    8,
+    19
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 8,
+   "width": 32,
+   "height": 32,
+   "raw": [
+    7,
+    28
+   ],
+   "start": [
+    7,
+    28
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 9,
+   "width": 32,
+   "height": 29,
+   "raw": [
+    14,
+    3
+   ],
+   "start": [
+    14,
+    3
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 10,
+   "width": 32,
+   "height": 32,
+   "raw": [
+    7,
+    28
+   ],
+   "start": [
+    7,
+    28
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 11,
+   "width": 32,
+   "height": 32,
+   "raw": [
+    6,
+    28
+   ],
+   "start": [
+    6,
+    28
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 12,
+   "width": 32,
+   "height": 32,
+   "raw": [
+    30,
+    27
+   ],
+   "start": [
+    30,
+    27
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 13,
+   "width": 32,
+   "height": 31,
+   "raw": [
+    6,
+    5
+   ],
+   "start": [
+    6,
+    5
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 14,
+   "width": 73,
+   "height": 16,
+   "raw": [
+    6,
+    8
+   ],
+   "start": [
+    6,
+    8
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 15,
+   "width": 51,
+   "height": 34,
+   "raw": [
+    5,
+    5
+   ],
+   "start": [
+    5,
+    5
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 16,
+   "width": 57,
+   "height": 32,
+   "raw": [
+    48,
+    12
+   ],
+   "start": [
+    48,
+    12
+   ],
+   "clamped": false
+  },
+  {
+   "stage": 17,
+   "width": 32,
+   "height": 32,
+   "raw": [
+    7,
+    28
+   ],
+   "start": [
+    7,
+    28
+   ],
+   "clamped": false
+  }
+ ]
+}

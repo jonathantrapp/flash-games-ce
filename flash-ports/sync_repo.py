@@ -204,6 +204,17 @@ for name,tag in {'scout-v9-stage3-win.png':'v9_stage3_combined','scout-v9-unlock
     shutil.copy2(SRC/'verification/scoutcamp'/tag/'screen.png',DST/'docs/screenshots'/name)
 for name in ['FlashGamesCE-v9-preview.zip','FlashGamesCE-v9-preview.zip.sha256']:
     shutil.copy2(ROOT/'release'/name,DST/'dist'/name)
+# v10 work in progress: stage-4 start-cursor fix (candidate not promoted to bin/ or released).
+for name in ['CHECKPOINT-v10.md','STAGE-SMOKE-v10_cursor-scoutcamp.md']:
+    shutil.copy2(SRC/'verification'/name,DST/'flash-ports/verification'/name)
+for scenario in (SRC/'verification/scoutcamp').glob('v10_cursor_*'):
+    for name in ['smoke.log','run-metadata.json']:
+        source=scenario/name
+        if source.is_file():
+            dest=DST/'flash-ports/verification/scoutcamp'/scenario.name/name
+            dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(source.read_text().rstrip()+'\n')
+for name,tag in {'scout-v10-stage4-cursor.png':'v10_cursor_stage04_idle','scout-v9-stage4-nocursor.png':'v9_control_stage04_idle'}.items():
+    shutil.copy2(SRC/'verification/scoutcamp'/tag/'screen.png',DST/'docs/screenshots'/name)
 shutil.copy2(SRC/'REPO-README.md',DST/'README.md')
 for name in ['FlashGamesCE-v7-preview.zip','FlashGamesCE-v7-preview.zip.sha256']:
     shutil.copy2(ROOT/'release'/name,DST/'dist'/name)

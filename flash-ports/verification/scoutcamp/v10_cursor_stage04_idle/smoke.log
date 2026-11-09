@@ -1,0 +1,39 @@
+[OK] JSON parsed
+E:\AI Stuff\Calc Stuff\flash-ports\verification\scoutcamp\v10_cursor_stage04_idle\smoke.json loaded and verified. 2 unique tests found.
+Launching command action | launch
+Launching command delay | 1200
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command hold | vars
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | right
+Launching command delay | 500
+Launching command release | right
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command release | vars
+Launching command delay | 150
+Launching command hold | enter
+Launching command delay | 500
+Launching command release | enter
+Launching command delay | 150
+Launching command delay | 1000
+Launching command hashWait | scout_diag_1
+	[Test passed!] Hash #scout_diag_1 had a matching CRC.
+Launching command hashWait | scout_diag_0
+	[Test passed!] Hash #scout_diag_0 had a matching CRC.
+[CPU] PC=d3109d SP=d1a6dc
+[CLOCK] CPU=48000000 RUN=1000
+[Autotest passed] Out of 2 tests attempted, 2 passed, and 0 failed.

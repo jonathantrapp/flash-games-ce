@@ -1,5 +1,9 @@
 # Developer handoff, v9 memory and campaign preview, 7 November 2026
 
+## 9 November 2026: stage-4 start cursor fixed in source (not released)
+
+`startLevel()` now clamps the initial cursor to the movement bounds; stage 4 was the only affected map. The candidate is in `scoutcamp/bin_v10cursor` (43,569 bytes, SHA-256 `b78bf3e9…841a`): 17/17 stage entries pass, and a stage-4 idle entry shows the cursor where v9 showed none. It has not been promoted to `bin/` or packaged; v9 stays the release. See `verification/CHECKPOINT-v10.md`. The v9 notes below about the stage-4 cursor describe the v9 binary.
+
 ## Next session: controls and Pedro launcher icon (user request)
 
 Recorded 7 November 2026 after the v9 release. The user says the arrow keys are difficult to use and wants a more natural, comfortable movement layout. Prioritize an alternative to relying on the calculator arrow pad, especially for Pedro. No replacement key mapping has been selected yet; consider a spaced keypad layout and check reachability of jump, attack and Fury combinations. Keep menu navigation, displayed help/tutorial prompts and controls documentation consistent, and validate actual input in CEmu before packaging. Review Scouts movement/cursor comfort as applicable; the user did not specify the scope more narrowly.
