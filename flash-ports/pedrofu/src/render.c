@@ -4,14 +4,25 @@
 #include "sky_runtime.h"
 #include "intro.h"
 #include "render_cache.h"
+#if defined(PEDRO_PROFILE)||defined(PEDRO_PATHSTAT)
+volatile uint8_t pedro_last_path; /* 0 reuse, 1 tracked and skipped sky, 2 tracked, 3 untracked */
+#define PATH(v) (pedro_last_path=(v))
+#else
+#define PATH(v)
+#endif
 #ifdef PEDRO_PROFILE
 #include <sys/timers.h>
-volatile uint32_t pedro_draw_profile[6];
+volatile uint32_t pedro_draw_profile[6],pedro_phase_sum[6],pedro_hud_sum[9];
+/* Phase sums cover scrolling (non-reuse) frames only; pedro_phase_sum[5] counts them. */
 #define DRAW_START uint32_t phase_time=timer_GetSafe(1,TIMER_UP)
-#define DRAW_PHASE(i) do { uint32_t n=timer_GetSafe(1,TIMER_UP);pedro_draw_profile[i]=n-phase_time;phase_time=n; }while(0)
+#define DRAW_PHASE(i) do { uint32_t n=timer_GetSafe(1,TIMER_UP);pedro_draw_profile[i]=n-phase_time;if(pedro_last_path){pedro_phase_sum[i]+=n-phase_time;if(!(i))pedro_phase_sum[5]++;}phase_time=n; }while(0)
+#define HUD_START uint32_t hud_time=timer_GetSafe(1,TIMER_UP)
+#define HUD_PHASE(i) do { uint32_t n=timer_GetSafe(1,TIMER_UP);if(pedro_last_path)pedro_hud_sum[i]+=n-hud_time;hud_time=n; }while(0)
 #else
 #define DRAW_START
 #define DRAW_PHASE(i)
+#define HUD_START
+#define HUD_PHASE(i)
 #endif
 
 uint8_t cBlack, cWhite = 255, cYellow = 254, cGold = 252, cRed, cGreen, cCyan, cPanel;
@@ -19,10 +30,10 @@ static int camx, camy;
 extern const uint8_t *pedro_flame;
 int enemy_status_value(const Enemy *e,int which);
 static uint8_t flat_sprite[2+64*8];
-/* Initialized storage lives in the guarded resident program region, leaving
- * the small BSS/allocator region available for runtime work. The panel is
- * opaque; two 150-pixel sprites retain every original panel/text pixel. */
-static uint8_t notice_images[2][2+150*14]={{1}};
+/* The panel is opaque; two 150-pixel sprites retain every original panel/text pixel.
+ * Zero-initialised, so it sits in the OS scratch RAM that BSS uses rather than in the resident
+ * program image, where its 4.2 KB would come out of the free RAM the sky AppVar needs. */
+static uint8_t notice_images[2][2+150*14];
 static char notice_text[96];
 static uint8_t notice_colors[3];
 static bool notice_valid;
@@ -32,27 +43,33 @@ typedef struct {int x,y;uint8_t type;int8_t face;} SceneryStamp;
 typedef struct {
     Damage rect[DAMAGE_RECTS];uint8_t solid[21*16],count;
     SceneryStamp scenery[24];uint8_t scenery_count;
-    int x,y,level;uint32_t tick;bool valid,overflow,had_notice;
+    int x,y,level;int hud_sig[8];uint32_t tick;bool valid,overflow,had_notice,hud_ok;
 } SceneCache;
 static SceneCache scene_cache[2];
-volatile uint32_t pedro_render_stats[3]; /* full redraws, reused backgrounds, overflow fallbacks */
+volatile uint32_t pedro_render_stats[4]; /* full redraws, reused backgrounds, overflow fallbacks, full redraws that skipped clean sky rows */
 static SceneCache *drawing_scene;
-void invalidate_scene_cache(void){scene_cache[0].valid=scene_cache[1].valid=false;}
+/* The sky is fixed to the screen. After a tracked frame, every pixel of that buffer above row top_old
+ * is sky apart from the frame's own damage rects, so the next scrolling frame in the same buffer only
+ * repaints from the higher of the old and new tile/scenery tops, plus any old rects above that.
+ * content_top is this frame's highest tile or scenery row. */
+static int top_old[2]={22,22},content_top;
+void invalidate_scene_cache(void){scene_cache[0].valid=scene_cache[1].valid=scene_cache[0].hud_ok=scene_cache[1].hud_ok=false;top_old[0]=top_old[1]=22;}
 static void damage(int x,int y,int w,int h){
     if(!drawing_scene)return;
     Damage r={x-2,y-2,x+w+2,y+h+2};
     if(r.x0<0)r.x0=0;if(r.y0<22)r.y0=22;if(r.x1>320)r.x1=320;if(r.y1>240)r.y1=240;
     if(r.x0>=r.x1||r.y0>=r.y1)return;
-    for(unsigned i=0;i<drawing_scene->count;){
-        Damage *d=&drawing_scene->rect[i];
+    SceneCache *sc=drawing_scene;
+    Damage *d=sc->rect,*end=d+sc->count; /* walk by pointer: indexing 12-byte rects costs a multiply each */
+    while(d<end){
         if(r.x0<d->x1&&r.x1>d->x0&&r.y0<d->y1&&r.y1>d->y0){
             if(d->x0<r.x0)r.x0=d->x0;if(d->y0<r.y0)r.y0=d->y0;
             if(d->x1>r.x1)r.x1=d->x1;if(d->y1>r.y1)r.y1=d->y1;
-            *d=drawing_scene->rect[--drawing_scene->count];i=0;
-        }else i++;
+            *d=*--end;sc->count--;d=sc->rect;
+        }else d++;
     }
-    if(drawing_scene->count==DAMAGE_RECTS){drawing_scene->overflow=true;return;}
-    drawing_scene->rect[drawing_scene->count++]=r;
+    if(sc->count==DAMAGE_RECTS){sc->overflow=true;return;}
+    *end=r;sc->count++;
 }
 
 static void draw_notice(void) {
@@ -91,7 +108,13 @@ static void draw_sky_region(int left,int top,int right,int bottom) {
     unsigned width=right-left;
     for(unsigned y=top;y<(unsigned)bottom;y++,dest+=320){
         unsigned offset=sky_row_offsets[y];
-        if(offset==65535)memset(dest,sky_row_colors[y],width);
+        if(offset==65535){
+            if(width==320){ /* consecutive rows of one flat colour are one contiguous block */
+                unsigned run=1;uint8_t color=sky_row_colors[y];
+                while(y+run<(unsigned)bottom&&sky_row_offsets[y+run]==65535&&sky_row_colors[y+run]==color)run++;
+                memset(dest,color,run*320);y+=run-1;dest+=(run-1)*320;
+            }else memset(dest,sky_row_colors[y],width);
+        }
 #ifdef SKY_FLASH_ROWS
         else if(sky_ram_pixels)memcpy(dest,sky_ram_pixels+offset+left,width);
         /* Original sky halves PDU20/PDU21 (160x240 each) read in place from archive. */
@@ -105,6 +128,27 @@ static void draw_sky_region(int left,int top,int right,int bottom) {
     }
 }
 static void draw_sky(int bottom){draw_sky_region(0,22,320,bottom);}
+/* Index of the first non-zero byte of p[0..n), or n. The per-cell loops below cost about 200 cycles a
+ * cell when the compiler keeps their state on the stack, and most cells of a scene are empty, so
+ * empty runs are skipped three bytes at a time. */
+static unsigned skip_zero(const uint8_t *p,unsigned n){
+    unsigned i=0;
+    while(i+3<=n&&!*(const unsigned *)(p+i))i+=3;
+    while(i<n&&!p[i])i++;
+    return i;
+}
+static unsigned skip_zero2(const uint8_t *p,const uint8_t *q,unsigned n){
+    unsigned i=0;
+    while(i+3<=n&&!(*(const unsigned *)(p+i)|*(const unsigned *)(q+i)))i+=3;
+    while(i<n&&!(p[i]|q[i]))i++;
+    return i;
+}
+/* Any non-empty cell in a row of n? Reads three bytes at a time, so it may look up to two cells past
+ * the span; that only makes the answer more conservative. */
+static bool row_any(const uint8_t *p,unsigned n){
+    for(const uint8_t *e=p+n;p<e;p+=3)if(*(const unsigned *)p)return true;
+    return false;
+}
 
 static uint8_t nearest_color(const uint8_t *palette, int r, int g, int b) {
     int best = 1, best_distance = 0x7fffff;
@@ -219,7 +263,10 @@ static void prop_sprite(const Prop *p) {
     else if (id == 43) { x = p->x + 3 - a->w / 2; y = p->y + 16 - a->h; frame = (g.ticks / 2) % a->frames; }
     /* These scenery props never move, animate or disappear within a stage.
      * Always repaint them after actor cleanup, without erasing them first. */
-    if((id>=18&&id<=25)||(id>=30&&id<=34))draw_sprite(id,frame,p->face,x-camx,y-camy+22);
+    if((id>=18&&id<=25)||(id>=30&&id<=34)){
+        if(y-camy+22<content_top&&x-camx<320&&x-camx+a->w>0&&y-camy+22+a->h>22)content_top=y-camy+22<22?22:y-camy+22;
+        draw_sprite(id,frame,p->face,x-camx,y-camy+22);
+    }
     else sprite_at(id, frame, p->face, x, y);
 }
 void shot_sprite(const Shot *s) {
@@ -234,49 +281,98 @@ void shot_sprite(const Shot *s) {
 static void clipped_ui(int id, int frame, int x, int y, int clip_x0, int clip_x1) {
     gfx_SetClipRegion(clip_x0, 0, clip_x1, 240); draw_ui(id, frame, x, y); gfx_SetClipRegion(0, 0, 320, 240);
 }
-static void draw_hud(void) {
+static void draw_hud_impl(bool force_full) {
+    /* Rows 0-21 hold only the black bar and HUD sprites. When nothing drawn there changed since
+     * the previous frame (the other buffer), copy that strip instead of repainting it. */
+    HUD_START;
+    SceneCache *sc=drawing_scene,*oc=sc==scene_cache?&scene_cache[1]:&scene_cache[0];
+    int hearts = maxlife() / 100, blink = (g.ticks / 6) & 1, boss = -1, bossw = 0;
+    const Enemy *e = g.enemy;
+    for (int i = 0; i < g.enemies; i++, e++) {
+        if (e->active && (e->type == 39 || e->type == 40 || e->type == 46) && absi(e->x - g.px) < 320 * 16) {
+            bossw = 59 * clampi(e->hp, 0, e->maxhp) / (e->maxhp ? e->maxhp : 1); boss = i;
+            break;
+        }
+    }
+    int fmax = maxfury(), sig[8] = {g.hp, hearts, g.totalmail, g.mailleft, g.fury, fmax, (g.hp <= 100 || g.fury >= fmax) ? blink : 0, boss < 0 ? -1 : bossw};
+    /* The scene is clipped below row 21, so a strip drawn into this buffer earlier is still intact
+     * when its signature matches: nothing to copy or redraw except the mail icons spilling below it. */
+    bool own = !force_full && sc->hud_ok && !memcmp(sig, sc->hud_sig, sizeof sig);
+    bool keep = own || (!force_full && oc->hud_ok && !memcmp(sig, oc->hud_sig, sizeof sig));
+    memcpy(sc->hud_sig, sig, sizeof sig); sc->hud_ok = g.mode == PLAY && !intro_is_active();
+    gfx_SetClipRegion(0, 0, 320, 240);
+    if (own);
+    else if (keep) memcpy(gfx_vbuffer, (uint8_t *)gfx_vbuffer == gfx_vram ? gfx_vram + 320 * 240 : gfx_vram, 320 * 22);
+    else { gfx_SetColor(cBlack); gfx_FillRectangle(0, 0, 320, 22); }
+    HUD_PHASE(0);
     damage(217,228,100,10);
     if(progress.points)damage(4,228,96,10);
-    int mail_y=3+((maxlife()/100+9)/10)*10+2;
+    int mail_y=3+((hearts+9)/10)*10+2;
     if(g.totalmail&&mail_y+11>22)damage(3,mail_y,(g.totalmail<26?g.totalmail:26)*12-1,11);
-    int hearts = maxlife() / 100, blink = (g.ticks / 6) & 1;
-    for (int i = 0; i < hearts; i++) {
+    for (int i = keep ? 20 : 0; i < hearts; i++) {
         int frame = g.hp >= i * 100 + 50 ? 1 : 0;
         if (frame && g.hp <= 100 && blink) frame = 2;
         draw_ui(UI_HEART, frame, 3 + (i % 10) * 10, 3 + (i / 10) * 10);
     }
+    if (keep) gfx_SetClipRegion(0, 22, 320, 240); /* rows 0-21 of the icons are already in the strip */
     for (int i = 0; i < g.totalmail && i < 26; i++) draw_ui(UI_MAIL, i >= g.mailleft ? 1 : 0, 3 + i * 12, 3 + ((hearts + 9) / 10) * 10 + 2);
-    int boxes = maxfury() / 100, whole = g.fury / 100, part = g.fury % 100;
-    draw_ui(UI_FURY, 0, 255, 2);
-    if (part) clipped_ui(UI_FURYI, 0, 256, 3, 256 + 61 - 61 * part / 100, 256 + 61);
-    for (int i = 0; i < boxes; i++) draw_ui(UI_FBOX, i < whole ? 1 + (g.fury >= maxfury() && blink) : 0, 256 + i * 8, 13);
+    gfx_SetClipRegion(0, 0, 320, 240);
+    HUD_PHASE(1);
+    int boxes = fmax / 100, whole = g.fury / 100, part = g.fury % 100;
+    if (!keep) {
+        draw_ui(UI_FURY, 0, 255, 2);
+        if (part) clipped_ui(UI_FURYI, 0, 256, 3, 256 + 61 - 61 * part / 100, 256 + 61);
+        for (int i = 0; i < boxes; i++) draw_ui(UI_FBOX, i < whole ? 1 + (g.fury >= fmax && blink) : 0, 256 + i * 8, 13);
+        if (boss >= 0) {
+            draw_ui(UI_BADG, 0, 128, 3);
+            if (bossw) clipped_ui(UI_BADGI, 0, 130, 5, 130, 130 + bossw);
+        }
+    }
+    HUD_PHASE(2);
     int need = progress.rank * 10 + 50;
     draw_ui(UI_XP, 0, 247, 229);
     if (progress.xp) clipped_ui(UI_XP, 1, 247, 229, 247, 247 + 68 * progress.xp / need);
-    char text[24]; snprintf(text, sizeof text, "Lv %d", progress.rank + 1);
-    gfx_SetTextFGColor(cWhite); gfx_PrintStringXY(text, 217, 228);
-    if (progress.points) { snprintf(text, sizeof text, "+%d pts", progress.points); gfx_SetTextFGColor(cYellow); gfx_PrintStringXY(text, 4, 228); }
-    for (int i = 0; i < g.enemies; i++) {
-        const Enemy *e = &g.enemy[i];
-        if (e->active && (e->type == 39 || e->type == 40 || e->type == 46) && absi(e->x - g.px) < 320 * 16) {
-            draw_ui(UI_BADG, 0, 128, 3);
-            int w = 59 * clampi(e->hp, 0, e->maxhp) / (e->maxhp ? e->maxhp : 1);
-            if (w) clipped_ui(UI_BADGI, 0, 130, 5, 130, 130 + w);
-            break;
-        }
+    HUD_PHASE(3);
+    static char lv_text[12], pts_text[16]; static int lv_rank = -1, pts_value = -1;
+    char text[24];
+    if (lv_rank != progress.rank) { lv_rank = progress.rank; snprintf(lv_text, sizeof lv_text, "Lv %d", lv_rank + 1); }
+    HUD_PHASE(4);
+    gfx_SetTextFGColor(cWhite); gfx_PrintStringXY(lv_text, 217, 228);
+    HUD_PHASE(5);
+    if (progress.points) {
+        if (pts_value != progress.points) { pts_value = progress.points; snprintf(pts_text, sizeof pts_text, "+%d pts", pts_value); }
+        gfx_SetTextFGColor(cYellow); gfx_PrintStringXY(pts_text, 4, 228);
     }
+    HUD_PHASE(6);
     if (g.arena >= 0 && g.arenaround < 5) {
         damage(0,25,320,10);
         snprintf(text, sizeof text, "Round %d/5  %ds", g.arenaround + 1, g.arenatime / 30);
         gfx_SetTextFGColor(g.arenatime > 0 ? cYellow : cRed); center_text(26, text);
     }
+    HUD_PHASE(7);
     if (g.notice_timer && g.notice) {
         draw_notice();
     }
+    HUD_PHASE(8);
 }
+#ifdef PEDRO_HUDCHECK
+volatile uint32_t pedro_hud_check[3]; /* frames compared, mismatches, strips kept */
+static uint32_t hud_sum(void){const uint8_t *p=gfx_vbuffer;uint32_t a=1,b=0;for(unsigned i=0;i<320*22;i++){a+=p[i]+1;b+=a;}return b^(a<<7);}
+static void draw_hud(void){
+    SceneCache *sc=drawing_scene,*oc=sc==scene_cache?&scene_cache[1]:&scene_cache[0];
+    bool will_keep=oc->hud_ok;
+    draw_hud_impl(false);
+    uint32_t first=hud_sum();
+    draw_hud_impl(true);
+    pedro_hud_check[0]++;if(hud_sum()!=first)pedro_hud_check[1]++;if(will_keep)pedro_hud_check[2]++;
+}
+#else
+static void draw_hud(void){draw_hud_impl(false);}
+#endif
 void draw_game(void) {
     DRAW_START;
     drawing_scene=NULL;
+    gfx_SetClipRegion(0,22,320,240); /* keep scene draws out of the retained HUD strip; draw_hud restores it */
     int tx = g.px / 16 + 4 - 160, ty = g.py / 16 + 8 - 120;
     if (g.ticks <= 1) { camx = tx; camy = ty; }
     camx += (clampi(tx, 0, (int)g.w * 16 - 320) - camx) / 3; camy += (clampi(ty, 0, (int)g.h * 16 - 218) - camy) / 3;
@@ -288,16 +384,21 @@ void draw_game(void) {
      * software multiply of g.w for every single visible tile. */
     const unsigned width=g.w;
     const uint8_t *back=g.back,*solid=g.solid,*decor=g.decor,*good=g.good;
-    SceneCache *cached=&scene_cache[(uint8_t *)gfx_vbuffer==gfx_vram?0:1];
+    const unsigned buf=(uint8_t *)gfx_vbuffer==gfx_vram?0:1;
+    SceneCache *cached=buf?&scene_cache[1]:&scene_cache[0];
+    const bool prior=cached->valid&&!cached->overflow; /* this buffer's last frame left usable old rects */
     bool reuse=cached->valid&&!cached->overflow&&cached->level==g.level&&cached->x==camx&&cached->y==camy&&g.ticks>=cached->tick&&g.mode==PLAY&&!intro_is_active();
     if(cached->overflow)pedro_render_stats[2]++;
     unsigned cell=0;
-    for(int y=y0;y<y1;y++)for(int x=x0;x<x1;x++){
-        uint8_t value=solid[y*width+x];if(cached->solid[cell]!=value)reuse=false;cached->solid[cell++]=value;
+    {
+        const unsigned span=x1-x0;const uint8_t *row=solid+y0*width+x0;
+        for(int y=y0;y<y1;y++,row+=width,cell+=span)
+            if(memcmp(cached->solid+cell,row,span)){reuse=false;memcpy(cached->solid+cell,row,span);}
     }
     unsigned scenery_count=0;
-    for(int i=0;i<g.props;i++){
-        const Prop*p=&g.prop[i];int id=p->type;
+    const Prop*p=g.prop;
+    for(int i=0;i<g.props;i++,p++){
+        int id=p->type;
         if(!p->active||!((id>=18&&id<=25)||(id>=30&&id<=34))||p->x<camx-160||p->x>camx+480||p->y<camy-160||p->y>camy+400)continue;
         if(scenery_count==24){reuse=false;scenery_count=255;break;}
         SceneryStamp *stamp=&cached->scenery[scenery_count++];
@@ -314,25 +415,57 @@ void draw_game(void) {
         for(int x=x0;x<x1;x++)if(!opaque[s[x]]&&!opaque[b[x]]&&!opaque[d[x]]){covered=false;break;}
         if(!covered)break;sky_bottom=sy<22?22:sy;
     }
+    bool track_frame=false;
     if(reuse){
-        pedro_render_stats[1]++;for(unsigned i=0;i<cached->count;i++)restore_region(&cached->rect[i]);
+        PATH(0);pedro_render_stats[1]++;for(const Damage *r=cached->rect,*end=r+cached->count;r<end;r++)restore_region(r);
         if(cached->had_notice&&(!g.notice_timer||!g.notice)){Damage r={10,206,310,220};restore_region(&r);}
     }
-    else {pedro_render_stats[0]++;draw_sky(sky_bottom);}
+    else {
+        pedro_render_stats[0]++;
+        const bool track=track_frame=g.mode==PLAY&&!intro_is_active();
+        int top=22;
+        content_top=240;
+        if(track){
+            const unsigned span=x1-x0;const uint8_t *srow=solid+y0*width+x0,*brow=back+y0*width+x0,*drow=decor+y0*width+x0;
+            for(int y=y0,sy=y0*16-camy+22;y<y1;y++,sy+=16,srow+=width,brow+=width,drow+=width)
+                if(row_any(srow,span)||row_any(brow,span)||row_any(drow,span)){content_top=sy<22?22:sy;break;}
+            if(prior){top=top_old[buf]<content_top?top_old[buf]:content_top;if(top>sky_bottom)top=sky_bottom;}
+        }
+        PATH(top>22?1:track?2:3);
+        if(top>22)pedro_render_stats[3]++;
+        if(top<sky_bottom)draw_sky_region(0,top,320,sky_bottom);
+        if(prior&&track&&top>22){
+            for(const Damage *r=cached->rect,*end=r+cached->count;r<end;r++)if(r->y0<top)draw_sky_region(r->x0,r->y0,r->x1,r->y1<top?r->y1:top);
+            if(cached->had_notice&&206<top)draw_sky_region(10,206,310,220<top?220:top);
+        }
+    }
     DRAW_PHASE(0);
+    const unsigned cells=x1>x0?x1-x0:0;
     if(!reuse)for(int y=y0,sy=y0*16-camy+22;y<y1;y++,sy+=16){
-        const uint8_t *b=back+y*width,*s=solid+y*width;
-        for(int x=x0,sx=x0*16-camx;x<x1;x++,sx+=16){int t=b[x];if(t)tile(t,sx,sy);t=s[x];if(t)tile(t,sx,sy);}
+        const uint8_t *b=back+y*width+x0,*s=solid+y*width+x0;
+        for(unsigned i=0;;i++){
+            i+=skip_zero2(b+i,s+i,cells-i);if(i>=cells)break;
+            const int t=b[i],u=s[i],sx=(x0+(int)i)*16-camx;
+            if(t&&!(u&&opaque[u]))tile(t,sx,sy);if(u)tile(u,sx,sy);
+        }
     }
     DRAW_PHASE(1);
     cached->count=0;cached->overflow=false;drawing_scene=cached;
-    for (int i = 0; i < g.props; i++) if (g.prop[i].active) prop_sprite(&g.prop[i]);
-    for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) {
-        int t = good[y * width + x], which = t == 12 ? 5 : t == 6 ? 0 : (t >= 7 && t <= 9) ? t - 6 : t == 36 ? 4 : t == 37 ? 6 : -1;
-        if (which >= 0) sprite_at(48, which, 1, x * 16, y * 16 + ((g.ticks / 6) & 1));
+    for (const Prop *q=g.prop,*qend=q+g.props; q<qend; q++) if (q->active) prop_sprite(q);
+    {
+        const int bob=(g.ticks / 6) & 1;
+        const uint8_t *goodRow=good+y0*width+x0;
+        for (int y = y0; y < y1; y++, goodRow += width) for (unsigned i = 0;; i++) {
+            i += skip_zero(goodRow + i, cells - i);
+            if (i >= cells) break;
+            int t = goodRow[i];
+            int which = t == 12 ? 5 : t == 6 ? 0 : (t >= 7 && t <= 9) ? t - 6 : t == 36 ? 4 : t == 37 ? 6 : -1;
+            if (which >= 0) sprite_at(48, which, 1, (x0 + (int)i) * 16, y * 16 + bob);
+        }
     }
-    for (int i = 0; i < g.enemies; i++) {
-        const Enemy *e = &g.enemy[i]; if (!e->active || (e->type==35&&e->state==5)) continue;
+    const Enemy *e = g.enemy;
+    for (int i = 0; i < g.enemies; i++, e++) {
+        if (!e->active || (e->type==35&&e->state==5)) continue;
         if (g.carry == i) continue;
         const ArtDef *a = &artdef[e->type];
         int ex = e->x / 16 - a->ox, ey = e->y / 16 - a->oy;
@@ -347,13 +480,16 @@ void draw_game(void) {
     for (int i = 0; i < MAX_SHOTS; i++) if (g.shot[i].active) shot_sprite(&g.shot[i]);
     if (intro_is_active())intro_draw(camx,camy-22);
     else if (g.mode != DEFEAT && (!g.invul || (g.ticks & 2)) && g.action != PA_DIE) sprite_at(0, pedro_frame(), g.face, g.px / 16 - 6, g.py / 16 - 3);
-    for(int y=y0,sy=y0*16-camy+22;y<y1;y++,sy+=16){const uint8_t*d=decor+y*width;for(int x=x0,sx=x0*16-camx;x<x1;x++,sx+=16){int t=d[x];if(t)tile(t,sx,sy);}}
+    for(int y=y0,sy=y0*16-camy+22;y<y1;y++,sy+=16){
+        const uint8_t *d=decor+y*width+x0;
+        for(unsigned i=0;;i++){i+=skip_zero(d+i,cells-i);if(i>=cells)break;tile(d[i],(x0+(int)i)*16-camx,sy);}
+    }
     DRAW_PHASE(3);
-    gfx_SetColor(cBlack); gfx_FillRectangle(0, 0, 320, 22);
     draw_hud();
     DRAW_PHASE(4);
     if (g.mode == DIALOGUE) story_draw();
     cached->x=camx;cached->y=camy;cached->level=g.level;cached->tick=g.ticks;
     cached->had_notice=g.notice_timer&&g.notice;
     cached->valid=g.mode==PLAY&&!intro_is_active();drawing_scene=NULL;
+    if(!reuse)top_old[buf]=track_frame?content_top:22; /* a reuse frame leaves tiles and scenery as they were */
 }

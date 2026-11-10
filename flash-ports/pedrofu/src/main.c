@@ -13,7 +13,13 @@
  * Optional profile overlay is a diagnostic build, not the shipped HUD. */
 volatile uint32_t pedro_profile[6];
 /* Cumulative counters permit paired-interval measurements without an overlay. */
-volatile uint32_t pedro_totals[5]; /* frames, steps, wait ticks, draw ticks, sim ticks */
+volatile uint32_t pedro_totals[5];
+#ifdef PEDRO_STEPHIST
+volatile uint32_t pedro_step_hist[6]; /* PLAY-mode iterations that ran 0..4 simulation steps; [5] = iterations with left/right held */
+#endif
+#if defined(PEDRO_PROFILE)||defined(PEDRO_PATHSTAT)
+volatile uint32_t pedro_path_cnt[4],pedro_path_period[4],pedro_path_slow[4],pedro_path_over[4],pedro_path_draw[4],pedro_path_n[4];
+#endif /* frames, steps, wait ticks, draw ticks, sim ticks */
 
 #define KEY_DOWN(k) (kb_Data[(k) >> 8] & ((k) & 0xFF))
 static uint16_t read_keys(void) {
@@ -99,6 +105,9 @@ int main(void) {
                 if (g.mode != PLAY) break;
             }
             if (steps == 4) accumulator = 0;
+#ifdef PEDRO_STEPHIST
+            pedro_step_hist[steps]++;if(keys&(LEFT|RIGHT))pedro_step_hist[5]++;
+#endif
         } else if (g.mode == DIALOGUE) {
             DIAG_PHASE(DP_FRONTEND);
             story_update(); pending_taps = 0; accumulator = 0; if (g.mode == DIALOGUE) g.ticks++;
@@ -114,10 +123,19 @@ int main(void) {
         extern volatile uint32_t pedro_draw_profile[6];
         pedro_draw_profile[5]=drawstart-waitstart;
 #endif
+#if defined(PEDRO_PROFILE)||defined(PEDRO_PATHSTAT)
+        {extern volatile uint8_t pedro_last_path;static uint32_t lastdraw;
+         uint32_t period=drawstart-lastdraw;lastdraw=drawstart;uint8_t path=pedro_last_path&3; /* the draw inside this period */
+         pedro_path_cnt[path]++;pedro_path_period[path]+=period;if(period>1130)pedro_path_slow[path]++;
+         if(period>1130)pedro_path_over[path]+=period-1092;}
+#endif
         if (g.mode == TITLE || g.mode == HELP || g.mode == MAP || g.mode == SKILLS || g.mode == ENDING) {invalidate_scene_cache();draw_frontend();}
         else { draw_game(); if (g.mode != PLAY && g.mode != DIALOGUE) draw_frontend(); }
         uint32_t drawn=timer_GetSafe(1, TIMER_UP)-drawstart;
         drawtime += drawn;pedro_totals[3]+=drawn;
+#if defined(PEDRO_PROFILE)||defined(PEDRO_PATHSTAT)
+        {extern volatile uint8_t pedro_last_path;uint8_t path=pedro_last_path&3;pedro_path_n[path]++;pedro_path_draw[path]+=drawn;}
+#endif
         frames++;pedro_totals[0]++;pedro_totals[1]=g.ticks;
         if (now - epoch >= 32768) {
             uint32_t elapsed = now - epoch;

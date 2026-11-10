@@ -57,7 +57,8 @@ static void update_spike(Shot *s,ShotExtra *m){
 }
 void projectile_update(void){
  if(shot_last_level!=g.level||g.ticks<shot_last_tick){rock_spiked=false;shot_last_level=g.level;}shot_last_tick=g.ticks;
- for(int i=0;i<MAX_SHOTS;i++){Shot *s=&g.shot[i];ShotExtra *m=&shot_extra[i];if(!s->active)continue;m->age++;if(--s->ttl<=0){s->active=0;continue;}
+ Shot *s=g.shot;ShotExtra *m=shot_extra;
+ for(int i=0;i<MAX_SHOTS;i++,s++,m++){if(!s->active)continue;m->age++;if(--s->ttl<=0){s->active=0;continue;}
  if(s->side==2){if(s->type==60){s->frame=clampi(m->age*30/FPS,0,12);m->gravity_remainder-=50*16;s->vy+=m->gravity_remainder/(FPS*FPS);m->gravity_remainder%=FPS*FPS;s->x+=s->vx;s->y+=s->vy;}else if(s->type==54){s->frame=clampi(m->age*20/FPS,0,3);s->vx=approach(s->vx,0,4);s->x+=s->vx;}else s->frame=clampi(m->age*20/FPS,0,5);continue;}
  if(s->type==52){if(m->frozen)m->frozen--;update_spike(s,m);continue;}
  if(m->frozen){m->frozen--;m->gravity_remainder+=400*16;s->vy+=m->gravity_remainder/(FPS*FPS);m->gravity_remainder%=FPS*FPS;s->y+=s->vy;if(blocked(s->x/16,s->y/16))s->active=0;continue;}
@@ -68,7 +69,7 @@ void projectile_update(void){
  if(s->frame>=1&&!m->burned&&!g.invul&&!g.dodge&&g.action!=PA_PILEDRIVE&&g.action!=PA_HITSTUN){m->burned=1;if(player_overlap(s,16,16)){player_hurt(100,s->face,0,0);if(player_reflects())s->active=0;}}continue;}
  s->x+=s->vx;s->y+=s->vy;s->face=s->vx<0?-1:1;int bw=s->type==49?3:s->type==50?5:7,bh=bw;
  if(s->side==1&&player_overlap(s,bw,bh)&&!g.invul&&!g.dodge&&g.action!=PA_PILEDRIVE&&g.action!=PA_HITSTUN)reflect_or_destroy(s,m);
- if(s->side==0)for(int j=0;j<g.enemies;j++){Enemy *e=&g.enemy[j];if(e->active&&absi(s->x-e->x-e->bw*8)<(bw+e->bw)*8&&absi(s->y-e->y-e->bh*8)<(bh+e->bh)*8){enemy_hit(e,scale_damage(s->damage),0,false);s->active=0;break;}}
+ if(s->side==0){Enemy *e=g.enemy;for(int j=0;j<g.enemies;j++,e++)if(e->active&&absi(s->x-e->x-e->bw*8)<(bw+e->bw)*8&&absi(s->y-e->y-e->bh*8)<(bh+e->bh)*8){enemy_hit(e,scale_damage(s->damage),0,false);s->active=0;break;}}
  if(!s->active)continue;int steps=(absi(s->vx)>absi(s->vy)?absi(s->vx):absi(s->vy))/16+1;
  for(int k=1;k<=steps;k++){int x=(oldx+(s->x-oldx)*k/steps)/16,y=(oldy+(s->y-oldy)*k/steps)/16;if(blocked(x,y)){s->active=0;break;}}
  if(s->type==51)turn_shot(s,m,g.px+4*16,g.py+7*16,100,60);

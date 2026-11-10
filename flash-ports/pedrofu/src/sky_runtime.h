@@ -3,7 +3,9 @@
 #include <stdint.h>
 /* Private, disposable unarchived AppVar. Never a save or a resource bank. */
 #define SKY_TEMP_NAME "PDSKYTMP"
-#define SKY_RAM_RESERVE 6144
+#ifndef SKY_RAM_RESERVE
+#define SKY_RAM_RESERVE 5120
+#endif
 extern const uint8_t *sky_ram_pixels;
 void sky_runtime_start(void);
 void sky_runtime_refresh(void);

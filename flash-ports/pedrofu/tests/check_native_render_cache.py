@@ -9,8 +9,9 @@ import hashlib,json,re,struct,subprocess,zlib
 HERE=Path(__file__).resolve().parent;GAME=HERE.parent;ROOT=GAME.parents[1]
 NATIVE=HERE/'render-native';(NATIVE/'src').mkdir(parents=True,exist_ok=True)
 cache=(GAME/'src/render_cache.c').read_text()
-cache=cache.replace('static uint8_t hud_storage[7000];',
-    'static struct {uint8_t before[64],pixels[7000],after[64];} hud_guard;\n#define hud_storage hud_guard.pixels')
+assert 'static uint8_t hud_storage[4800];' in cache
+cache=cache.replace('static uint8_t hud_storage[4800];',
+    'static struct {uint8_t before[64],pixels[4800],after[64];} hud_guard;\n#define hud_storage hud_guard.pixels')
 cache=cache.replace('static uint8_t tile_storage[TILE_SLOTS][TILE_BYTES];',
     'static struct {uint8_t before[64],pixels[TILE_SLOTS][TILE_BYTES],after[64];} tile_guard;\n#define tile_storage tile_guard.pixels')
 cache=cache.replace('static uint8_t actor_storage[ACTOR_SLOTS][ACTOR_BYTES];',
