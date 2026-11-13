@@ -8,7 +8,7 @@ SRC = ROOT / 'flash-ports'
 DST = ROOT / 'build/flash-games-ce-repo'
 assert (DST / '.git').is_dir(), 'Clone the separate flash-games-ce repository first'
 excluded = {'obj', 'obj_qa', '__pycache__', 'verification', 'bin', 'bin_qa', 'data', 'experiments', 'compiler-cache'}
-extensions = {'.py', '.c', '.h', '.s', '.S', '.ld', '.as', '.md', '.json', '.png', '.bin'}
+extensions = {'.ps1', '.py', '.c', '.h', '.s', '.S', '.ld', '.as', '.md', '.json', '.png', '.bin'}
 count = 0
 for source in SRC.rglob('*'):
     rel = source.relative_to(SRC)

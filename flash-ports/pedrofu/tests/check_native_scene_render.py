@@ -22,8 +22,9 @@ else:(OUT/'src/reference.c').unlink(missing_ok=True)
 candidate=(GAME/'src/render.c').read_text()
 candidate_hash=hashlib.sha256(candidate.encode()).hexdigest()
 reference_hash=hashlib.sha256((HERE/'reference/render_v5.c').read_bytes()).hexdigest()
-candidate=candidate.replace('static uint8_t notice_images[2][2+150*14]={{1}};',
- 'static struct {uint8_t before[64],pixels[2+150*14],after[64];} notice_guard[2]={{{1}}};')
+assert 'static uint8_t notice_images[2][2+150*14];' in candidate
+candidate=candidate.replace('static uint8_t notice_images[2][2+150*14];',
+ 'static struct {uint8_t before[64],pixels[2+150*14],after[64];} notice_guard[2];')
 candidate=re.sub(r'notice_images\[([^]]+)\]',r'notice_guard[\1].pixels',candidate)
 candidate=candidate.replace('static SceneCache scene_cache[2];','static struct {uint8_t before[64];SceneCache values[2];uint8_t after[64];} scene_guard;\n#define scene_cache scene_guard.values')
 world=(GAME/'src/world.c').read_text()
@@ -127,7 +128,8 @@ if (OUT/'src/sky_copy.s').exists():(OUT/'src/sky_copy.s').unlink()
 (OUT/'makefile').write_text('NAME = PDSCENE\nDESCRIPTION = "Scene pixels against v5"\nCOMPRESSED = YES\nARCHIVED = YES\nCFLAGS = -Wall -Wextra -Oz -std=c11\nEXTRA_LDFLAGS += -T ../../../ram_guard.ld\nCEDEV_TOOLCHAIN = ../../../../local-tools/cedev/CEdev\ninclude ../../../../local-tools/cedev/CEdev/meta/makefile.mk\n')
 # This fixture is under game/tests/scene-native, so the game's guard is ../../.
 (OUT/'makefile').write_text((OUT/'makefile').read_text().replace('../../../ram_guard.ld','../../ram_guard.ld'))
-(OUT/'makefile').write_text((OUT/'makefile').read_text().replace('COMPRESSED = YES','COMPRESSED = NO\nHAS_PRINTF = NO').replace('ARCHIVED = YES','ARCHIVED = NO').replace('-std=c11','-std=c11 -DSKY_FLASH_ROWS'))
+# The flash fixture (reference + candidate renderers) no longer launches when stored uncompressed (the OS answers ERROR: UNDEFINED with zero counters), so it stays zx7-compressed.
+(OUT/'makefile').write_text((OUT/'makefile').read_text().replace('COMPRESSED = YES','COMPRESSED = '+('YES' if args.sky_mode=='flash' else 'NO')+'\nHAS_PRINTF = NO').replace('ARCHIVED = YES','ARCHIVED = NO').replace('-std=c11','-std=c11 -DSKY_FLASH_ROWS'))
 subprocess.run([str(ROOT/'local-tools/cedev/CEdev/bin/make.exe')],cwd=OUT,check=True)
 mapping=(OUT/'bin/PDSCENE.map').read_text();addr=int(re.search(r'^\s*(0x[\da-fA-F]+)\s+_scene_diag\s*$',mapping,re.M)[1],16)
 def crc(data):

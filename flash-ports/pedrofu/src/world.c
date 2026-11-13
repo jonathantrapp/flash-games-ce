@@ -26,7 +26,13 @@ bool load_resources(void){
 void draw_sprite(int id,int fr,int facing,int x,int y){if(id<0||id>=60||!artdata[id])return;const ArtDef *a=&artdef[id];if(!a->frames||x>=320||y>=240||x+a->w<=0||y+a->h<=0)return;if(fr<0)fr=0;else if(fr>=a->frames)fr%=a->frames;cached_sprite(artdata[id]+((facing<0?a->frames:0)+fr)*a->stride,x,y);}
 void draw_ui(int id,int fr,int x,int y){if(id<0||id>=UI_COUNT||!uiimg[id])return;const UiDef *u=&uidef[id];if(fr<0)fr=0;if(fr>=u->frames)fr=u->frames-1;if(!cached_hud(id,fr,x,y))gfx_TransparentSprite((gfx_sprite_t *)(uiimg[id]+fr*u->stride),x,y);}
 int levels_passed(void){int n=0;while(n<15&&progress.passed[n])n++;return n;}
-int tile_at(int x,int y){if(x<0||x>=(int)g.w*16)return 1;if(y<0)return 1;if(y>=(int)g.h*16)return 0;return g.solid[(y/16)*g.w+x/16];}
+int tile_at(int x,int y){
+ static unsigned lastRow=65535,lastWidth,lastOffset; /* collision probes cluster on a few rows */
+ unsigned w=g.w;
+ if(x<0||(unsigned)x>=w*16u)return 1;if(y<0)return 1;if((unsigned)y>=(unsigned)g.h*16u)return 0;
+ unsigned row=(unsigned)y>>4;if(row!=lastRow||w!=lastWidth){lastRow=row;lastWidth=w;lastOffset=row*w;}
+ return g.solid[lastOffset+((unsigned)x>>4)];
+}
 static int slope(int t){switch(t){case 14:case 86:case 121:case 123:case 171:return 1;case 18:case 90:case 122:case 125:case 170:return 2;default:return 0;}}
 bool blocked(int x,int y){int t=tile_at(x,y);return t&&!slope(t)&&t!=55&&(t<62||t>66);}
 bool body_collides(int x,int y,int bw,int bh){return blocked(x,y)||blocked(x+bw-1,y)||blocked(x,y+bh-1)||blocked(x+bw-1,y+bh-1);}
@@ -83,7 +89,10 @@ static void tent_launch(Prop *p) {
  }
 }
 void prop_update(void){
- for(int i=0;i<g.props;i++){Prop *p=&g.prop[i];if(!p->active)continue;int dist=absi(p->x-g.px/16)+absi(p->y-g.py/16);
+ int pxs=g.px/16,pys=g.py/16;
+ for(int i=0;i<g.props;i++){Prop *p=&g.prop[i];if(!p->active)continue;int type=p->type;
+  if(type!=48&&type!=13&&type!=14&&type!=44&&type!=43)continue;
+  int dist=absi(p->x-pxs)+absi(p->y-pys);
   if(p->type==48){p->timer++;if(p->timer>15&&dist<24){collect_power(p->state);p->active=0;}continue;}
   if(p->type==13||p->type==14||p->type==44){
    if(!p->state&&dist<50){
@@ -95,7 +104,7 @@ void prop_update(void){
    if(p->state==1&&--p->timer<=0){tent_launch(p);p->count++;p->timer=(p->type==44?2:4)*FPS;if(p->count>=(p->type==44?6:4)){p->state=2;p->tag=0;}}
    continue;
   }
-  if(p->type==43){if(absi(p->x+3-g.px/16-4)<10&&g.py/16+15>p->y-16&&g.py/16<p->y+16){int dir=g.px/16+4>p->x+3?1:-1;g.px=(p->x+(dir>0?12:-8))*16;player_hurt(100,dir,100,-100);}continue;}
+  if(p->type==43){if(absi(p->x+3-g.px/16-4)<10&&g.py/16+15>p->y-16&&g.py/16<p->y+16){int dir=g.px/16+4>p->x+3?1:-1;g.px=(p->x+(dir>0?12:-8))*16;player_hurt(100,dir,100,-100);pxs=g.px/16;pys=g.py/16;}continue;}
  }
  int tx=(g.px/16+4)/16,ty=(g.py/16+8)/16;
  for(int y=ty-1;y<=ty+1;y++)for(int x=tx-1;x<=tx+1;x++)if(x>=0&&x<(int)g.w&&y>=0&&y<(int)g.h&&absi(x*16+8-g.px/16-4)+absi(y*16+8-g.py/16-8)<20){int i=y*g.w+x,t=g.good[i],which=-1;if(t==12)which=5;else if(t==6)which=0;else if(t>=7&&t<=9)which=t-6;else if(t==36)which=4;else if(t==37)which=6;if(which>=0){g.good[i]=0;collect_power(which);}}
